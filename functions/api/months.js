@@ -1,6 +1,6 @@
 // Übersicht aller Monate seit dem Startmonat: Budget, Ausgaben, Übrig je Monat.
 
-import { computeOverview, isMonthString, monthAdd, monthCount, recurringSum } from '../../shared/month.js';
+import { DEFAULT_START_MONTH, computeOverview, isMonthString, monthAdd, monthCount, recurringSum } from '../../shared/month.js';
 import { json } from '../../shared/http.js';
 
 const MAX_MONTHS = 120;
@@ -48,7 +48,7 @@ export async function onRequestGet({ env, data }) {
   ]);
 
   const settings = {
-    startMonth: settingsRow.results[0]?.budget_start_month ?? null,
+    startMonth: settingsRow.results[0]?.budget_start_month ?? DEFAULT_START_MONTH,
     carryoverEnabled: (settingsRow.results[0]?.carryover_enabled ?? 1) === 1,
   };
   const recurring = recurringRows.results.map((r) => ({

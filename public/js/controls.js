@@ -1,7 +1,7 @@
 // Wiederverwendbare Bedienelemente.
 
 import { el } from './dom.js';
-import { formatMonth, monthAdd } from './format.js';
+import { MIN_MONTH, formatMonth, monthAdd } from './format.js';
 
 const monthShort = new Intl.DateTimeFormat('de-AT', { month: 'short' });
 
@@ -49,7 +49,13 @@ export function monthSwitch(month, onChange, { big = false } = {}) {
     { className: `month-switch${big ? ' month-switch-big' : ''}` },
     el(
       'button',
-      { className: 'month-arrow', type: 'button', 'aria-label': 'Voriger Monat', onClick: () => onChange(monthAdd(month, -1)) },
+      {
+        className: 'month-arrow',
+        type: 'button',
+        'aria-label': 'Voriger Monat',
+        disabled: month <= MIN_MONTH,
+        onClick: () => onChange(monthAdd(month, -1)),
+      },
       '←'
     ),
     el('span', { className: big ? 'month-title' : 'month-switch-label' }, formatMonth(month)),

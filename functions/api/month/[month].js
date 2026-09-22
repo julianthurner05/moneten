@@ -3,7 +3,7 @@
 // Kategorie-Zuordnung erscheinen in der jeweiligen Kategorie.
 
 import { ensureDefaultCategories } from '../../../shared/categories.js';
-import { computeOverview, isMonthString, monthCount, recurringSum } from '../../../shared/month.js';
+import { DEFAULT_START_MONTH, computeOverview, isMonthString, monthCount, recurringSum } from '../../../shared/month.js';
 import { error, json } from '../../../shared/http.js';
 
 function currentMonth() {
@@ -79,7 +79,7 @@ export async function onRequestGet({ env, data, params }) {
   ]);
 
   const settings = {
-    startMonth: settingsRow.results[0]?.budget_start_month ?? null,
+    startMonth: settingsRow.results[0]?.budget_start_month ?? DEFAULT_START_MONTH,
     carryoverEnabled: (settingsRow.results[0]?.carryover_enabled ?? 1) === 1,
   };
   const recurring = recurringRows.results.map((r) => ({

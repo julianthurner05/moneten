@@ -4,11 +4,11 @@ import { api } from '../api.js';
 import { dateChip, monthSwitch } from '../controls.js';
 import { el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
-import { currentMonth, formatDate, formatEuro } from '../format.js';
+import { MIN_MONTH, currentMonth, formatDate, formatEuro } from '../format.js';
 import { openEntryForm } from './entryForm.js';
 
 export async function renderMonth(ctx, month) {
-  const m = month ?? currentMonth();
+  const m = (month ?? currentMonth()) < MIN_MONTH ? MIN_MONTH : month ?? currentMonth();
   const data = await api(`/api/month/${m}`);
   ctx.show('monat', () => build(ctx, data));
 }

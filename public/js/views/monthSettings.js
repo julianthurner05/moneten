@@ -63,11 +63,6 @@ function build(ctx, data) {
   };
 
   // --- Optionen ---
-  const startMonth = createMonthPicker({
-    id: 'settings-start',
-    value: data.settings.budgetStartMonth ?? '',
-    allowEmpty: true,
-  });
   const carryover = el('input', {
     id: 'settings-carryover',
     type: 'checkbox',
@@ -84,7 +79,7 @@ function build(ctx, data) {
         try {
           await api('/api/personal/settings', {
             method: 'PUT',
-            body: { budgetStartMonth: startMonth.value || null, carryoverEnabled: carryover.checked },
+            body: { budgetStartMonth: data.settings.budgetStartMonth ?? null, carryoverEnabled: carryover.checked },
           });
           ctx.refresh();
         } catch (err) {
@@ -93,15 +88,26 @@ function build(ctx, data) {
         }
       },
     },
-    el(
-      'div',
-      { className: 'field' },
-      el('label', { className: 'field-label', for: 'settings-start' }, 'Startmonat des Budgets'),
-      startMonth.root
-    ),
     el('div', { className: 'check-row' }, carryover, el('label', { for: 'settings-carryover' }, 'Übrig des Vormonats übertragen')),
     optionsError,
     el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'submit' }, 'Speichern'))
+  );
+
+  const logout = el(
+    'div',
+    { className: 'konto-link' },
+    el(
+      'button',
+      {
+        className: 'textlink',
+        type: 'button',
+        onClick: async () => {
+          await api('/api/logout', { method: 'POST' });
+          ctx.onLogout();
+        },
+      },
+      'Abmelden'
+    )
   );
 
   return el(
@@ -111,7 +117,8 @@ function build(ctx, data) {
     recurringBlock('income', 'Wiederkehrende Einnahmen', '+ Einnahme'),
     recurringBlock('fixed', 'Fixkosten', '+ Fixkosten'),
     el('div', { className: 'section-label' }, 'Optionen'),
-    options
+    options,
+    logout
   );
 }
 

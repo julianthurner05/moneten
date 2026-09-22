@@ -38,6 +38,9 @@ export function recurringSum(items, kind, month) {
 
 const MAX_MONTHS = 1200;
 
+/** Vor diesem Monat gibt es kein Budget und keinen Übertrag. */
+export const DEFAULT_START_MONTH = '2026-09';
+
 /**
  * Kennzahlen eines Monats.
  * Übertrag(m) = Übrig(m−1), wenn carryover aktiv und m nach dem Startmonat liegt, sonst 0.

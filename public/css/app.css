@@ -1138,6 +1138,8 @@ input[type='checkbox']:disabled {
   opacity: 1;
   transform: none;
   transition: visibility 0s, opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+  /* Offen darf nichts geclippt werden, sonst verschwinden Dropdowns am Ende des Aufklappers. */
+  overflow: visible;
 }
 
 /* ---------- Ladebildschirm ---------- */
@@ -1431,6 +1433,11 @@ a.privat-toggle:hover {
 
 .month-arrow:hover {
   color: var(--color-text);
+}
+
+.month-arrow:disabled {
+  color: var(--color-line);
+  cursor: default;
 }
 
 /* ---------- Plus-Button rechts unten ---------- */
