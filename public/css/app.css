@@ -1067,7 +1067,8 @@ input[type='checkbox']:disabled {
 /* ---------- Anmeldung und Setup ---------- */
 
 .auth-wrap {
-  min-height: 85dvh;
+  min-height: 100svh;
+  margin-bottom: calc(-1 * max(var(--space-8), env(safe-area-inset-bottom)));
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1160,50 +1161,6 @@ input[type='checkbox']:disabled {
   transition: visibility 0s, opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
   /* Offen darf nichts geclippt werden, sonst verschwinden Dropdowns am Ende des Aufklappers. */
   overflow: visible;
-}
-
-/* ---------- Ladebildschirm ---------- */
-
-#loader {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100dvh;
-  z-index: var(--z-loader);
-  background: var(--color-bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-5);
-  opacity: 1;
-  transition: opacity var(--duration-slow) var(--ease);
-}
-
-#loader.is-done {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.loader-wordmark {
-  font-size: var(--text-display);
-  line-height: var(--leading-tight);
-  letter-spacing: -0.01em;
-}
-
-.loader-bar {
-  width: 10rem;
-  height: var(--meter-height);
-  border-radius: var(--radius-full);
-  background: var(--color-field);
-  overflow: hidden;
-}
-
-.loader-fill {
-  height: 100%;
-  width: 0%;
-  border-radius: var(--radius-full);
-  background: var(--color-text);
 }
 
 /* ---------- Einblend-Animationen ---------- */

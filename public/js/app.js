@@ -197,29 +197,21 @@ document.addEventListener(
   true
 );
 
-// Ladebildschirm: Wortmarke mit Ladebalken, füllt sich, wenn die App bereit ist.
+// Ladebildschirm: die CSS-Animation läuft ohne JS an; hier nur das Fertigstellen –
+// Balken weich auf 100 %, dann ausblenden.
 const loader = document.getElementById('loader');
-const startLoader = () => {
+const finishLoader = () => {
   const fill = loader.querySelector('.loader-fill');
-  let progress = 0;
-  let target = 88;
-  const tick = () => {
-    progress += (target - progress) * 0.035;
-    if (target === 100 && progress > 99.4) progress = 100;
-    fill.style.width = `${progress}%`;
-    if (progress < 100) {
-      requestAnimationFrame(tick);
-    } else {
-      loader.classList.add('is-done');
-      setTimeout(() => loader.remove(), 500);
-    }
-  };
-  requestAnimationFrame(tick);
-  return () => {
-    target = 100;
-  };
+  fill.style.width = getComputedStyle(fill).width;
+  fill.style.animation = 'none';
+  void fill.offsetWidth;
+  fill.style.transition = 'width 400ms cubic-bezier(0.22, 1, 0.36, 1)';
+  fill.style.width = '100%';
+  setTimeout(() => {
+    loader.classList.add('is-done');
+    setTimeout(() => loader.remove(), 450);
+  }, 420);
 };
-const finishLoader = startLoader();
 
 window.addEventListener('hashchange', handleRoute);
 handleRoute().finally(finishLoader);
