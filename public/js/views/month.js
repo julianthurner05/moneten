@@ -158,10 +158,6 @@ function build(ctx, data) {
 
   sections.push(...sharesSections);
 
-  // Admins erreichen den Adminbereich über die Kopfzeile – unten nur für alle anderen.
-  const kontoLink = ctx.state.user.isAdmin
-    ? null
-    : el('div', { className: 'konto-link' }, el('a', { className: 'textlink', href: '#/konto' }, 'Konto'));
 
   const listArea =
     sections.length === 0
@@ -170,7 +166,7 @@ function build(ctx, data) {
 
   const fab = buildFab([{ label: 'Eintrag', onClick: () => openNewEntry(ctx, data) }]);
 
-  return el('div', { className: 'view' }, hero, listArea, kontoLink, fab);
+  return el('div', { className: 'view' }, hero, listArea, fab);
 }
 
 function noticePanel(message) {

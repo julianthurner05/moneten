@@ -147,7 +147,12 @@ async function handleRoute() {
       if (parts[0] === 'konto' && parts[1] === 'passwort') {
         renderPasswordChange(ctx, { forced: false });
       } else if (parts[0] === 'konto') {
-        await renderAccount(ctx);
+        // Konto/Adminbereich gibt es vorerst nur für Admins.
+        if (state.user.isAdmin) {
+          await renderAccount(ctx);
+        } else {
+          await renderMonth(ctx, null);
+        }
       } else if (parts[1] === 'uebersicht') {
         await renderMonthOverview(ctx);
       } else if (parts[1] === 'einstellungen') {
