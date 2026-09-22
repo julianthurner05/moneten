@@ -2,8 +2,8 @@
 // eigene Kategorien und private Einzugsposten.
 
 import { ensureDefaultCategories } from '../../../../shared/categories.js';
-import { loadBalances, loadGroupForMember } from '../../../../shared/groupData.js';
-import { suggestSettlements } from '../../../../shared/split.js';
+import { loadGroupForMember } from '../../../../shared/groupData.js';
+import { computeBalances, suggestSettlements } from '../../../../shared/split.js';
 import { error, json } from '../../../../shared/http.js';
 
 export async function onRequestGet({ env, data, params }) {
@@ -58,7 +58,18 @@ export async function onRequestGet({ env, data, params }) {
   }
   const mappingByExpense = new Map(myMappings.results.map((m) => [m.expense_id, m.category_id]));
 
-  const balances = await loadBalances(env, group.id);
+  // Salden direkt aus den schon geladenen Daten – spart einen zweiten DB-Roundtrip.
+  const balances = computeBalances(
+    members.results.map((m) => m.id),
+    expenses.results.map((e) => ({
+      paidBy: e.paid_by,
+      amountCents: e.amount_cents,
+      shares: sharesByExpense.get(e.id) ?? [],
+    })),
+    settlements.results
+      .filter((s) => s.confirmed_at)
+      .map((s) => ({ fromUser: s.from_user, toUser: s.to_user, amountCents: s.amount_cents }))
+  );
 
   return json({
     group: {

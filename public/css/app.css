@@ -58,9 +58,23 @@ html[data-input='pointer'] :focus-visible {
 /* ---------- Kopfzeile ---------- */
 
 #header {
-  border-bottom: var(--hairline) solid var(--color-line);
   position: relative;
+}
+
+.header-inner {
+  border-bottom: var(--hairline) solid var(--color-line);
   transition: border-color var(--duration) var(--ease);
+}
+
+.header-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  padding-left: max(var(--space-5), env(safe-area-inset-left));
+  padding-right: max(var(--space-5), env(safe-area-inset-right));
+  padding-block: var(--space-3);
 }
 
 .header-inner {
@@ -511,10 +525,6 @@ a.row:hover .row-title {
 /* Begleichungen leicht dunkler hinterlegt, damit man sie sofort erkennt */
 .row-settle {
   background: var(--color-field);
-  border-radius: var(--radius-sm);
-  padding-inline: var(--space-3);
-  border-bottom-color: transparent;
-  margin-block: var(--space-1);
 }
 
 .row-settle .date-chip {
@@ -602,7 +612,7 @@ a.row:hover .row-title {
 }
 
 .konto-link {
-  margin-top: var(--space-9);
+  margin-top: calc(var(--space-9) * 1.5);
   text-align: center;
 }
 
@@ -1040,6 +1050,25 @@ a.privat-toggle:hover {
   color: var(--color-bg);
 }
 
+.details-button {
+  display: none;
+  align-items: center;
+  background: var(--color-field);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  line-height: 1;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+
+.details-button.is-active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
 /* ---------- Datums-Tag ---------- */
 
 .date-chip {
@@ -1286,15 +1315,23 @@ input[type='month'] {
     font-size: min(4.75rem, 19vw);
   }
 
+  .hero-centered {
+    padding-block: calc(var(--space-9) * 1.2) calc(var(--space-9) * 1.9);
+    gap: var(--space-7);
+  }
+
+  .info-button {
+    display: none;
+  }
+
+  .details-button {
+    display: inline-flex;
+  }
+
   .header-inner {
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-4);
     padding-block: var(--space-3);
-  }
-
-  .header-nav {
-    order: 3;
-    flex-basis: 100%;
   }
 
   .section-head {

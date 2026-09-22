@@ -92,33 +92,37 @@ function build(ctx, data) {
   );
   details.style.display = 'none';
 
+  const toggleDetails = () => {
+    const open = details.style.display === 'none';
+    for (const button of [infoButton, detailsButton]) {
+      button.setAttribute('aria-expanded', String(open));
+      button.classList.toggle('is-active', open);
+    }
+    if (open) {
+      details.style.display = '';
+      requestAnimationFrame(() => requestAnimationFrame(() => details.classList.add('is-open')));
+    } else {
+      details.classList.remove('is-open');
+      details.addEventListener(
+        'transitionend',
+        () => {
+          if (!details.classList.contains('is-open')) details.style.display = 'none';
+        },
+        { once: true }
+      );
+    }
+  };
+
   const infoButton = el(
     'button',
-    {
-      className: 'info-button',
-      type: 'button',
-      'aria-label': 'Wer schuldet wem?',
-      'aria-expanded': 'false',
-      onClick: () => {
-        const open = details.style.display === 'none';
-        infoButton.setAttribute('aria-expanded', String(open));
-        infoButton.classList.toggle('is-active', open);
-        if (open) {
-          details.style.display = '';
-          requestAnimationFrame(() => requestAnimationFrame(() => details.classList.add('is-open')));
-        } else {
-          details.classList.remove('is-open');
-          details.addEventListener(
-            'transitionend',
-            () => {
-              if (!details.classList.contains('is-open')) details.style.display = 'none';
-            },
-            { once: true }
-          );
-        }
-      },
-    },
+    { className: 'info-button', type: 'button', 'aria-label': 'Wer schuldet wem?', 'aria-expanded': 'false', onClick: toggleDetails },
     'i'
+  );
+  // Am Handy sitzt statt des i ein kleiner Details-Knopf unter dem Saldo.
+  const detailsButton = el(
+    'button',
+    { className: 'details-button', type: 'button', 'aria-expanded': 'false', onClick: toggleDetails },
+    'Details'
   );
 
   const hero = el(
@@ -134,6 +138,7 @@ function build(ctx, data) {
       el('div', { className: `hero-value${balanceClass}` }, formatEuro(myBalance)),
       infoButton
     ),
+    detailsButton,
     details,
     group.archived ? el('div', { className: 'detail-meta' }, el('span', {}, 'Archiviert')) : null
   );

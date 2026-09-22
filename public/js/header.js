@@ -123,14 +123,20 @@ export function renderHeader(state) {
     ? el('span', { className: 'privat-toggle is-embedded', 'aria-current': 'true' }, 'Privat')
     : el('a', { className: 'privat-toggle', href: '#/monat' }, 'Privat');
 
-  const budget = privat
-    ? [
+  // Unter der Linie: im Gruppen-Modus die Tabs, im Privat-Modus Übersicht und Budgetplanung.
+  const tabs = privat
+    ? el(
+        'div',
+        { className: 'header-tabs' },
         el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht'),
-        el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung'),
-      ]
-    : null;
+        el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung')
+      )
+    : navItems.length > 0
+      ? el('div', { className: 'header-tabs' }, nav)
+      : null;
 
   header.replaceChildren(
-    el('div', { className: 'header-inner' }, left, nav, el('div', { className: 'header-spacer' }), budget, privatToggle)
+    el('div', { className: 'header-inner' }, left, el('div', { className: 'header-spacer' }), privatToggle),
+    ...(tabs ? [tabs] : [])
   );
 }

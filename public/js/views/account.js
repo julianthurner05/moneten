@@ -133,6 +133,7 @@ function openArchiveForm(ctx, groups) {
           if (!ok) return;
           try {
             await api(`/api/groups/${group.id}/archive`, { method: 'POST' });
+            ctx.state.groups = []; // Gruppen-Cache verwerfen
             ctx.refresh();
           } catch (err) {
             openPanel((closeNotice) =>

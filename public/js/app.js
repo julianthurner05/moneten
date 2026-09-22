@@ -118,36 +118,52 @@ async function handleRoute() {
     return;
   }
 
-  try {
+  // Gruppenliste nur laden, wenn sie fehlt oder die Route sie frisch braucht –
+  // sonst hängt an jedem Seitenwechsel ein zusätzlicher Request.
+  const ensureGroups = async (force = false) => {
+    if (!force && state.groups.length > 0) return;
     await loadGroupsData();
+  };
+
+  try {
     if (parts[0] === 'gruppen' && parts[1]) {
+      await ensureGroups(true);
       selectGroup(parts[1]);
       await renderGroupDetail(ctx, parts[1]);
     } else if (parts[0] === 'gruppen') {
+      await ensureGroups(true);
       renderGroups(ctx, { groups: state.groups, totalBalanceCents: state.totalBalanceCents });
     } else if (parts[0] === 'einzug') {
+      await ensureGroups();
       if (state.selectedGroupId) {
         await renderEinzug(ctx, state.selectedGroupId);
       } else {
         ctx.navigate('#/gruppen');
       }
-    } else if (parts[0] === 'konto' && parts[1] === 'passwort') {
-      renderPasswordChange(ctx, { forced: false });
-    } else if (parts[0] === 'konto') {
-      await renderAccount(ctx);
-    } else if (parts[0] === 'monat' && parts[1] === 'uebersicht') {
-      await renderMonthOverview(ctx);
-    } else if (parts[0] === 'monat' && parts[1] === 'einstellungen') {
-      await renderMonthSettings(ctx);
-    } else if (parts[0] === 'monat' && isMonthString(parts[1])) {
-      await renderMonth(ctx, parts[1]);
-    } else if (parts[0] === 'monat') {
-      await renderMonth(ctx, null);
-    } else if (state.selectedGroupId) {
-      // Startansicht: die gewählte Gruppe.
-      await renderGroupDetail(ctx, state.selectedGroupId);
+    } else if (parts[0] === 'konto' || parts[0] === 'monat') {
+      // Privat-Modus braucht die Gruppenliste nicht – höchstens im Hintergrund
+      // vorladen, damit der Rückweg sofort da ist.
+      if (state.groups.length === 0) loadGroupsData().catch(() => {});
+      if (parts[0] === 'konto' && parts[1] === 'passwort') {
+        renderPasswordChange(ctx, { forced: false });
+      } else if (parts[0] === 'konto') {
+        await renderAccount(ctx);
+      } else if (parts[1] === 'uebersicht') {
+        await renderMonthOverview(ctx);
+      } else if (parts[1] === 'einstellungen') {
+        await renderMonthSettings(ctx);
+      } else if (isMonthString(parts[1])) {
+        await renderMonth(ctx, parts[1]);
+      } else {
+        await renderMonth(ctx, null);
+      }
     } else {
-      renderGroups(ctx, { groups: state.groups, totalBalanceCents: state.totalBalanceCents });
+      await ensureGroups();
+      if (state.selectedGroupId) {
+        await renderGroupDetail(ctx, state.selectedGroupId);
+      } else {
+        renderGroups(ctx, { groups: state.groups, totalBalanceCents: state.totalBalanceCents });
+      }
     }
   } catch (err) {
     if (err.status === 401) {

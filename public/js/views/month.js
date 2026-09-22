@@ -13,6 +13,7 @@ export async function renderMonth(ctx, month) {
   ctx.show('monat', () => build(ctx, data));
 }
 
+
 function build(ctx, data) {
   const month = data.month;
   const mappedByCategory = new Map();
@@ -160,7 +161,7 @@ function build(ctx, data) {
   const kontoLink = el(
     'div',
     { className: 'konto-link' },
-    el('a', { className: 'privat-toggle', href: '#/konto' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto')
+    el('a', { className: 'textlink', href: '#/konto' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto')
   );
 
   const listArea =
