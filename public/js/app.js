@@ -45,7 +45,6 @@ const ctx = {
       active,
       groups: state.groups,
       selectedGroup: selectedGroup(),
-      totalBalanceCents: state.totalBalanceCents,
     });
     swapView(main, build);
   },

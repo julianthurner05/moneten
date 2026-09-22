@@ -193,22 +193,11 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
     const wrap = (label, input, forId) =>
       el('div', { className: 'field' }, el('label', { className: 'field-label', for: forId }, label), input);
 
-    return el(
-      'form',
-      { onSubmit: submit },
-      el(
-        'h2',
-        { className: 'panel-title' },
-        einzug
-          ? isEdit
-            ? 'Einzugs-Ausgabe bearbeiten'
-            : 'Neue Einzugs-Ausgabe'
-          : isEdit
-            ? 'Ausgabe bearbeiten'
-            : 'Neue Ausgabe'
-      ),
-      wrap('Beschreibung', description, 'exp-desc'),
-      wrap('Betrag', amount, 'exp-amount'),
+    // Schnell-Eingabe: Betrag und Beschreibung reichen – alles andere
+    // (heute, von mir bezahlt, gleich auf alle) steckt hinter „Erweitert".
+    const advanced = el(
+      'div',
+      { className: 'form-advanced' },
       wrap('Datum', date, 'exp-date'),
       wrap(
         'Bezahlt von',
@@ -227,7 +216,56 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
             el('span', { className: 'select-wrap' }, myCategory, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
             'exp-category'
           )
-        : null,
+        : null
+    );
+
+    let advancedOpen = isEdit;
+    const advancedToggle = el(
+      'button',
+      {
+        className: 'textlink',
+        type: 'button',
+        onClick: () => {
+          advancedOpen = !advancedOpen;
+          advancedToggle.textContent = advancedOpen ? 'Weniger ▴' : 'Erweitert ▾';
+          if (advancedOpen) {
+            advanced.style.display = '';
+            requestAnimationFrame(() => requestAnimationFrame(() => advanced.classList.add('is-open')));
+          } else {
+            advanced.classList.remove('is-open');
+            advanced.addEventListener(
+              'transitionend',
+              () => {
+                if (!advanced.classList.contains('is-open')) advanced.style.display = 'none';
+              },
+              { once: true }
+            );
+          }
+        },
+      },
+      advancedOpen ? 'Weniger ▴' : 'Erweitert ▾'
+    );
+    advanced.style.display = advancedOpen ? '' : 'none';
+    if (advancedOpen) advanced.classList.add('is-open');
+
+    return el(
+      'form',
+      { onSubmit: submit },
+      el(
+        'h2',
+        { className: 'panel-title' },
+        einzug
+          ? isEdit
+            ? 'Einzugs-Ausgabe bearbeiten'
+            : 'Neue Einzugs-Ausgabe'
+          : isEdit
+            ? 'Ausgabe bearbeiten'
+            : 'Neue Ausgabe'
+      ),
+      wrap('Betrag', amount, 'exp-amount'),
+      wrap('Beschreibung', description, 'exp-desc'),
+      advancedToggle,
+      advanced,
       error,
       el(
         'div',

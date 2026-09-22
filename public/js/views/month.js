@@ -1,8 +1,10 @@
 // Persönliche Monatsübersicht: Kennzahlen, Kategorien, Anteile aus Gruppen.
 
 import { api } from '../api.js';
+import { monthSwitch } from '../controls.js';
 import { el, openPanel } from '../dom.js';
-import { currentMonth, formatDate, formatEuro, formatMonth, monthAdd } from '../format.js';
+import { buildFab } from '../fab.js';
+import { currentMonth, formatDate, formatEuro, formatMonth } from '../format.js';
 import { openEntryForm } from './entryForm.js';
 
 export async function renderMonth(ctx, month) {
@@ -27,41 +29,16 @@ function build(ctx, data) {
   const counting = visibleCategories.filter((c) => c.countsTowardMonth);
   const nonCounting = visibleCategories.filter((c) => !c.countsTowardMonth);
 
-  const monthLink = (label, target, isActive = false) =>
-    el(
-      'a',
-      { className: `textlink${isActive ? ' is-active' : ''}`, href: `#/monat/${target}` },
-      label
-    );
-
-  const toolbar = el(
-    'div',
-    { className: 'toolbar' },
-    el(
-      'div',
-      { className: 'toolbar-group' },
-      monthLink('←', monthAdd(month, -1)),
-      monthLink('Heute', currentMonth(), month === currentMonth()),
-      monthLink('→', monthAdd(month, 1))
-    ),
-    el('div', { className: 'toolbar-spacer' }),
-    el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Einstellungen'),
-    el(
-      'button',
-      {
-        className: 'button',
-        type: 'button',
-        onClick: () => openNewEntry(ctx, data),
-      },
-      '+ Eintrag'
-    )
-  );
-
   const head = el(
     'div',
     { className: 'section-head' },
-    el('div', { className: 'month-title' }, formatMonth(month)),
-    toolbar
+    monthSwitch(month, (m) => ctx.navigate(`#/monat/${m}`), { big: true }),
+    el(
+      'div',
+      { className: 'toolbar' },
+      el('div', { className: 'toolbar-spacer' }),
+      el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Einstellungen')
+    )
   );
 
   const spentRatio = data.budgetCents > 0 ? data.ausgabenCents / data.budgetCents : 0;
@@ -166,7 +143,19 @@ function build(ctx, data) {
     ];
   }
 
-  return el('div', { className: 'view' }, head, stats, el('div', { className: 'section-label' }, 'Kategorien'), categoryGrid, nonCountingBlock, sharesBlock);
+  const fab = buildFab([{ label: 'Eintrag', onClick: () => openNewEntry(ctx, data) }]);
+
+  return el(
+    'div',
+    { className: 'view' },
+    head,
+    stats,
+    el('div', { className: 'section-label' }, 'Kategorien'),
+    categoryGrid,
+    nonCountingBlock,
+    sharesBlock,
+    fab
+  );
 }
 
 function noticePanel(message) {

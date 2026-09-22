@@ -2,6 +2,7 @@
 
 import { api } from '../api.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
+import { buildFab } from '../fab.js';
 import { centsToInput, formatDate, formatEuro, parseEuroInput, todayIso } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
 
@@ -15,7 +16,9 @@ function build(ctx, data) {
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
 
-  const shared = data.expenses.filter((e) => e.isEinzug);
+  // Kaution läuft gesondert: fest vermerkt, zählt nicht zu den Einzugskosten.
+  const deposits = data.expenses.filter((e) => e.isEinzug && e.isDeposit);
+  const shared = data.expenses.filter((e) => e.isEinzug && !e.isDeposit);
   const sharedSum = shared.reduce((sum, e) => sum + e.amountCents, 0);
   const mySharedSum = shared.reduce(
     (sum, e) => sum + (e.shares.find((s) => s.userId === ctx.state.user.id)?.shareCents ?? 0),
@@ -28,43 +31,29 @@ function build(ctx, data) {
     { className: 'section-head' },
     el(
       'div',
-      {},
-      el('div', { className: 'detail-meta' }, el('span', {}, 'Einzug'), el('span', {}, group.name)),
-      el('div', { className: 'month-title' }, formatEuro(mySharedSum + privateSum)),
-      el('div', { className: 'detail-meta' }, el('span', {}, 'Dein Einzug gesamt'))
-    ),
-    el(
-      'div',
-      { className: 'toolbar' },
-      el('div', { className: 'toolbar-spacer' }),
-      group.archived
-        ? null
-        : el(
-            'button',
-            {
-              className: 'button',
-              type: 'button',
-              onClick: () => openExpenseForm(ctx, group, members, null, { isEinzug: true }),
-            },
-            '+ Gemeinsame Ausgabe'
-          )
+      { className: 'detail-meta' },
+      el('span', {}, 'Einzug'),
+      el('span', {}, group.name)
     )
   );
 
+  // Gegenüberstellung als Erstes: gemeinsame und private Einzugskosten.
   const stats = el(
     'div',
-    { className: 'stat-grid', 'data-stagger': '' },
-    [
-      ['Gemeinsam gesamt', sharedSum],
-      ['Dein Anteil daran', mySharedSum],
-      ['Privat', privateSum],
-    ].map(([label, cents]) =>
-      el(
-        'div',
-        { className: 'stat' },
-        el('div', { className: 'stat-label' }, label),
-        el('div', { className: 'stat-value' }, formatEuro(cents))
-      )
+    { className: 'stat-grid stat-grid-hero', 'data-stagger': '' },
+    el(
+      'div',
+      { className: 'stat' },
+      el('div', { className: 'stat-label' }, 'Gemeinsam – dein Anteil'),
+      el('div', { className: 'stat-value' }, formatEuro(mySharedSum)),
+      el('div', { className: 'stat-foot' }, `von ${formatEuro(sharedSum)} gesamt`)
+    ),
+    el(
+      'div',
+      { className: 'stat' },
+      el('div', { className: 'stat-label' }, 'Privat'),
+      el('div', { className: 'stat-value' }, formatEuro(privateSum)),
+      el('div', { className: 'stat-foot' }, 'nur für dich sichtbar')
     )
   );
 
@@ -120,6 +109,37 @@ function build(ctx, data) {
           )
         );
 
+  const depositBlock =
+    deposits.length === 0
+      ? null
+      : [
+          el('div', { className: 'section-label' }, 'Kaution – fest vermerkt, zählt nicht zu den Einzugskosten'),
+          el(
+            'div',
+            { className: 'row-list' },
+            deposits.map((expense) =>
+              el(
+                'div',
+                { className: 'row' },
+                el(
+                  'div',
+                  { className: 'row-main' },
+                  el('div', { className: 'row-label' }, `${formatDate(expense.spentOn)} · Bezahlt von ${name(expense.paidBy)}`),
+                  el('div', { className: 'row-title' }, expense.description)
+                ),
+                el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
+              )
+            )
+          ),
+        ];
+
+  const fab = group.archived
+    ? null
+    : buildFab([
+        { label: 'Gemeinsame Ausgabe', onClick: () => openExpenseForm(ctx, group, members, null, { isEinzug: true }) },
+        { label: 'Privater Eintrag', onClick: () => openPrivateForm(ctx, group, null) },
+      ]);
+
   return el(
     'div',
     { className: 'view' },
@@ -127,13 +147,10 @@ function build(ctx, data) {
     stats,
     el('div', { className: 'section-label' }, 'Gemeinsam – wird in der Gruppe aufgeteilt'),
     sharedList,
-    el(
-      'div',
-      { className: 'settings-block-head' },
-      el('div', { className: 'section-label' }, 'Privat – nur für dich sichtbar'),
-      el('button', { className: 'textlink', type: 'button', onClick: () => openPrivateForm(ctx, group, null) }, '+ Privater Eintrag')
-    ),
-    privateList
+    el('div', { className: 'section-label' }, 'Privat – nur für dich sichtbar'),
+    privateList,
+    depositBlock,
+    fab
   );
 }
 

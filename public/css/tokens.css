@@ -25,6 +25,9 @@
   --color-border: #1A1D14;
   --color-line: #CDD0C2;
   --color-secondary: #7A7E6F;
+  --color-positive: #3D6B35;
+  --color-negative: #A34434;
+  --color-badge: #C03B28;
   --color-scrim: rgba(26, 29, 20, 0.3);
   --shadow-panel: 0 16px 40px rgba(26, 29, 20, 0.16);
 
@@ -71,6 +74,7 @@
 
   /* Ebenen */
   --z-header: 10;
+  --z-fab: 15;
   --z-overlay: 20;
 
   /* Maße */
@@ -88,6 +92,9 @@
     --color-border: #EDEFE6;
     --color-line: #383C2F;
     --color-secondary: #8E9280;
+    --color-positive: #9CC58F;
+    --color-negative: #D98A79;
+    --color-badge: #E0523C;
     --color-scrim: rgba(0, 0, 0, 0.5);
     --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5);
   }
@@ -100,6 +107,9 @@
   --color-border: #EDEFE6;
   --color-line: #383C2F;
   --color-secondary: #8E9280;
+  --color-positive: #9CC58F;
+  --color-negative: #D98A79;
+  --color-badge: #E0523C;
   --color-scrim: rgba(0, 0, 0, 0.5);
   --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5);
 }

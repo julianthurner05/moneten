@@ -19,6 +19,7 @@ export async function onRequestPut({ request, env, data, params }) {
 
   const expense = await loadExpense(env, group.id, params.eid);
   if (!expense) return error('Ausgabe nicht gefunden.', 404);
+  if (expense.is_deposit) return error('Die Kaution ist fest vermerkt und nicht bearbeitbar.');
 
   const body = await readJson(request);
   if (!body) return error('Ungültige Anfrage.');
@@ -83,6 +84,7 @@ export async function onRequestDelete({ env, data, params }) {
 
   const expense = await loadExpense(env, group.id, params.eid);
   if (!expense) return error('Ausgabe nicht gefunden.', 404);
+  if (expense.is_deposit) return error('Die Kaution ist fest vermerkt und nicht bearbeitbar.');
 
   await env.DB.prepare('UPDATE group_expenses SET deleted_at = ? WHERE id = ?')
     .bind(nowIso(), expense.id)

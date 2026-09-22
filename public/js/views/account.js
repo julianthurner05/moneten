@@ -2,6 +2,7 @@
 
 import { api } from '../api.js';
 import { el, openPanel } from '../dom.js';
+import { themeToggle } from '../header.js';
 
 export async function renderAccount(ctx) {
   const isAdmin = ctx.state.user.isAdmin;
@@ -95,7 +96,12 @@ function build(ctx, users) {
     );
   }
 
-  return el('div', { className: 'view' }, head, ownSection, adminSection);
+  const themeSection = [
+    el('div', { className: 'section-label' }, 'Darstellung'),
+    el('div', { className: 'settings-options' }, themeToggle()),
+  ];
+
+  return el('div', { className: 'view' }, head, ownSection, adminSection, themeSection);
 }
 
 function openUserForm(ctx) {

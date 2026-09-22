@@ -91,6 +91,8 @@ html[data-input='pointer'] :focus-visible {
   gap: var(--space-2);
   background: none;
   border: none;
+  text-decoration: none;
+  color: inherit;
   padding: var(--space-2) var(--space-3);
   margin-left: calc(-1 * var(--space-3));
   border-radius: var(--radius-sm);
@@ -216,76 +218,6 @@ html[data-input='pointer'] :focus-visible {
 .theme-button.is-active,
 .theme-button:hover {
   color: var(--color-text);
-}
-
-.menu-button {
-  display: none;
-  background: none;
-  border: none;
-  padding-inline: var(--space-3);
-  cursor: pointer;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: var(--tap-target);
-}
-
-.menu-line {
-  display: block;
-  width: 1.125rem;
-  height: var(--hairline);
-  background: var(--color-text);
-  transition: background-color var(--duration) var(--ease);
-}
-
-.mobile-menu {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background: var(--color-bg);
-  border-bottom: var(--hairline) solid var(--color-line);
-  z-index: var(--z-header);
-  opacity: 0;
-  transform: translateY(calc(-1 * var(--space-2)));
-  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease),
-    background-color var(--duration) var(--ease);
-}
-
-.mobile-menu.is-visible {
-  opacity: 1;
-  transform: none;
-}
-
-.mobile-menu-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  padding: var(--space-4);
-  padding-left: max(var(--space-5), env(safe-area-inset-left));
-  padding-right: max(var(--space-5), env(safe-area-inset-right));
-  border-top: var(--hairline) solid var(--color-line);
-  text-decoration: none;
-  color: inherit;
-  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
-}
-
-.mobile-menu-item.is-active {
-  background: var(--color-text);
-  color: var(--color-bg);
-}
-
-.mobile-menu-status {
-  padding: var(--space-3) var(--space-5);
-  border-top: var(--hairline) solid var(--color-line);
-  color: var(--color-secondary);
-  font-size: var(--text-sm);
-}
-
-.mobile-menu .theme-toggle {
-  border-top: var(--hairline) solid var(--color-line);
-  padding: var(--space-3) var(--space-5);
 }
 
 /* ---------- Hauptbereich ---------- */
@@ -881,25 +813,274 @@ input[type='checkbox']:disabled {
   transition: opacity var(--duration-slow) var(--ease), transform var(--duration-slow) var(--ease);
 }
 
+
+/* ---------- Privat-Umschalter ---------- */
+
+.privat-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease), opacity var(--duration) var(--ease);
+}
+
+a.privat-toggle:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.privat-toggle.is-embedded {
+  background: var(--color-line);
+  border-color: var(--color-line);
+  color: var(--color-secondary);
+  pointer-events: none;
+}
+
+/* ---------- Saldo-Hero ---------- */
+
+.hero {
+  padding-block: var(--space-2) var(--space-6);
+}
+
+.hero-label,
+.hero-foot {
+  font-size: var(--text-sm);
+  color: var(--color-secondary);
+}
+
+.hero-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.hero-value {
+  font-size: var(--text-huge);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  transition: color var(--duration) var(--ease);
+}
+
+.hero-value.is-positive,
+.row-amount.is-positive {
+  color: var(--color-positive);
+}
+
+.hero-value.is-negative,
+.row-amount.is-negative {
+  color: var(--color-negative);
+}
+
+.info-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: none;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  display: grid;
+  place-content: center;
+  flex-shrink: 0;
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+
+.info-button:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+/* ---------- Monatsumschalter ---------- */
+
+.month-switch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.month-switch-label {
+  font-size: var(--text-sm);
+  min-width: 9rem;
+  text-align: center;
+}
+
+.month-switch-big {
+  gap: var(--space-4);
+}
+
+.month-arrow {
+  background: none;
+  border: none;
+  padding: var(--space-2);
+  cursor: pointer;
+  color: var(--color-secondary);
+  font-size: var(--text-base);
+  transition: color var(--duration-fast) var(--ease);
+}
+
+.month-arrow:hover {
+  color: var(--color-text);
+}
+
+/* ---------- Plus-Button rechts unten ---------- */
+
+.fab-wrap {
+  position: fixed;
+  right: max(var(--space-5), env(safe-area-inset-right));
+  bottom: max(var(--space-5), env(safe-area-inset-bottom));
+  z-index: var(--z-fab);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.fab {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-text);
+  color: var(--color-bg);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  position: relative;
+  box-shadow: var(--shadow-panel);
+  transition: opacity var(--duration-fast) var(--ease), background-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.fab:hover {
+  opacity: 0.85;
+}
+
+.fab-plus {
+  font-size: 1.75rem;
+  line-height: 1;
+}
+
+.fab-badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-full);
+  background: var(--color-badge);
+  color: #FFFFFF;
+  font-size: var(--text-sm);
+  display: grid;
+  place-content: center;
+}
+
+.fab-menu {
+  background: var(--color-bg);
+  border: var(--hairline) solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-panel);
+  padding: var(--space-2);
+  min-width: 13rem;
+  display: none;
+  opacity: 0;
+  transform: translateY(var(--space-2));
+  transition: opacity var(--duration-fast) var(--ease), transform var(--duration-fast) var(--ease);
+}
+
+.fab-wrap.is-open .fab-menu {
+  display: block;
+  opacity: 1;
+  transform: none;
+}
+
+.fab-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  cursor: pointer;
+  text-align: left;
+  transition: background-color var(--duration-fast) var(--ease);
+}
+
+.fab-menu-item:hover {
+  background: var(--color-surface);
+}
+
+.fab-menu-item .fab-badge {
+  position: static;
+}
+
+/* ---------- Erweiterter Formularbereich ---------- */
+
+.form-advanced {
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-1)));
+  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+  margin-top: var(--space-4);
+}
+
+.form-advanced.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Begleichungs-Vorschläge ---------- */
+
+.suggestion-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.suggestion-chip {
+  background: none;
+  border: var(--hairline) solid var(--color-line);
+  border-radius: var(--radius-full);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease), background-color var(--duration-fast) var(--ease);
+}
+
+.suggestion-chip:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+}
+
+/* Datumsfelder nicht über die volle Breite */
+input[type='date'],
+input[type='month'] {
+  max-width: 12rem;
+}
+
+.stat-grid-hero .stat-value {
+  font-size: var(--text-huge);
+}
+
 /* ---------- Schmale Bildschirme ---------- */
 
 @media (max-width: 767px) {
-  .header-nav,
-  .header-status,
-  .header-inner .theme-toggle {
-    display: none;
-  }
-
-  .menu-button {
-    display: flex;
-  }
-
   .header-inner {
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+    padding-block: var(--space-3);
   }
 
-  .mobile-menu .theme-toggle {
-    display: flex;
+  .header-nav {
+    order: 3;
+    flex-basis: 100%;
   }
 
   .section-head {
@@ -914,5 +1095,13 @@ input[type='checkbox']:disabled {
 
   .row {
     flex-wrap: wrap;
+  }
+
+  .stat-grid-hero {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .stat-grid-hero .stat-value {
+    font-size: var(--text-display);
   }
 }

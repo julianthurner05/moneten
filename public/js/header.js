@@ -1,7 +1,8 @@
-// Kopfzeile: Gruppen-Dropdown (Workspace), Tabs, Gesamtsaldo, Hell/Dunkel.
+// Kopfzeile mit zwei Modi:
+// Gruppe  – links Gruppen-Dropdown, Tabs Gruppe/Einzug, rechts der Privat-Umschalter.
+// Privat  – links zurück zur Gruppe, Tabs Monat/Konto, Privat-Umschalter eingebettet.
 
 import { el } from './dom.js';
-import { formatEuro } from './format.js';
 
 const THEME_KEY = 'moneten_theme';
 
@@ -27,7 +28,7 @@ function themeIcon(kind) {
   return svg;
 }
 
-function setTheme(theme) {
+export function setTheme(theme) {
   document.documentElement.dataset.theme = theme;
   try {
     localStorage.setItem(THEME_KEY, theme);
@@ -39,13 +40,15 @@ function setTheme(theme) {
   });
 }
 
-function currentTheme() {
+export function currentTheme() {
   const set = document.documentElement.dataset.theme;
   if (set === 'light' || set === 'dark') return set;
   return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
-function themeToggle(theme) {
+/** Hell/Dunkel-Umschalter – sitzt im Konto-Bereich. */
+export function themeToggle() {
+  const theme = currentTheme();
   return el(
     'div',
     { className: 'theme-toggle', role: 'group', 'aria-label': 'Farbschema' },
@@ -63,12 +66,6 @@ function themeToggle(theme) {
       )
     )
   );
-}
-
-function balanceText(totalBalanceCents) {
-  if (totalBalanceCents > 0) return `Du bekommst ${formatEuro(totalBalanceCents)}`;
-  if (totalBalanceCents < 0) return `Du schuldest ${formatEuro(-totalBalanceCents)}`;
-  return 'Alles ausgeglichen';
 }
 
 function kindLabel(group) {
@@ -135,26 +132,29 @@ function buildWorkspace(state) {
 }
 
 /**
- * @param {object} state – {user, active, groups, selectedGroup, totalBalanceCents}
+ * @param {object} state – {user, active, groups, selectedGroup}
+ * active: 'gruppe' | 'einzug' | 'monat' | 'konto' | null
  */
 export function renderHeader(state) {
   const header = document.getElementById('header');
-  const theme = currentTheme();
 
   if (!state.user) {
-    header.replaceChildren(
-      el('div', { className: 'header-inner' }, el('div', { className: 'header-spacer' }), themeToggle(theme))
-    );
+    header.replaceChildren(el('div', { className: 'header-inner' }));
     return;
   }
 
+  const privat = state.active === 'monat' || state.active === 'konto';
   const hasEinzug = state.selectedGroup?.kind === 'wg';
-  const navItems = [
-    state.selectedGroup ? { key: 'gruppe', label: 'Gruppe', href: '#/' } : null,
-    hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
-    { key: 'monat', label: 'Monat', href: '#/monat' },
-    { key: 'konto', label: 'Konto', href: '#/konto' },
-  ].filter(Boolean);
+
+  const navItems = privat
+    ? [
+        { key: 'monat', label: 'Monat', href: '#/monat' },
+        { key: 'konto', label: 'Konto', href: '#/konto' },
+      ]
+    : [
+        state.selectedGroup ? { key: 'gruppe', label: 'Gruppe', href: '#/' } : null,
+        hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
+      ].filter(Boolean);
 
   const nav = el(
     'nav',
@@ -163,59 +163,23 @@ export function renderHeader(state) {
       el(
         'a',
         { className: `nav-cell${state.active === item.key ? ' is-active' : ''}`, href: item.href },
-        el('span', { className: 'nav-label' }, item.label)
+        item.label
       )
     )
   );
 
-  const status = el('div', { className: 'header-status' }, balanceText(state.totalBalanceCents ?? 0));
-
-  const menuButton = el(
-    'button',
-    {
-      className: 'menu-button',
-      type: 'button',
-      'aria-label': 'Menü',
-      'aria-expanded': 'false',
-      onClick: () => {
-        const menu = header.querySelector('.mobile-menu');
-        const open = menu.classList.toggle('is-open');
-        menuButton.setAttribute('aria-expanded', String(open));
-        if (open) {
-          menu.style.display = 'block';
-          requestAnimationFrame(() => requestAnimationFrame(() => menu.classList.add('is-visible')));
-        } else {
-          menu.classList.remove('is-visible');
-          menu.addEventListener(
-            'transitionend',
-            () => {
-              if (!menu.classList.contains('is-open')) menu.style.display = 'none';
-            },
-            { once: true }
-          );
-        }
-      },
-    },
-    el('span', { className: 'menu-line' }),
-    el('span', { className: 'menu-line' })
-  );
-
-  const mobileMenu = el(
-    'div',
-    { className: 'mobile-menu' },
-    navItems.map((item) =>
-      el(
+  const left = privat
+    ? el(
         'a',
-        { className: `mobile-menu-item${state.active === item.key ? ' is-active' : ''}`, href: item.href },
-        item.label
+        { className: 'workspace-button', href: '#/' },
+        el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '←'),
+        el('span', { className: 'workspace-name' }, state.selectedGroup ? state.selectedGroup.name : 'Gruppe')
       )
-    ),
-    el('div', { className: 'mobile-menu-status' }, balanceText(state.totalBalanceCents ?? 0)),
-    themeToggle(theme)
-  );
+    : buildWorkspace(state);
 
-  header.replaceChildren(
-    el('div', { className: 'header-inner' }, buildWorkspace(state), nav, status, themeToggle(theme), menuButton),
-    mobileMenu
-  );
+  const privatToggle = privat
+    ? el('span', { className: 'privat-toggle is-embedded', 'aria-current': 'true' }, 'Privat')
+    : el('a', { className: 'privat-toggle', href: '#/monat' }, 'Privat');
+
+  header.replaceChildren(el('div', { className: 'header-inner' }, left, nav, el('div', { className: 'header-spacer' }), privatToggle));
 }

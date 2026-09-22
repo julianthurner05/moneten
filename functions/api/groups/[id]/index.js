@@ -19,7 +19,7 @@ export async function onRequestGet({ env, data, params }) {
          JOIN users u ON u.id = m.user_id WHERE m.group_id = ? ORDER BY u.display_name`
       ).bind(group.id),
       env.DB.prepare(
-        `SELECT id, paid_by, amount_cents, description, spent_on, split_mode, created_by, is_einzug
+        `SELECT id, paid_by, amount_cents, description, spent_on, split_mode, created_by, is_einzug, is_deposit
          FROM group_expenses WHERE group_id = ? AND deleted_at IS NULL
          ORDER BY spent_on DESC, created_at DESC`
       ).bind(group.id),
@@ -77,6 +77,7 @@ export async function onRequestGet({ env, data, params }) {
       splitMode: e.split_mode,
       createdBy: e.created_by,
       isEinzug: !!e.is_einzug,
+      isDeposit: !!e.is_deposit,
       myCategoryId: mappingByExpense.get(e.id) ?? null,
       shares: sharesByExpense.get(e.id) ?? [],
     })),

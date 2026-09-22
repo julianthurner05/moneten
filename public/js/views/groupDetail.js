@@ -1,12 +1,14 @@
-// Gruppendetail: Salden, Ausgleichsvorschläge, Ausgaben und Zahlungen mit Monatsfilter.
+// Gruppen-Ansicht: eigener Saldo zuerst, Monatsliste darunter, Plus-Button für Aktionen.
 
 import { api } from '../api.js';
+import { monthSwitch } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
-import { formatDate, formatEuro, formatMonth, monthOf } from '../format.js';
+import { buildFab } from '../fab.js';
+import { currentMonth, formatDate, formatEuro, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
 import { openSettlementForm } from './settlementForm.js';
 
-const filterState = { groupId: null, month: 'all' };
+const filterState = { groupId: null, month: null };
 
 function noticePanel(message) {
   openPanel((close) =>
@@ -23,72 +25,26 @@ export async function renderGroupDetail(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}`);
   if (filterState.groupId !== groupId) {
     filterState.groupId = groupId;
-    filterState.month = 'all';
+    filterState.month = currentMonth();
   }
   ctx.show('gruppe', () => build(ctx, data));
 }
 
 function build(ctx, data) {
   const { group, members, expenses, settlements, suggestions } = data;
+  const me = ctx.state.user.id;
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
+  const myBalance = members.find((m) => m.id === me)?.balanceCents ?? 0;
+  const mySuggestions = suggestions.filter((s) => s.fromUser === me || s.toUser === me);
 
+  const month = filterState.month ?? currentMonth();
   const entries = [
-    // Einzugs-Ausgaben laufen gesondert im Einzug-Bereich.
     ...expenses.filter((e) => !e.isEinzug).map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
     ...settlements.map((s) => ({ type: 'settlement', date: s.settledOn, data: s })),
-  ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
-
-  const months = [...new Set(entries.map((entry) => monthOf(entry.date)))];
-  if (!months.includes(filterState.month) && filterState.month !== 'all') {
-    filterState.month = 'all';
-  }
-  const filtered =
-    filterState.month === 'all' ? entries : entries.filter((entry) => monthOf(entry.date) === filterState.month);
-
-  const monthSelect = el(
-    'select',
-    {
-      'aria-label': 'Monat filtern',
-      onChange: (event) => {
-        filterState.month = event.target.value;
-        ctx.refresh();
-      },
-    },
-    el('option', { value: 'all', selected: filterState.month === 'all' }, 'Alle Monate'),
-    months.map((month) =>
-      el('option', { value: month, selected: filterState.month === month }, formatMonth(month))
-    )
-  );
-
-  const toolbar = el(
-    'div',
-    { className: 'toolbar' },
-    el('span', { className: 'select-wrap' }, monthSelect, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
-    el('div', { className: 'toolbar-spacer' }),
-    group.archived
-      ? null
-      : [
-          el(
-            'button',
-            {
-              className: 'button',
-              type: 'button',
-              onClick: () => openExpenseForm(ctx, group, members, null, { myCategories: data.myCategories }),
-            },
-            '+ Ausgabe'
-          ),
-          el(
-            'button',
-            {
-              className: 'button',
-              type: 'button',
-              onClick: () => openSettlementForm(ctx, group, members, null),
-            },
-            '+ Ausgleich'
-          ),
-        ]
-  );
+  ]
+    .filter((entry) => monthOf(entry.date) === month)
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   const head = el(
     'div',
@@ -103,109 +59,60 @@ function build(ctx, data) {
         el('span', {}, members.length === 1 ? '1 Mitglied' : `${members.length} Mitglieder`),
         group.archived ? el('span', {}, 'Archiviert') : null
       ),
-      el('div', { className: 'month-title' }, group.name)
-    ),
-    toolbar
-  );
-
-  const balanceFoot = (cents) => (cents > 0 ? 'bekommt' : cents < 0 ? 'schuldet' : 'ausgeglichen');
-
-  const balances = el(
-    'div',
-    { className: 'card-grid card-grid-small', 'data-stagger': '' },
-    members.map((member) =>
-      el(
-        'div',
-        { className: 'card card-static' },
-        el('div', { className: 'card-meta' }, el('span', {}, member.displayName)),
-        el('div', { className: 'card-amount card-amount-small' }, formatEuro(member.balanceCents)),
-        el('div', { className: 'card-foot' }, balanceFoot(member.balanceCents))
-      )
+      monthSwitch(month, (m) => {
+        filterState.month = m;
+        ctx.refresh();
+      })
     )
   );
 
-  const manageBar = group.archived
-    ? null
-    : el(
-        'div',
-        { className: 'toolbar toolbar-sub' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => openAddMember(ctx, group, members) }, '+ Mitglied'),
-        el(
-          'button',
-          {
-            className: 'textlink',
-            type: 'button',
-            onClick: async () => {
-              const ok = await confirmPanel('Gruppe archivieren? Das geht nur, wenn alle Salden ausgeglichen sind.', 'Archivieren');
-              if (!ok) return;
-              try {
-                await api(`/api/groups/${group.id}/archive`, { method: 'POST' });
-                ctx.refresh();
-              } catch (err) {
-                noticePanel(err.message);
-              }
-            },
-          },
-          'Gruppe archivieren'
-        )
-      );
-
-  const suggestionRows =
-    suggestions.length === 0 || group.archived
-      ? null
-      : el(
-          'div',
-          { className: 'row-list', 'data-stagger': '' },
-          suggestions.map((suggestion) =>
-            el(
-              'div',
-              { className: 'row' },
-              el(
-                'div',
-                { className: 'row-main' },
-                el('div', { className: 'row-label' }, 'Ausgleichsvorschlag'),
-                el('div', { className: 'row-title' }, `${name(suggestion.fromUser)} zahlt an ${name(suggestion.toUser)}`)
-              ),
-              el(
-                'div',
-                { className: 'row-side' },
-                el('div', { className: 'row-amount' }, formatEuro(suggestion.amountCents)),
-                el(
-                  'button',
-                  {
-                    className: 'button',
-                    type: 'button',
-                    onClick: () =>
-                      openSettlementForm(ctx, group, members, {
-                        fromUser: suggestion.fromUser,
-                        toUser: suggestion.toUser,
-                        amountCents: suggestion.amountCents,
-                      }),
-                  },
-                  'Eintragen'
-                )
-              )
-            )
-          )
-        );
+  // Eigener Saldo als Erstes, farblich passend zum Stand.
+  const balanceClass = myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : '';
+  const hero = el(
+    'div',
+    { className: 'hero' },
+    el('div', { className: 'hero-label' }, 'Dein Saldo'),
+    el(
+      'div',
+      { className: 'hero-row' },
+      el('div', { className: `hero-value${balanceClass}` }, formatEuro(myBalance)),
+      el(
+        'button',
+        {
+          className: 'info-button',
+          type: 'button',
+          'aria-label': 'Wer schuldet wem?',
+          onClick: () => openBalanceInfo(ctx, name, myBalance, mySuggestions),
+        },
+        'i'
+      )
+    ),
+    el(
+      'div',
+      { className: 'hero-foot' },
+      myBalance > 0 ? 'bekommst du insgesamt' : myBalance < 0 ? 'schuldest du insgesamt' : 'alles ausgeglichen'
+    )
+  );
 
   let entryList;
-  if (filtered.length === 0) {
-    entryList = el('p', { className: 'empty-note' }, 'Keine Einträge.');
+  if (entries.length === 0) {
+    entryList = el('p', { className: 'empty-note' }, 'Keine Einträge in diesem Monat.');
   } else {
     entryList = el(
       'div',
       { className: 'row-list', 'data-stagger': '' },
-      filtered.map((entry) => {
+      entries.map((entry) => {
         if (entry.type === 'expense') {
           const expense = entry.data;
-          const row = el(
+          return el(
             group.archived ? 'div' : 'button',
-            group.archived ? { className: 'row' } : {
-              className: 'row row-clickable',
-              type: 'button',
-              onClick: () => openExpenseForm(ctx, group, members, expense, { myCategories: data.myCategories }),
-            },
+            group.archived
+              ? { className: 'row' }
+              : {
+                  className: 'row row-clickable',
+                  type: 'button',
+                  onClick: () => openExpenseForm(ctx, group, members, expense, { myCategories: data.myCategories }),
+                },
             el(
               'div',
               { className: 'row-main' },
@@ -214,10 +121,9 @@ function build(ctx, data) {
             ),
             el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
           );
-          return row;
         }
         const settlement = entry.data;
-        const canConfirm = !settlement.confirmed && settlement.toUser === ctx.state.user.id && !group.archived;
+        const canConfirm = !settlement.confirmed && settlement.toUser === me && !group.archived;
         return el(
           'div',
           { className: 'row' },
@@ -227,7 +133,7 @@ function build(ctx, data) {
             el(
               'div',
               { className: 'row-label' },
-              `${formatDate(settlement.settledOn)} · Ausgleich${settlement.confirmed ? '' : ' · Wartet auf Bestätigung'}`
+              `${formatDate(settlement.settledOn)} · Begleichung${settlement.confirmed ? '' : ' · Wartet auf Bestätigung'}`
             ),
             el('div', { className: 'row-title' }, `${name(settlement.fromUser)} an ${name(settlement.toUser)}`)
           ),
@@ -259,7 +165,94 @@ function build(ctx, data) {
     );
   }
 
-  return el('div', { className: 'view' }, head, balances, manageBar, suggestionRows, entryList);
+  const manageBar = group.archived
+    ? null
+    : el(
+        'div',
+        { className: 'toolbar toolbar-sub' },
+        el('button', { className: 'textlink', type: 'button', onClick: () => openAddMember(ctx, group, members) }, '+ Mitglied'),
+        el(
+          'button',
+          {
+            className: 'textlink',
+            type: 'button',
+            onClick: async () => {
+              const ok = await confirmPanel('Gruppe archivieren? Das geht nur, wenn alle Salden ausgeglichen sind.', 'Archivieren');
+              if (!ok) return;
+              try {
+                await api(`/api/groups/${group.id}/archive`, { method: 'POST' });
+                ctx.refresh();
+              } catch (err) {
+                noticePanel(err.message);
+              }
+            },
+          },
+          'Gruppe archivieren'
+        )
+      );
+
+  // Zum Monatsende erinnert ein roter Zähler am Plus an offene Begleichungen.
+  const monthEnd = Number(new Date().getDate()) >= 25;
+  const reminder = monthEnd && !group.archived ? mySuggestions.length : 0;
+  const fab = group.archived
+    ? null
+    : buildFab(
+        [
+          {
+            label: 'Ausgabe',
+            onClick: () => openExpenseForm(ctx, group, members, null, { myCategories: data.myCategories }),
+          },
+          {
+            label: 'Begleichung',
+            badge: reminder,
+            onClick: () => openSettlementForm(ctx, group, members, { suggestions: mySuggestions, me }),
+          },
+        ],
+        { badge: reminder }
+      );
+
+  return el('div', { className: 'view' }, head, hero, entryList, manageBar, fab);
+}
+
+function openBalanceInfo(ctx, name, myBalance, mySuggestions) {
+  openPanel((close) =>
+    el(
+      'div',
+      {},
+      el('h2', { className: 'panel-title' }, 'Dein Saldo im Detail'),
+      mySuggestions.length === 0
+        ? el('p', { className: 'panel-message' }, 'Alles ausgeglichen – niemand schuldet niemandem etwas.')
+        : el(
+            'div',
+            { className: 'row-list' },
+            mySuggestions.map((s) =>
+              el(
+                'div',
+                { className: 'row' },
+                el(
+                  'div',
+                  { className: 'row-main' },
+                  el(
+                    'div',
+                    { className: 'row-title' },
+                    s.toUser === ctx.state.user.id ? `${name(s.fromUser)} schuldet dir` : `Du schuldest ${name(s.toUser)}`
+                  )
+                ),
+                el(
+                  'div',
+                  { className: 'row-side' },
+                  el(
+                    'div',
+                    { className: `row-amount${s.toUser === ctx.state.user.id ? ' is-positive' : ' is-negative'}` },
+                    formatEuro(s.amountCents)
+                  )
+                )
+              )
+            )
+          ),
+      el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'button', onClick: () => close() }, 'OK'))
+    )
+  );
 }
 
 async function openAddMember(ctx, group, members) {
