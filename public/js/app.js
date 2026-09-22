@@ -7,6 +7,9 @@ import { renderLogin, renderPasswordChange, renderSetup } from './views/auth.js'
 import { renderAccount } from './views/account.js';
 import { renderGroups } from './views/groups.js';
 import { renderGroupDetail } from './views/groupDetail.js';
+import { renderMonth } from './views/month.js';
+import { renderMonthSettings } from './views/monthSettings.js';
+import { isMonthString } from './format.js';
 
 const main = document.getElementById('app');
 
@@ -32,7 +35,7 @@ const ctx = {
   refresh: () => handleRoute(),
   onLogin(user) {
     state.user = user;
-    ctx.navigate('#/gruppen');
+    ctx.navigate('#/monat');
   },
   onLogout() {
     state.user = null;
@@ -42,10 +45,13 @@ const ctx = {
   },
 };
 
+let lastGroups = [];
+
 async function loadGroupsData() {
   const data = await api('/api/groups');
   state.groupCount = data.groups.filter((g) => !g.archived).length;
   state.totalBalanceCents = data.totalBalanceCents;
+  lastGroups = data.groups;
   return data;
 }
 
@@ -73,23 +79,22 @@ async function handleRoute() {
   }
 
   try {
+    await loadGroupsData();
     if (parts[0] === 'gruppen' && parts[1]) {
-      await loadGroupsData();
       await renderGroupDetail(ctx, parts[1]);
-      return;
-    }
-    if (parts[0] === 'konto' && parts[1] === 'passwort') {
-      await loadGroupsData();
+    } else if (parts[0] === 'gruppen') {
+      renderGroups(ctx, { groups: lastGroups, totalBalanceCents: state.totalBalanceCents });
+    } else if (parts[0] === 'konto' && parts[1] === 'passwort') {
       renderPasswordChange(ctx, { forced: false });
-      return;
-    }
-    if (parts[0] === 'konto') {
-      await loadGroupsData();
+    } else if (parts[0] === 'konto') {
       await renderAccount(ctx);
-      return;
+    } else if (parts[0] === 'monat' && parts[1] === 'einstellungen') {
+      await renderMonthSettings(ctx);
+    } else if (parts[0] === 'monat' && isMonthString(parts[1])) {
+      await renderMonth(ctx, parts[1]);
+    } else {
+      await renderMonth(ctx, null);
     }
-    const data = await loadGroupsData();
-    renderGroups(ctx, data);
   } catch (err) {
     if (err.status === 401) {
       state.user = null;

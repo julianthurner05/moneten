@@ -84,7 +84,7 @@ export function renderHeader(state) {
   }
 
   const navItems = [
-    { key: 'monat', label: 'Monat', href: '#/monat', disabled: true, number: '' },
+    { key: 'monat', label: 'Monat', href: '#/monat', number: '' },
     { key: 'gruppen', label: 'Gruppen', href: '#/gruppen', number: String(state.groupCount ?? '') },
     { key: 'konto', label: 'Konto', href: '#/konto', number: '' },
   ];

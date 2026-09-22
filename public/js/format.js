@@ -49,3 +49,21 @@ export function todayIso() {
 export function monthOf(isoDate) {
   return isoDate.slice(0, 7);
 }
+
+export function currentMonth() {
+  return todayIso().slice(0, 7);
+}
+
+/** "2026-01" + 1 → "2026-02"; negative Deltas erlaubt. */
+export function monthAdd(month, delta) {
+  const year = Number(month.slice(0, 4));
+  const m = Number(month.slice(5, 7));
+  const total = year * 12 + (m - 1) + delta;
+  return `${String(Math.floor(total / 12)).padStart(4, '0')}-${String(((total % 12) + 12) % 12 + 1).padStart(2, '0')}`;
+}
+
+export function isMonthString(value) {
+  if (typeof value !== 'string' || !/^\d{4}-\d{2}$/.test(value)) return false;
+  const m = Number(value.slice(5, 7));
+  return m >= 1 && m <= 12;
+}
