@@ -126,6 +126,13 @@ textarea:focus-visible {
   background: var(--color-field);
 }
 
+/* Ohne Dropdown (nur eine Gruppe) ist der Name reine Anzeige. */
+.workspace-static,
+.workspace-static:hover {
+  background: none;
+  cursor: default;
+}
+
 .workspace-menu {
   position: absolute;
   top: calc(100% + var(--space-2));
