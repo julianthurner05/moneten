@@ -56,6 +56,12 @@ html[data-input='pointer'] :focus-visible {
   outline: none;
 }
 
+/* Eingabefelder zeigen nie einen Fokusrahmen – der Cursor reicht. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
 /* ---------- Kopfzeile ---------- */
 
 #header {
@@ -1068,10 +1074,7 @@ input[type='checkbox']:disabled {
 .auth-form {
   width: 100%;
   max-width: var(--panel-max-width);
-  background: var(--color-surface);
-  border-radius: var(--radius);
   padding: var(--space-5);
-  transition: background-color var(--duration) var(--ease);
 }
 
 .auth-form .button {
@@ -1147,6 +1150,8 @@ input[type='checkbox']:disabled {
 #loader {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100dvh;
   z-index: var(--z-loader);
   background: var(--color-bg);
   display: flex;
@@ -1163,11 +1168,10 @@ input[type='checkbox']:disabled {
   pointer-events: none;
 }
 
-.loader-value {
-  font-size: var(--text-huge);
+.loader-wordmark {
+  font-size: var(--text-display);
   line-height: var(--leading-tight);
   letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
 }
 
 .loader-bar {
