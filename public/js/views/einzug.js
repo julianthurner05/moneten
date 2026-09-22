@@ -79,8 +79,23 @@ function build(ctx, data) {
     )
   );
 
+  const depositRows = deposits.map((expense) => {
+    const perPerson = expense.shares[0]?.shareCents ?? Math.round(expense.amountCents / members.length);
+    return el(
+      'div',
+      { className: 'row row-muted' },
+      el(
+        'div',
+        { className: 'row-main' },
+        el('div', { className: 'row-title' }, expense.description),
+        el('div', { className: 'row-label' }, `${formatEuro(perPerson)} p.\u202fP. · Überwiesen ✓`)
+      ),
+      el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
+    );
+  });
+
   const sharedList =
-    shared.length === 0
+    shared.length === 0 && depositRows.length === 0
       ? el('p', { className: 'empty-note' }, 'Noch keine gemeinsamen Einzugs-Ausgaben – z. B. Kaution oder Gerätebestellungen.')
       : el(
           'div',
@@ -114,7 +129,8 @@ function build(ctx, data) {
                     )
               )
             )
-          )
+          ),
+          depositRows
         );
 
   const privateList =
@@ -138,21 +154,6 @@ function build(ctx, data) {
           )
         );
 
-  const depositBlock =
-    deposits.length === 0
-      ? null
-      : deposits.map((expense) => {
-          const perPerson = expense.shares[0]?.shareCents ?? Math.round(expense.amountCents / members.length);
-          return el(
-            'div',
-            { className: 'deposit-note' },
-            el('span', {}, expense.description),
-            el('span', {}, formatEuro(expense.amountCents)),
-            el('span', {}, `${formatEuro(perPerson)} p.\u202fP.`),
-            el('span', {}, 'Überwiesen ✓')
-          );
-        });
-
   const fab = group.archived
     ? null
     : buildFab([
@@ -168,7 +169,6 @@ function build(ctx, data) {
     sharedList,
     el('div', { className: 'section-label' }, 'Privat'),
     privateList,
-    depositBlock,
     fab
   );
 }
