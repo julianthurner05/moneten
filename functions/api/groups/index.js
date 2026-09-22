@@ -60,6 +60,8 @@ export async function onRequestPost({ request, env, data }) {
   const body = await readJson(request);
   if (!body) return error('Ungültige Anfrage.');
   if (!isNonEmptyString(body.name, 64)) return error('Gruppenname fehlt.');
+  const kind = body.kind ?? 'standard';
+  if (!['standard', 'wg'].includes(kind)) return error('Ungültige Gruppenart.');
 
   const memberIds = Array.isArray(body.memberIds) ? [...new Set(body.memberIds)] : [];
   if (!memberIds.includes(data.user.id)) memberIds.push(data.user.id);
@@ -76,8 +78,8 @@ export async function onRequestPost({ request, env, data }) {
   await env.DB.batch([
     env.DB.prepare(
       `INSERT INTO groups (id, name, kind, currency, archived, created_by, created_at)
-       VALUES (?, ?, 'standard', 'EUR', 0, ?, ?)`
-    ).bind(groupId, body.name.trim(), data.user.id, now),
+       VALUES (?, ?, ?, 'EUR', 0, ?, ?)`
+    ).bind(groupId, body.name.trim(), kind, data.user.id, now),
     ...memberIds.map((userId) =>
       env.DB.prepare('INSERT INTO group_members (group_id, user_id, joined_at) VALUES (?, ?, ?)').bind(
         groupId,

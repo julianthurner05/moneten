@@ -14,7 +14,7 @@ function noticePanel(message) {
       'div',
       {},
       el('p', { className: 'panel-message' }, message),
-      el('div', { className: 'panel-actions' }, el('button', { className: 'textlink strong', type: 'button', onClick: () => close() }, 'OK'))
+      el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'button', onClick: () => close() }, 'OK'))
     )
   );
 }
@@ -71,7 +71,7 @@ function build(ctx, data) {
           el(
             'button',
             {
-              className: 'textlink strong',
+              className: 'button',
               type: 'button',
               onClick: () => openExpenseForm(ctx, group, members, null),
             },
@@ -80,7 +80,7 @@ function build(ctx, data) {
           el(
             'button',
             {
-              className: 'textlink strong',
+              className: 'button',
               type: 'button',
               onClick: () => openSettlementForm(ctx, group, members, null),
             },
@@ -100,6 +100,7 @@ function build(ctx, data) {
         { className: 'detail-meta' },
         el('a', { className: 'textlink', href: '#/gruppen' }, '← Gruppen'),
         el('span', { className: 'detail-name' }, group.name),
+        group.kind === 'wg' ? el('span', {}, 'WG') : null,
         el('span', {}, members.length === 1 ? '1 Mitglied' : `${members.length} Mitglieder`),
         group.archived ? el('span', {}, 'Archiviert') : null
       ),
@@ -173,7 +174,7 @@ function build(ctx, data) {
                 el(
                   'button',
                   {
-                    className: 'textlink strong',
+                    className: 'button',
                     type: 'button',
                     onClick: () =>
                       openSettlementForm(ctx, group, members, {
@@ -277,7 +278,7 @@ async function openAddMember(ctx, group, members) {
         'div',
         { className: 'panel-actions' },
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Hinzufügen')
+        el('button', { className: 'button', type: 'submit' }, 'Hinzufügen')
       )
     );
   });

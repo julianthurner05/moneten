@@ -28,6 +28,12 @@ function memberLabel(count) {
   return count === 1 ? '1 Mitglied' : `${count} Mitglieder`;
 }
 
+function metaLabel(group) {
+  return [group.kind === 'wg' ? 'WG' : null, memberLabel(group.memberCount), group.archived ? 'Archiviert' : null]
+    .filter(Boolean)
+    .join(' · ');
+}
+
 export function renderGroups(ctx, data) {
   ctx.show('gruppen', () => build(ctx, data));
 }
@@ -76,7 +82,7 @@ function build(ctx, data) {
     el('div', { className: 'toolbar-spacer' }),
     el(
       'button',
-      { className: 'textlink strong', type: 'button', onClick: () => openGroupForm(ctx) },
+      { className: 'button', type: 'button', onClick: () => openGroupForm(ctx) },
       '+ Gruppe'
     )
   );
@@ -103,7 +109,7 @@ function build(ctx, data) {
             'div',
             { className: 'card-meta' },
             el('span', {}, group.name),
-            el('span', {}, group.archived ? `${memberLabel(group.memberCount)} · Archiviert` : memberLabel(group.memberCount))
+            el('span', {}, metaLabel(group))
           ),
           el('div', { className: 'card-amount' }, formatEuro(group.myBalanceCents)),
           el('div', { className: 'card-foot' }, balanceLabel(group.myBalanceCents))
@@ -121,7 +127,7 @@ function build(ctx, data) {
           el(
             'div',
             { className: 'row-main' },
-            el('div', { className: 'row-label' }, group.archived ? `${memberLabel(group.memberCount)} · Archiviert` : memberLabel(group.memberCount)),
+            el('div', { className: 'row-label' }, metaLabel(group)),
             el('div', { className: 'row-title' }, group.name)
           ),
           el(
@@ -142,6 +148,12 @@ async function openGroupForm(ctx) {
   const { users } = await api('/api/users');
   openPanel((close) => {
     const name = el('input', { id: 'group-name', type: 'text', required: true });
+    const kind = el(
+      'select',
+      { id: 'group-kind' },
+      el('option', { value: 'standard', selected: true }, 'Standard'),
+      el('option', { value: 'wg' }, 'WG')
+    );
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const checkboxes = users.map((user) => {
@@ -168,7 +180,7 @@ async function openGroupForm(ctx) {
           try {
             const result = await api('/api/groups', {
               method: 'POST',
-              body: { name: name.value, memberIds },
+              body: { name: name.value, kind: kind.value, memberIds },
             });
             close();
             ctx.navigate(`#/gruppen/${result.id}`);
@@ -180,13 +192,19 @@ async function openGroupForm(ctx) {
       },
       el('h2', { className: 'panel-title' }, 'Neue Gruppe'),
       el('div', { className: 'field' }, el('label', { className: 'field-label', for: 'group-name' }, 'Name'), name),
+      el(
+        'div',
+        { className: 'field' },
+        el('label', { className: 'field-label', for: 'group-kind' }, 'Art'),
+        el('span', { className: 'select-wrap' }, kind, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾'))
+      ),
       el('div', { className: 'field' }, el('span', { className: 'field-label' }, 'Mitglieder'), checkboxes),
       error,
       el(
         'div',
         { className: 'panel-actions' },
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Anlegen')
+        el('button', { className: 'button', type: 'submit' }, 'Anlegen')
       )
     );
   });
