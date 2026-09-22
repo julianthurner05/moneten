@@ -2,7 +2,7 @@
 // Eigene Daten, Passwort ändern, Abmelden – für Admins die User-Verwaltung.
 
 import { api } from '../api.js';
-import { el, openPanel } from '../dom.js';
+import { confirmPanel, el, openPanel } from '../dom.js';
 
 export async function renderAccount(ctx) {
   const users = ctx.state.user.isAdmin ? (await api('/api/users')).users : null;
@@ -74,6 +74,28 @@ function buildAccountSection(ctx, users) {
       );
   }
 
+  const activeGroups = ctx.state.groups.filter((g) => !g.archived);
+  const adminTools =
+    users && activeGroups.length > 0
+      ? [
+          el('div', { className: 'section-label' }, 'Gruppen'),
+          el(
+            'div',
+            { className: 'row-list' },
+            el(
+              'div',
+              { className: 'row' },
+              el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, 'Gruppe archivieren')),
+              el(
+                'div',
+                { className: 'row-side' },
+                el('button', { className: 'textlink', type: 'button', onClick: () => openArchiveForm(ctx, activeGroups) }, 'Auswählen')
+              )
+            )
+          ),
+        ]
+      : null;
+
   return [
     users
       ? el(
@@ -84,7 +106,66 @@ function buildAccountSection(ctx, users) {
         )
       : null,
     el('div', { className: 'row-list', 'data-stagger': '' }, ownRow, adminRows),
+    adminTools,
   ];
+}
+
+function openArchiveForm(ctx, groups) {
+  openPanel((close) => {
+    const select = el(
+      'select',
+      { id: 'archive-group' },
+      groups.map((group) => el('option', { value: group.id }, group.name))
+    );
+    const error = el('p', { className: 'form-error', role: 'alert' });
+
+    return el(
+      'form',
+      {
+        onSubmit: async (event) => {
+          event.preventDefault();
+          const group = groups.find((g) => g.id === select.value);
+          close();
+          const ok = await confirmPanel(
+            `„${group.name}" archivieren? Das geht nur, wenn alle Salden ausgeglichen sind.`,
+            'Archivieren'
+          );
+          if (!ok) return;
+          try {
+            await api(`/api/groups/${group.id}/archive`, { method: 'POST' });
+            ctx.refresh();
+          } catch (err) {
+            openPanel((closeNotice) =>
+              el(
+                'div',
+                {},
+                el('p', { className: 'panel-message' }, err.message),
+                el(
+                  'div',
+                  { className: 'panel-actions' },
+                  el('button', { className: 'button', type: 'button', onClick: () => closeNotice() }, 'OK')
+                )
+              )
+            );
+          }
+        },
+      },
+      el('h2', { className: 'panel-title' }, 'Gruppe archivieren'),
+      el(
+        'div',
+        { className: 'field' },
+        el('label', { className: 'field-label', for: 'archive-group' }, 'Gruppe'),
+        el('span', { className: 'select-wrap' }, select, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
+        error
+      ),
+      el(
+        'div',
+        { className: 'panel-actions' },
+        el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
+        el('button', { className: 'button', type: 'submit' }, 'Archivieren')
+      )
+    );
+  });
 }
 
 function openUserForm(ctx) {

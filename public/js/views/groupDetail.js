@@ -2,7 +2,7 @@
 
 import { api } from '../api.js';
 import { dateChip, monthSwitch, suggestFromBalances } from '../controls.js';
-import { confirmPanel, el, openPanel } from '../dom.js';
+import { el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { currentMonth, formatEuro, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
@@ -168,31 +168,6 @@ function build(ctx, data) {
     );
   }
 
-  const archiveLink = group.archived
-    ? null
-    : el(
-        'div',
-        { className: 'archive-link' },
-        el(
-          'button',
-          {
-            className: 'textlink',
-            type: 'button',
-            onClick: async () => {
-              const ok = await confirmPanel('Gruppe archivieren? Das geht nur, wenn alle Salden ausgeglichen sind.', 'Archivieren');
-              if (!ok) return;
-              try {
-                await api(`/api/groups/${group.id}/archive`, { method: 'POST' });
-                ctx.refresh();
-              } catch (err) {
-                noticePanel(err.message);
-              }
-            },
-          },
-          'Gruppe archivieren'
-        )
-      );
-
   // Zum Monatsende erinnert ein roter Zähler am Plus an offene Begleichungen.
   const monthEnd = Number(new Date().getDate()) >= 25;
   const reminder = monthEnd && !group.archived ? mySuggestions.length : 0;
@@ -217,7 +192,7 @@ function build(ctx, data) {
         { badge: reminder }
       );
 
-  return el('div', { className: 'view' }, hero, entryList, archiveLink, fab);
+  return el('div', { className: 'view' }, hero, entryList, fab);
 }
 
 function openBalanceInfo(ctx, name, monthSuggestions) {
