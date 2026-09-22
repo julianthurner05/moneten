@@ -127,7 +127,8 @@ export function renderHeader(state) {
     ? [
         el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht'),
         el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung'),
-      ]
+        state.user.isAdmin ? el('a', { className: 'textlink', href: '#/konto' }, 'Adminbereich') : null,
+      ].filter(Boolean)
     : navItems.length > 0
       ? [nav]
       : [];
