@@ -158,11 +158,10 @@ function build(ctx, data) {
 
   sections.push(...sharesSections);
 
-  const kontoLink = el(
-    'div',
-    { className: 'konto-link' },
-    el('a', { className: 'textlink', href: '#/konto' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto')
-  );
+  // Admins erreichen den Adminbereich über die Kopfzeile – unten nur für alle anderen.
+  const kontoLink = ctx.state.user.isAdmin
+    ? null
+    : el('div', { className: 'konto-link' }, el('a', { className: 'textlink', href: '#/konto' }, 'Konto'));
 
   const listArea =
     sections.length === 0
