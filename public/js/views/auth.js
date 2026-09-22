@@ -123,11 +123,6 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
       error,
       el('button', { className: 'button', type: 'submit' }, 'Passwort ändern')
     );
-    return el(
-      'div',
-      { className: 'auth-wrap', 'data-stagger': '' },
-      el('div', { className: 'auth-wordmark' }, 'moneten'),
-      form
-    );
+    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
   });
 }
