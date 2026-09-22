@@ -171,7 +171,7 @@ function build(ctx, data) {
         const canConfirm = !settlement.confirmed && settlement.toUser === me && !group.archived;
         return el(
           'div',
-          { className: 'row' },
+          { className: 'row row-settle' },
           dateChip(settlement.settledOn),
           el(
             'div',

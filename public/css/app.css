@@ -508,6 +508,19 @@ a.row:hover .row-title {
   color: var(--color-secondary);
 }
 
+/* Begleichungen leicht dunkler hinterlegt, damit man sie sofort erkennt */
+.row-settle {
+  background: var(--color-field);
+  border-radius: var(--radius-sm);
+  padding-inline: var(--space-3);
+  border-bottom-color: transparent;
+  margin-block: var(--space-1);
+}
+
+.row-settle .date-chip {
+  background: var(--color-surface);
+}
+
 .row-main {
   flex: 1;
   min-width: 0;

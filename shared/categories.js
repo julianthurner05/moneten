@@ -4,7 +4,6 @@
 export const DEFAULT_CATEGORIES = [
   { name: 'Einkaufen', counts: 1 },
   { name: 'Freizeit', counts: 1 },
-  { name: 'Reisen', counts: 1 },
 ];
 
 /** Legt die Standard-Kategorien an, falls der User noch keine hat. */
