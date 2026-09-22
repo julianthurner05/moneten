@@ -224,3 +224,80 @@ export function createDatePicker({ id, value }) {
     },
   };
 }
+
+const monthShortList = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+/**
+ * Monatswahl im App-Design. value als YYYY-MM, leer erlaubt (allowEmpty).
+ * @returns {{root: HTMLElement, value: string}}
+ */
+export function createMonthPicker({ id, value = '', allowEmpty = false, emptyLabel = '–' }) {
+  let current = value;
+  let viewYear = Number((value || new Date().toISOString().slice(0, 7)).slice(0, 4));
+
+  const labelSpan = el('span', { className: 'ui-select-label' }, current ? formatMonth(current) : emptyLabel);
+  const button = el(
+    'button',
+    { className: 'ui-select-button', type: 'button', id, 'aria-haspopup': 'dialog', 'aria-expanded': 'false' },
+    labelSpan,
+    el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')
+  );
+  const menu = el('div', { className: 'pop-menu pop-calendar' });
+  const root = el('div', { className: 'ui-select' }, button, menu);
+  const close = popupBehavior(root, button);
+
+  const pick = (v) => {
+    current = v;
+    labelSpan.textContent = v ? formatMonth(v) : emptyLabel;
+    close();
+  };
+
+  const renderPicker = () => {
+    menu.replaceChildren(
+      el(
+        'div',
+        { className: 'cal-head' },
+        el('button', { className: 'month-arrow', type: 'button', 'aria-label': 'Voriges Jahr', onClick: () => { viewYear -= 1; renderPicker(); } }, '←'),
+        el('span', { className: 'cal-title' }, String(viewYear)),
+        el('button', { className: 'month-arrow', type: 'button', 'aria-label': 'Nächstes Jahr', onClick: () => { viewYear += 1; renderPicker(); } }, '→')
+      ),
+      el(
+        'div',
+        { className: 'cal-grid cal-grid-months' },
+        monthShortList.map((label, index) => {
+          const iso = `${viewYear}-${String(index + 1).padStart(2, '0')}`;
+          return el(
+            'button',
+            {
+              className: `cal-cell cal-day${iso === current ? ' is-active' : ''}`,
+              type: 'button',
+              onClick: () => pick(iso),
+            },
+            label
+          );
+        })
+      ),
+      allowEmpty
+        ? el(
+            'div',
+            { className: 'cal-clear' },
+            el('button', { className: 'textlink', type: 'button', onClick: () => pick('') }, 'Leeren')
+          )
+        : null
+    );
+  };
+  renderPicker();
+  button.addEventListener('click', () => {
+    if (root.classList.contains('is-open')) {
+      viewYear = Number((current || new Date().toISOString().slice(0, 7)).slice(0, 4));
+      renderPicker();
+    }
+  });
+
+  return {
+    root,
+    get value() {
+      return current;
+    },
+  };
+}

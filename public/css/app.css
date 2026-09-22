@@ -250,6 +250,16 @@ html[data-input='pointer'] :focus-visible {
   opacity: 0;
 }
 
+/* Vollbreite-Elemente (100vw) dürfen keinen Querscroll erzeugen */
+#app {
+  overflow-x: clip;
+}
+
+/* Statistikblöcke direkt in der Ansicht (z. B. Übersicht) mit Luft nach unten */
+.view > .stat-grid {
+  margin-bottom: var(--space-8);
+}
+
 .section-head {
   display: flex;
   align-items: flex-end;
@@ -497,6 +507,19 @@ select {
   gap: var(--space-1);
 }
 
+.cal-grid-months {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cal-grid-months .cal-day {
+  min-height: 2.5rem;
+}
+
+.cal-clear {
+  margin-top: var(--space-2);
+  text-align: center;
+}
+
 .cal-cell {
   display: grid;
   place-content: center;
@@ -648,13 +671,11 @@ a.row:hover .row-title {
   color: var(--color-secondary);
 }
 
-/* Begleichungen leicht dunkler hinterlegt, über die volle Seitenbreite */
+/* Begleichungen leicht dunkler hinterlegt, über die volle Viewport-Breite */
 .row-settle {
   background: var(--color-field);
-  margin-left: calc(-1 * max(var(--space-5), env(safe-area-inset-left)));
-  margin-right: calc(-1 * max(var(--space-5), env(safe-area-inset-right)));
-  padding-left: max(var(--space-5), env(safe-area-inset-left));
-  padding-right: max(var(--space-5), env(safe-area-inset-right));
+  margin-inline: calc(50% - 50vw);
+  padding-inline: calc(50vw - 50%);
 }
 
 .row-settle .date-chip {

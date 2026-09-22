@@ -1,6 +1,7 @@
 // Einstellungen der Monatsübersicht: Kategorien, wiederkehrende Posten, Optionen.
 
 import { api } from '../api.js';
+import { createMonthPicker } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { centsToInput, currentMonth, formatEuro, formatMonth, parseEuroInput } from '../format.js';
 
@@ -62,10 +63,10 @@ function build(ctx, data) {
   };
 
   // --- Optionen ---
-  const startMonth = el('input', {
+  const startMonth = createMonthPicker({
     id: 'settings-start',
-    type: 'month',
     value: data.settings.budgetStartMonth ?? '',
+    allowEmpty: true,
   });
   const carryover = el('input', {
     id: 'settings-carryover',
@@ -96,7 +97,7 @@ function build(ctx, data) {
       'div',
       { className: 'field' },
       el('label', { className: 'field-label', for: 'settings-start' }, 'Startmonat des Budgets'),
-      startMonth
+      startMonth.root
     ),
     el('div', { className: 'check-row' }, carryover, el('label', { for: 'settings-carryover' }, 'Übrig des Vormonats übertragen')),
     optionsError,
@@ -126,8 +127,8 @@ function openRecurringForm(ctx, kind, item) {
       placeholder: '0,00',
       value: item ? centsToInput(item.amountCents) : '',
     });
-    const start = el('input', { id: 'rec-start', type: 'month', required: true, value: item?.startMonth ?? currentMonth() });
-    const end = el('input', { id: 'rec-end', type: 'month', value: item?.endMonth ?? '' });
+    const start = createMonthPicker({ id: 'rec-start', value: item?.startMonth ?? currentMonth() });
+    const end = createMonthPicker({ id: 'rec-end', value: item?.endMonth ?? '', allowEmpty: true, emptyLabel: 'Ohne Ende' });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const showError = (message) => {
@@ -193,8 +194,8 @@ function openRecurringForm(ctx, kind, item) {
       ),
       wrap('Name', name, 'rec-name'),
       wrap('Betrag pro Monat', amount, 'rec-amount'),
-      wrap('Von', start, 'rec-start'),
-      wrap('Bis (optional)', end, 'rec-end'),
+      wrap('Von', start.root, 'rec-start'),
+      wrap('Bis (optional)', end.root, 'rec-end'),
       error,
       el(
         'div',
