@@ -26,21 +26,10 @@ function build(ctx, data) {
   );
   const privateSum = einzugPersonal.reduce((sum, item) => sum + item.amountCents, 0);
 
-  const head = el(
-    'div',
-    { className: 'section-head' },
-    el(
-      'div',
-      { className: 'detail-meta' },
-      el('span', {}, 'Einzug'),
-      el('span', {}, group.name)
-    )
-  );
-
   // Gegenüberstellung als Erstes: gemeinsame und private Einzugskosten.
   const stats = el(
     'div',
-    { className: 'stat-grid stat-grid-hero', 'data-stagger': '' },
+    { className: 'stat-grid stat-grid-hero view-top', 'data-stagger': '' },
     el(
       'div',
       { className: 'stat' },
@@ -52,8 +41,7 @@ function build(ctx, data) {
       'div',
       { className: 'stat' },
       el('div', { className: 'stat-label' }, 'Privat'),
-      el('div', { className: 'stat-value' }, formatEuro(privateSum)),
-      el('div', { className: 'stat-foot' }, 'nur für dich sichtbar')
+      el('div', { className: 'stat-value' }, formatEuro(privateSum))
     )
   );
 
@@ -113,7 +101,7 @@ function build(ctx, data) {
     deposits.length === 0
       ? null
       : [
-          el('div', { className: 'section-label' }, 'Kaution – fest vermerkt, zählt nicht zu den Einzugskosten'),
+          el('div', { className: 'section-label' }, 'Kaution – zählt nicht mit'),
           el(
             'div',
             { className: 'row-list' },
@@ -143,11 +131,10 @@ function build(ctx, data) {
   return el(
     'div',
     { className: 'view' },
-    head,
     stats,
-    el('div', { className: 'section-label' }, 'Gemeinsam – wird in der Gruppe aufgeteilt'),
+    el('div', { className: 'section-label' }, 'Gemeinsam'),
     sharedList,
-    el('div', { className: 'section-label' }, 'Privat – nur für dich sichtbar'),
+    el('div', { className: 'section-label' }, 'Privat'),
     privateList,
     depositBlock,
     fab

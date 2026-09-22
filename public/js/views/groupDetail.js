@@ -49,21 +49,11 @@ function build(ctx, data) {
   const head = el(
     'div',
     { className: 'section-head' },
-    el(
-      'div',
-      {},
-      el(
-        'div',
-        { className: 'detail-meta' },
-        el('span', {}, group.kind === 'wg' ? 'WG' : 'Standard'),
-        el('span', {}, members.length === 1 ? '1 Mitglied' : `${members.length} Mitglieder`),
-        group.archived ? el('span', {}, 'Archiviert') : null
-      ),
-      monthSwitch(month, (m) => {
-        filterState.month = m;
-        ctx.refresh();
-      })
-    )
+    monthSwitch(month, (m) => {
+      filterState.month = m;
+      ctx.refresh();
+    }),
+    group.archived ? el('div', { className: 'detail-meta' }, el('span', {}, 'Archiviert')) : null
   );
 
   // Eigener Saldo als Erstes, farblich passend zum Stand.
@@ -71,7 +61,6 @@ function build(ctx, data) {
   const hero = el(
     'div',
     { className: 'hero' },
-    el('div', { className: 'hero-label' }, 'Dein Saldo'),
     el(
       'div',
       { className: 'hero-row' },
@@ -86,11 +75,6 @@ function build(ctx, data) {
         },
         'i'
       )
-    ),
-    el(
-      'div',
-      { className: 'hero-foot' },
-      myBalance > 0 ? 'bekommst du insgesamt' : myBalance < 0 ? 'schuldest du insgesamt' : 'alles ausgeglichen'
     )
   );
 
@@ -165,12 +149,11 @@ function build(ctx, data) {
     );
   }
 
-  const manageBar = group.archived
+  const archiveLink = group.archived
     ? null
     : el(
         'div',
-        { className: 'toolbar toolbar-sub' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => openAddMember(ctx, group, members) }, '+ Mitglied'),
+        { className: 'archive-link' },
         el(
           'button',
           {
@@ -207,11 +190,15 @@ function build(ctx, data) {
             badge: reminder,
             onClick: () => openSettlementForm(ctx, group, members, { suggestions: mySuggestions, me }),
           },
+          {
+            label: 'Mitglied',
+            onClick: () => openAddMember(ctx, group, members),
+          },
         ],
         { badge: reminder }
       );
 
-  return el('div', { className: 'view' }, head, hero, entryList, manageBar, fab);
+  return el('div', { className: 'view' }, head, hero, entryList, archiveLink, fab);
 }
 
 function openBalanceInfo(ctx, name, myBalance, mySuggestions) {

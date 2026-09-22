@@ -5,12 +5,15 @@ import { monthSwitch } from '../controls.js';
 import { el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { currentMonth, formatDate, formatEuro, formatMonth } from '../format.js';
+import { buildAccountSection } from './account.js';
 import { openEntryForm } from './entryForm.js';
 
 export async function renderMonth(ctx, month) {
   const m = month ?? currentMonth();
   const data = await api(`/api/month/${m}`);
-  ctx.show('monat', () => build(ctx, data));
+  // Konto-Bereich sitzt ganz unten; Admins sehen dort auch die User-Verwaltung.
+  const users = ctx.state.user.isAdmin ? (await api('/api/users')).users : null;
+  ctx.show('monat', () => build(ctx, data, users));
 }
 
 /** Dünner Anzeigebalken, ratio 0–1. */
@@ -23,7 +26,7 @@ function meter(ratio) {
   );
 }
 
-function build(ctx, data) {
+function build(ctx, data, users) {
   const month = data.month;
   const visibleCategories = data.categories.filter((c) => !c.archived || c.monthSumCents !== 0);
   const counting = visibleCategories.filter((c) => c.countsTowardMonth);
@@ -150,10 +153,10 @@ function build(ctx, data) {
     { className: 'view' },
     head,
     stats,
-    el('div', { className: 'section-label' }, 'Kategorien'),
     categoryGrid,
     nonCountingBlock,
     sharesBlock,
+    buildAccountSection(ctx, users),
     fab
   );
 }

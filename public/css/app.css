@@ -360,9 +360,8 @@ select {
 
 .field .select-wrap {
   width: 100%;
-  border: var(--hairline) solid var(--color-line);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3);
+  border-bottom: var(--hairline) solid var(--color-line);
+  padding: var(--space-2) 0;
   transition: border-color var(--duration) var(--ease);
 }
 
@@ -461,8 +460,7 @@ button.card {
 /* ---------- Listen ---------- */
 
 .row-list {
-  border: var(--hairline) solid var(--color-border);
-  border-radius: var(--radius);
+  border-top: var(--hairline) solid var(--color-line);
   transition: border-color var(--duration) var(--ease);
 }
 
@@ -472,7 +470,7 @@ button.card {
   align-items: baseline;
   gap: var(--space-4);
   width: 100%;
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-4) 0;
   background: none;
   border: none;
   border-bottom: var(--hairline) solid var(--color-line);
@@ -482,26 +480,13 @@ button.card {
   transition: background-color var(--duration-fast) var(--ease), border-color var(--duration) var(--ease);
 }
 
-.row:first-child {
-  border-radius: var(--radius) var(--radius) 0 0;
-}
-
-.row:last-child {
-  border-bottom: none;
-  border-radius: 0 0 var(--radius) var(--radius);
-}
-
-.row:only-child {
-  border-radius: var(--radius);
-}
-
 .row-clickable {
   cursor: pointer;
 }
 
-.row-clickable:hover,
-a.row:hover {
-  background: var(--color-surface);
+.row-clickable:hover .row-title,
+a.row:hover .row-title {
+  color: var(--color-secondary);
 }
 
 .row-main {
@@ -537,6 +522,18 @@ a.row:hover {
   color: var(--color-secondary);
   padding-block: var(--space-5);
   margin: 0;
+}
+
+.stat-grid + .card-grid {
+  margin-top: var(--space-7);
+}
+
+.view-top {
+  margin-top: var(--space-7);
+}
+
+.archive-link {
+  margin-top: var(--space-8);
 }
 
 /* ---------- Kennzahlen ---------- */
@@ -643,9 +640,10 @@ input[type='date'],
 input[type='month'] {
   width: 100%;
   background: transparent;
-  border: var(--hairline) solid var(--color-line);
-  border-radius: var(--radius-sm);
-  padding: var(--space-3);
+  border: none;
+  border-bottom: var(--hairline) solid var(--color-line);
+  border-radius: 0;
+  padding: var(--space-2) 0;
   font-size: var(--text-base);
   transition: border-color var(--duration) var(--ease);
 }
@@ -789,11 +787,7 @@ input[type='checkbox']:disabled {
 }
 
 .settings-options {
-  border: var(--hairline) solid var(--color-border);
-  border-radius: var(--radius);
-  padding: var(--space-5);
   max-width: var(--panel-max-width);
-  transition: border-color var(--duration) var(--ease);
 }
 
 .group-share-list {

@@ -4,70 +4,6 @@
 
 import { el } from './dom.js';
 
-const THEME_KEY = 'moneten_theme';
-
-function themeIcon(kind) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 16 16');
-  svg.setAttribute('width', '14');
-  svg.setAttribute('height', '14');
-  svg.setAttribute('aria-hidden', 'true');
-  const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  circle.setAttribute('cx', '8');
-  circle.setAttribute('cy', '8');
-  circle.setAttribute('r', '6.5');
-  circle.setAttribute('fill', 'none');
-  circle.setAttribute('stroke', 'currentColor');
-  svg.append(circle);
-  if (kind === 'dark') {
-    const half = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    half.setAttribute('d', 'M8 1.5 A6.5 6.5 0 0 1 8 14.5 Z');
-    half.setAttribute('fill', 'currentColor');
-    svg.append(half);
-  }
-  return svg;
-}
-
-export function setTheme(theme) {
-  document.documentElement.dataset.theme = theme;
-  try {
-    localStorage.setItem(THEME_KEY, theme);
-  } catch {
-    // localStorage nicht verfügbar
-  }
-  document.querySelectorAll('.theme-button').forEach((button) => {
-    button.classList.toggle('is-active', button.dataset.theme === theme);
-  });
-}
-
-export function currentTheme() {
-  const set = document.documentElement.dataset.theme;
-  if (set === 'light' || set === 'dark') return set;
-  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-}
-
-/** Hell/Dunkel-Umschalter – sitzt im Konto-Bereich. */
-export function themeToggle() {
-  const theme = currentTheme();
-  return el(
-    'div',
-    { className: 'theme-toggle', role: 'group', 'aria-label': 'Farbschema' },
-    ['light', 'dark'].map((kind) =>
-      el(
-        'button',
-        {
-          className: `theme-button${theme === kind ? ' is-active' : ''}`,
-          type: 'button',
-          dataset: { theme: kind },
-          'aria-label': kind === 'light' ? 'Helles Schema' : 'Dunkles Schema',
-          onClick: () => setTheme(kind),
-        },
-        themeIcon(kind)
-      )
-    )
-  );
-}
-
 function kindLabel(group) {
   return group.kind === 'wg' ? 'WG' : 'Standard';
 }
@@ -147,10 +83,7 @@ export function renderHeader(state) {
   const hasEinzug = state.selectedGroup?.kind === 'wg';
 
   const navItems = privat
-    ? [
-        { key: 'monat', label: 'Monat', href: '#/monat' },
-        { key: 'konto', label: 'Konto', href: '#/konto' },
-      ]
+    ? []
     : [
         state.selectedGroup ? { key: 'gruppe', label: 'Gruppe', href: '#/' } : null,
         hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,

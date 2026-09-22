@@ -1,107 +1,73 @@
-// Konto: eigene Daten, Passwort ändern, Abmelden – und für Admins die User-Verwaltung.
+// Konto-Bereich: sitzt ganz unten im Privat-Bereich.
+// Eigene Daten, Passwort ändern, Abmelden – für Admins die User-Verwaltung.
 
 import { api } from '../api.js';
 import { el, openPanel } from '../dom.js';
-import { themeToggle } from '../header.js';
 
-export async function renderAccount(ctx) {
-  const isAdmin = ctx.state.user.isAdmin;
-  const users = isAdmin ? (await api('/api/users')).users : null;
-  ctx.show('konto', () => build(ctx, users));
-}
-
-function build(ctx, users) {
+export function buildAccountSection(ctx, users) {
   const user = ctx.state.user;
 
-  const ownSection = el(
+  const ownRow = el(
     'div',
-    { className: 'row-list', 'data-stagger': '' },
+    { className: 'row' },
     el(
       'div',
-      { className: 'row' },
+      { className: 'row-main' },
+      el('div', { className: 'row-title' }, user.displayName)
+    ),
+    el(
+      'div',
+      { className: 'row-side' },
+      el('a', { className: 'textlink', href: '#/konto/passwort' }, 'Passwort ändern'),
       el(
-        'div',
-        { className: 'row-main' },
-        el('div', { className: 'row-label' }, user.username),
-        el('div', { className: 'row-title' }, user.displayName)
-      ),
-      el(
-        'div',
-        { className: 'row-side' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => (location.hash = '#/konto/passwort') }, 'Passwort ändern'),
-        el(
-          'button',
-          {
-            className: 'button',
-            type: 'button',
-            onClick: async () => {
-              await api('/api/logout', { method: 'POST' });
-              ctx.onLogout();
-            },
+        'button',
+        {
+          className: 'textlink',
+          type: 'button',
+          onClick: async () => {
+            await api('/api/logout', { method: 'POST' });
+            ctx.onLogout();
           },
-          'Abmelden'
-        )
+        },
+        'Abmelden'
       )
     )
   );
 
-  const head = el(
-    'div',
-    { className: 'section-head' },
-    el('div', { className: 'month-title' }, 'Konto'),
-    el(
-      'div',
-      { className: 'toolbar' },
-      el('div', { className: 'toolbar-spacer' }),
-      users
-        ? el('button', { className: 'button', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
-        : null
-    )
-  );
-
-  let adminSection = null;
+  let adminRows = null;
   if (users) {
-    adminSection = el(
-      'div',
-      { className: 'row-list', 'data-stagger': '' },
-      users.map((entry) =>
+    adminRows = users
+      .filter((entry) => entry.id !== user.id)
+      .map((entry) =>
         el(
           'div',
           { className: 'row' },
           el(
             'div',
             { className: 'row-main' },
-            el(
-              'div',
-              { className: 'row-label' },
-              [entry.username, entry.isAdmin ? 'Admin' : null, entry.mustChangePassword ? 'Muss Passwort ändern' : null]
-                .filter(Boolean)
-                .join(' · ')
-            ),
-            el('div', { className: 'row-title' }, entry.displayName)
+            el('div', { className: 'row-title' }, entry.displayName),
+            entry.mustChangePassword ? el('div', { className: 'row-label' }, 'Muss Passwort ändern') : null
           ),
           el(
             'div',
             { className: 'row-side' },
-            entry.id === ctx.state.user.id
-              ? null
-              : el(
-                  'button',
-                  { className: 'textlink', type: 'button', onClick: () => openResetForm(ctx, entry) },
-                  'Passwort zurücksetzen'
-                )
+            el('button', { className: 'textlink', type: 'button', onClick: () => openResetForm(ctx, entry) }, 'Passwort zurücksetzen')
           )
         )
-      )
-    );
+      );
   }
 
-  const themeSection = [
-    el('div', { className: 'section-label' }, 'Darstellung'),
-    el('div', { className: 'settings-options' }, themeToggle()),
+  return [
+    el(
+      'div',
+      { className: 'settings-block-head' },
+      el('div', { className: 'section-label' }, 'Konto'),
+      users
+        ? el('button', { className: 'textlink', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
+        : null
+    ),
+    el('div', { className: 'row-list', 'data-stagger': '' }, ownRow, adminRows),
   ];
-
-  return el('div', { className: 'view' }, head, ownSection, adminSection, themeSection);
 }
 
 function openUserForm(ctx) {

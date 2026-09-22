@@ -4,7 +4,6 @@ import { api } from './api.js';
 import { swapView } from './dom.js';
 import { renderHeader } from './header.js';
 import { renderLogin, renderPasswordChange, renderSetup } from './views/auth.js';
-import { renderAccount } from './views/account.js';
 import { renderGroups } from './views/groups.js';
 import { renderGroupDetail } from './views/groupDetail.js';
 import { renderEinzug } from './views/einzug.js';
@@ -40,6 +39,9 @@ const ctx = {
   selectedGroup,
   selectGroup,
   show(active, build) {
+    // Das Thema hängt am Modus: Privat ist dunkel, alles andere hell.
+    const privat = active === 'monat' || active === 'konto';
+    document.documentElement.dataset.theme = state.user && privat ? 'dark' : 'light';
     renderHeader({
       user: state.user,
       active,
@@ -130,7 +132,8 @@ async function handleRoute() {
     } else if (parts[0] === 'konto' && parts[1] === 'passwort') {
       renderPasswordChange(ctx, { forced: false });
     } else if (parts[0] === 'konto') {
-      await renderAccount(ctx);
+      // Konto lebt jetzt unten im Privat-Bereich.
+      await renderMonth(ctx, null);
     } else if (parts[0] === 'monat' && parts[1] === 'einstellungen') {
       await renderMonthSettings(ctx);
     } else if (parts[0] === 'monat' && isMonthString(parts[1])) {
