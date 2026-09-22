@@ -182,7 +182,7 @@ function build(ctx, data) {
         return el(
           'div',
           { className: 'row row-settle' },
-          dateChip(settlement.settledOn),
+          el('span', { className: 'date-chip date-chip-euro', 'aria-hidden': 'true' }, '€'),
           el(
             'div',
             { className: 'row-main settle-main' },
