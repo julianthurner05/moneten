@@ -133,21 +133,21 @@ Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (vi
 
 **Gestaltungshaltung: Schweizer Grafikdesign.** Ein einziger Schriftschnitt (Regular), keine Fettung (`font-synthesis: none`), keine Versalien. Hierarchie entsteht ausschließlich über Größe, Weißraum und Farbe. Bewusst wenige Schriftgrößen (klein / Grundgröße / Display), nie viele Größen auf einem Fleck. Viel Weißraum, großzügige Abstände. Keine großen Eintrags-Zähler.
 
-**Farben** – monochrom auf hellem Salbeigrau, dunkle Konturen (wie ein technisches Interface):
-- Seitenhintergrund `#EDEFE6`
-- Hover-/Nebenfläche `#F5F6F0`
-- Text und Karten-Konturen `#1A1D14`
-- Trennlinien (weich, in Listen) `#CDD0C2`
-- Sekundärtext `#7A7E6F`
-- Kein Buntakzent; primäre Aktionen sind dunkle Pillen (Textfarbe gefüllt, Hintergrundfarbe als Schrift).
-- Dunkelmodus als Umkehrung: Hintergrund `#171912`, Fläche `#1E211A`, Text/Konturen `#EDEFE6`, Linien `#383C2F`, Sekundär `#8E9280`. **Das Thema hängt am Modus:** Gruppen-Modus hell, Privat-Modus dunkel. Keine Darstellungs-Einstellung, kein Umschalter.
-- Saldo-Farben: positiv gedämpftes Grün (`#3D6B35` / dunkel `#9CC58F`), negativ gedämpftes Rot (`#A34434` / `#D98A79`), Erinnerungs-Badge `#C03B28`.
+**Farben** – neutrale Grautöne, Struktur über leichte Feldfarben statt Konturen:
+- Seitenhintergrund `#F3F3F1`, Flächen (Karten, Panels) `#FFFFFF`, Feldfarbe (Chips, Pillen) `#EAEAE7`
+- Text `#1B1B19`, Trennlinien `#DEDEDA`, Sekundärtext `#77776F`
+- Dunkel (Privat): `#161615` / `#222221` / `#2A2A28` / `#EDEDEB` / `#343431` / `#8F8F86`
+- Kein Buntakzent; primäre Aktionen sind dunkle Pillen. **Keine dicken Borders** – nur weiche Haarlinien oder gar keine; Abgrenzung über Feldfarben.
+- Saldo/Übrig farblich nach Stand: positiv gedämpftes Grün, negativ gedämpftes Rot.
+- **Das Thema hängt am Modus:** Gruppen-Modus hell, Privat-Modus dunkel. Keine Darstellungs-Einstellung, kein Umschalter.
 
-**Bausteine:** Karten (Kennzahlen, Kategorien) als transparente Flächen mit 1px-Kontur in Textfarbe und ~16px-Rundung. **Listen laufen frei** – keine Box, nur weiche Haarlinien zwischen den Zeilen. **Eingabefelder als Unterlinien** (Haarlinie unten, kein Kasten), nur Datumsfelder mit begrenzter Breite. Buttons und aktive Nav-Punkte als dunkle Pillen (voll gerundet). Erfassen über einen schwebenden Plus-Button rechts unten mit Minimenü. Dashboard-Anzeigen: dünne Balken (4px, voll gerundet); Beträge mit `font-variant-numeric: tabular-nums` in Listen. Panels/Dropdowns mit Kontur und weichem Schatten über einem Scrim. **Keine kleinen Meta-Labels** (kein „Dein Saldo", „WG · 3 Mitglieder" o. Ä.) – nur strukturell nötige Abschnittsbeschriftungen. **Tabu:** weitere Buntfarben, Verläufe, Fettung, Versalien, dekorative Schatten auf Karten.
+**Bausteine:** Karten (Kennzahlen) als weiße/dunkle Flächen mit ~16px-Rundung, ohne Border. **Listen laufen frei** – keine Box, nur weiche Haarlinien; links in jeder datierten Zeile ein **quadratisches Datums-Tag** (Feldfarbe, Monat abgekürzt klein oben, Tageszahl darunter). Begleichungen mit horizontalem **Pfeil von Person zu Person**. Die Kaution ist eine ausgegraute Zeile ohne Datum/Bezahler. **Eingabefelder als Unterlinien**, Datumsfelder mit begrenzter Breite. Buttons/Pillen mit `line-height: 1` (Schrift exakt mittig). Erfassen über einen schwebenden Plus-Button rechts unten (SVG-Plus, exakt zentriert) mit Minimenü. Dashboard-Balken 4px; Beträge mit `tabular-nums`. **Jede Ansicht beginnt mit einem großen, mittigen Statistikbereich** (Monatsumschalter mit Pfeilen links/rechts vom Monat, darunter große Zahlen, viel Abstand), erst beim Scrollen kommen die Listen; Kategorien sind Listen mit Kopfzeile (Name + Monatssumme). Viel Abstand zwischen Bereichen. **Keine kleinen Meta-Labels.** Inhaltsbreite wächst bis 2560px. **Tabu:** weitere Buntfarben, Verläufe, Fettung, Versalien, dekorative Schatten.
 
 **Aufbau-Prinzipien:**
 - Struktur durch Flächen auf graugrünem Grund plus 1px-Linien und Weißraum. Keine Wortmarke/Logo in der Kopfzeile.
-- **Kopfzeile mit zwei Modi:** Im Gruppen-Modus links das Workspace-Dropdown (Gruppenwechsel, „Alle Gruppen"), daneben Tabs **Gruppe** und **Einzug** (nur WG), rechts die Pille **Privat**. Im Privat-Modus links „← Gruppenname" zurück, keine Tabs, die Privat-Pille eingebettet/inaktiv. Kein Gesamtsaldo in der Kopfzeile. Der Privat-Bereich ist die Monatsübersicht; ganz unten liegt der Konto-Block (Passwort ändern, Abmelden, für Admins die User-Verwaltung). Es gibt keinen eigenen Konto-Tab.
+- **Kopfzeile mit zwei Modi:** Im Gruppen-Modus links das Workspace-Dropdown (Gruppenwechsel, „Alle Gruppen"), daneben Tabs **Allgemein** und **Einzug** (nur WG), rechts die Pille **Privat**. Im Privat-Modus links „← Gruppen" zurück, keine Tabs, rechts der Textlink **Budgetplanung** (statt „Einstellungen") neben der eingebetteten Privat-Pille. Kein Gesamtsaldo in der Kopfzeile.
+- **Gruppen-Ansicht:** Das Saldo ist **monatsgebunden** (nur Ausgaben und bestätigte Begleichungen des gewählten Monats) und steht groß und mittig unter dem Monatsumschalter; ein kleines ⓘ daneben zeigt, wer wem in diesem Monat was schuldet. Keine Vorschlagszeilen im Hauptflow – die Begleichungs-Lightbox macht die Vorschläge.
+- **Privat-Bereich:** Monatsdetail mit Statistik oben und Kategorien-Listen darunter; Umschalter zur **Übersicht aller Monate** (klickbar zurück ins Monatsdetail). Ganz unten ein kleiner mittiger **Konto**-Button zur eigenen Konto-Seite (Passwort ändern, Abmelden, Admin-Userverwaltung). Kein Konto-Tab.
 - **Werkzeugleiste:** Text-Bedienelemente für Umschalter und Filter (inaktiv Sekundär-, aktiv Textfarbe), Dropdowns mit kleinem Dreieck. Primäre Aktionen („+ Ausgabe", „Speichern") als kompakte, dunkel gefüllte Buttons mit Rundung; sekundäre Aktionen als Textlinks.
 - **Große Zahl links** über Listen und Rastern, daneben Umschalter Liste/Raster und Sortierung als Textlinks.
 - **Karten-Raster:** weiße Karten mit 1px-Rahmen, Rundung und Abstand zueinander (kein zusammenhängendes Haarlinien-Raster). Oben eine Metazeile klein, fett, in Sekundärfarbe (Name links, Zusatzinfos rechts). Darunter der Betrag in sehr großer Schrift, unten eine kleine Fußzeile. Hover und Fokus: Rahmen wechselt auf Textfarbe, Metazeile ebenso.

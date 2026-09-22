@@ -18,24 +18,25 @@
   /* Schrift */
   --font-sans: 'GT Standard', system-ui, sans-serif;
 
-  /* Farben (hell) – helles Salbeigrau, dunkle Konturen, monochrom */
-  --color-bg: #EDEFE6;
-  --color-surface: #F5F6F0;
-  --color-text: #1A1D14;
-  --color-border: #1A1D14;
-  --color-line: #CDD0C2;
-  --color-secondary: #7A7E6F;
-  --color-positive: #3D6B35;
+  /* Farben (hell) – neutrale Grautöne, Struktur über leichte Feldfarben */
+  --color-bg: #F3F3F1;
+  --color-surface: #FFFFFF;
+  --color-field: #EAEAE7;
+  --color-text: #1B1B19;
+  --color-line: #DEDEDA;
+  --color-secondary: #77776F;
+  --color-positive: #45703D;
   --color-negative: #A34434;
   --color-badge: #C03B28;
-  --color-scrim: rgba(26, 29, 20, 0.3);
-  --shadow-panel: 0 16px 40px rgba(26, 29, 20, 0.16);
+  --color-scrim: rgba(27, 27, 25, 0.3);
+  --shadow-panel: 0 16px 40px rgba(27, 27, 25, 0.14);
 
   /* Schriftgrößen – bewusst wenige */
   --text-sm: 0.8125rem;
   --text-base: 1.0625rem;
+  --text-lg: 1.5rem;
   --text-display: clamp(2rem, 4.5vw, 3rem);
-  --text-huge: clamp(3.25rem, 8vw, 5.5rem);
+  --text-huge: clamp(3.5rem, 10vw, 7rem);
 
   /* Zeilenhöhen */
   --leading-tight: 1.05;
@@ -51,6 +52,7 @@
   --space-6: 2rem;
   --space-7: 3rem;
   --space-8: 4.5rem;
+  --space-9: 6rem;
 
   /* Linien und Radien */
   --hairline: 1px;
@@ -80,33 +82,18 @@
   /* Maße */
   --header-height: 4.5rem;
   --panel-max-width: 26rem;
-  --content-max-width: 72rem;
+  --content-max-width: 160rem;
   --tap-target: 2.75rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg: #171912;
-    --color-surface: #1E211A;
-    --color-text: #EDEFE6;
-    --color-border: #EDEFE6;
-    --color-line: #383C2F;
-    --color-secondary: #8E9280;
-    --color-positive: #9CC58F;
-    --color-negative: #D98A79;
-    --color-badge: #E0523C;
-    --color-scrim: rgba(0, 0, 0, 0.5);
-    --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5);
-  }
+  --date-chip: 3.25rem;
 }
 
 :root[data-theme="dark"] {
-  --color-bg: #171912;
-  --color-surface: #1E211A;
-  --color-text: #EDEFE6;
-  --color-border: #EDEFE6;
-  --color-line: #383C2F;
-  --color-secondary: #8E9280;
+  --color-bg: #161615;
+  --color-surface: #222221;
+  --color-field: #2A2A28;
+  --color-text: #EDEDEB;
+  --color-line: #343431;
+  --color-secondary: #8F8F86;
   --color-positive: #9CC58F;
   --color-negative: #D98A79;
   --color-badge: #E0523C;

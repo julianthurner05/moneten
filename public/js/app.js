@@ -8,7 +8,9 @@ import { renderGroups } from './views/groups.js';
 import { renderGroupDetail } from './views/groupDetail.js';
 import { renderEinzug } from './views/einzug.js';
 import { renderMonth } from './views/month.js';
+import { renderMonthOverview } from './views/monthOverview.js';
 import { renderMonthSettings } from './views/monthSettings.js';
+import { renderAccount } from './views/account.js';
 import { isMonthString } from './format.js';
 
 const main = document.getElementById('app');
@@ -132,8 +134,9 @@ async function handleRoute() {
     } else if (parts[0] === 'konto' && parts[1] === 'passwort') {
       renderPasswordChange(ctx, { forced: false });
     } else if (parts[0] === 'konto') {
-      // Konto lebt jetzt unten im Privat-Bereich.
-      await renderMonth(ctx, null);
+      await renderAccount(ctx);
+    } else if (parts[0] === 'monat' && parts[1] === 'uebersicht') {
+      await renderMonthOverview(ctx);
     } else if (parts[0] === 'monat' && parts[1] === 'einstellungen') {
       await renderMonthSettings(ctx);
     } else if (parts[0] === 'monat' && isMonthString(parts[1])) {

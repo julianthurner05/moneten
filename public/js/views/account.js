@@ -1,10 +1,27 @@
-// Konto-Bereich: sitzt ganz unten im Privat-Bereich.
+// Konto: eigene Seite, erreichbar über den Button ganz unten im Privat-Bereich.
 // Eigene Daten, Passwort ändern, Abmelden – für Admins die User-Verwaltung.
 
 import { api } from '../api.js';
 import { el, openPanel } from '../dom.js';
 
-export function buildAccountSection(ctx, users) {
+export async function renderAccount(ctx) {
+  const users = ctx.state.user.isAdmin ? (await api('/api/users')).users : null;
+  ctx.show('konto', () =>
+    el(
+      'div',
+      { className: 'view' },
+      el(
+        'div',
+        { className: 'hero hero-centered' },
+        el('div', { className: 'month-title' }, 'Konto'),
+        el('a', { className: 'textlink', href: '#/monat' }, '← Privat')
+      ),
+      buildAccountSection(ctx, users)
+    )
+  );
+}
+
+function buildAccountSection(ctx, users) {
   const user = ctx.state.user;
 
   const ownRow = el(
@@ -58,14 +75,14 @@ export function buildAccountSection(ctx, users) {
   }
 
   return [
-    el(
-      'div',
-      { className: 'settings-block-head' },
-      el('div', { className: 'section-label' }, 'Konto'),
-      users
-        ? el('button', { className: 'textlink', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
-        : null
-    ),
+    users
+      ? el(
+          'div',
+          { className: 'settings-block-head' },
+          el('div', { className: 'section-label' }, 'Accounts'),
+          el('button', { className: 'textlink', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
+        )
+      : null,
     el('div', { className: 'row-list', 'data-stagger': '' }, ownRow, adminRows),
   ];
 }

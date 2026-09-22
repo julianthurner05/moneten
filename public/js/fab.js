@@ -8,10 +8,23 @@ import { el } from './dom.js';
  * @param {{badge?: number}} options – Zahl am Plus-Button (z. B. Begleichungs-Erinnerung)
  */
 export function buildFab(items, { badge = 0 } = {}) {
+  // Plus als SVG, damit es exakt in der Kreismitte sitzt.
+  const plus = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  plus.setAttribute('viewBox', '0 0 16 16');
+  plus.setAttribute('width', '18');
+  plus.setAttribute('height', '18');
+  plus.setAttribute('aria-hidden', 'true');
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', 'M8 1.5 V14.5 M1.5 8 H14.5');
+  path.setAttribute('stroke', 'currentColor');
+  path.setAttribute('stroke-width', '1.5');
+  path.setAttribute('fill', 'none');
+  plus.append(path);
+
   const button = el(
     'button',
     { className: 'fab', type: 'button', 'aria-label': 'Hinzufügen' },
-    el('span', { className: 'fab-plus', 'aria-hidden': 'true' }, '+'),
+    plus,
     badge > 0 ? el('span', { className: 'fab-badge' }, String(badge)) : null
   );
 

@@ -1,6 +1,7 @@
 // Einzug-Bereich einer WG-Gruppe: gemeinsame Einzugs-Ausgaben plus privater Bereich.
 
 import { api } from '../api.js';
+import { dateChip } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { centsToInput, formatDate, formatEuro, parseEuroInput, todayIso } from '../format.js';
@@ -61,11 +62,12 @@ function build(ctx, data) {
                     type: 'button',
                     onClick: () => openExpenseForm(ctx, group, members, expense, {}),
                   },
+              dateChip(expense.spentOn),
               el(
                 'div',
                 { className: 'row-main' },
-                el('div', { className: 'row-label' }, `${formatDate(expense.spentOn)} · Bezahlt von ${name(expense.paidBy)}`),
-                el('div', { className: 'row-title' }, expense.description)
+                el('div', { className: 'row-title' }, expense.description),
+                el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`)
               ),
               el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
             )
@@ -86,12 +88,8 @@ function build(ctx, data) {
                 type: 'button',
                 onClick: () => openPrivateForm(ctx, group, item),
               },
-              el(
-                'div',
-                { className: 'row-main' },
-                el('div', { className: 'row-label' }, formatDate(item.spentOn)),
-                el('div', { className: 'row-title' }, item.description)
-              ),
+              dateChip(item.spentOn),
+              el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, item.description)),
               el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(item.amountCents)))
             )
           )
@@ -108,13 +106,8 @@ function build(ctx, data) {
             deposits.map((expense) =>
               el(
                 'div',
-                { className: 'row' },
-                el(
-                  'div',
-                  { className: 'row-main' },
-                  el('div', { className: 'row-label' }, `${formatDate(expense.spentOn)} · Bezahlt von ${name(expense.paidBy)}`),
-                  el('div', { className: 'row-title' }, expense.description)
-                ),
+                { className: 'row row-muted' },
+                el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, expense.description)),
                 el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
               )
             )

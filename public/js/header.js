@@ -85,7 +85,7 @@ export function renderHeader(state) {
   const navItems = privat
     ? []
     : [
-        state.selectedGroup ? { key: 'gruppe', label: 'Gruppe', href: '#/' } : null,
+        state.selectedGroup ? { key: 'gruppe', label: 'Allgemein', href: '#/' } : null,
         hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
       ].filter(Boolean);
 
@@ -106,7 +106,7 @@ export function renderHeader(state) {
         'a',
         { className: 'workspace-button', href: '#/' },
         el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '←'),
-        el('span', { className: 'workspace-name' }, state.selectedGroup ? state.selectedGroup.name : 'Gruppe')
+        el('span', { className: 'workspace-name' }, 'Gruppen')
       )
     : buildWorkspace(state);
 
@@ -114,5 +114,11 @@ export function renderHeader(state) {
     ? el('span', { className: 'privat-toggle is-embedded', 'aria-current': 'true' }, 'Privat')
     : el('a', { className: 'privat-toggle', href: '#/monat' }, 'Privat');
 
-  header.replaceChildren(el('div', { className: 'header-inner' }, left, nav, el('div', { className: 'header-spacer' }), privatToggle));
+  const budget = privat
+    ? el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung')
+    : null;
+
+  header.replaceChildren(
+    el('div', { className: 'header-inner' }, left, nav, el('div', { className: 'header-spacer' }), budget, privatToggle)
+  );
 }
