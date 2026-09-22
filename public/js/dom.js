@@ -126,7 +126,7 @@ export function confirmPanel(message, confirmLabel) {
             el(
               'button',
               {
-                className: 'textlink strong',
+                className: 'button',
                 type: 'button',
                 onClick: () => {
                   result = true;

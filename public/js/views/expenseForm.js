@@ -207,7 +207,7 @@ export function openExpenseForm(ctx, group, members, expense) {
         isEdit ? el('button', { className: 'textlink', type: 'button', onClick: remove }, 'Löschen') : null,
         el('div', { className: 'toolbar-spacer' }),
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Speichern')
+        el('button', { className: 'button', type: 'submit' }, 'Speichern')
       )
     );
   });

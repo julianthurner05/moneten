@@ -31,7 +31,7 @@ function build(ctx, users) {
         el(
           'button',
           {
-            className: 'textlink strong',
+            className: 'button',
             type: 'button',
             onClick: async () => {
               await api('/api/logout', { method: 'POST' });
@@ -53,7 +53,7 @@ function build(ctx, users) {
       { className: 'toolbar' },
       el('div', { className: 'toolbar-spacer' }),
       users
-        ? el('button', { className: 'textlink strong', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
+        ? el('button', { className: 'button', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
         : null
     )
   );
@@ -134,7 +134,7 @@ function openUserForm(ctx) {
         'div',
         { className: 'panel-actions' },
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Anlegen')
+        el('button', { className: 'button', type: 'submit' }, 'Anlegen')
       )
     );
   });
@@ -172,7 +172,7 @@ function openResetForm(ctx, entry) {
         'div',
         { className: 'panel-actions' },
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Zurücksetzen')
+        el('button', { className: 'button', type: 'submit' }, 'Zurücksetzen')
       )
     );
   });

@@ -65,7 +65,7 @@ export function openSettlementForm(ctx, group, members, prefill) {
         'div',
         { className: 'panel-actions' },
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'textlink strong', type: 'submit' }, 'Eintragen')
+        el('button', { className: 'button', type: 'submit' }, 'Eintragen')
       )
     );
   });

@@ -55,7 +55,7 @@ Alle Beträge als **ganze Cent** (`INTEGER`), nie als Kommazahl. IDs als zufäll
 - **recurring_items**: id, user_id, kind (`'income'` oder `'fixed'`), name, amount_cents, start_month, end_month (optional)
 - **user_settings**: user_id, budget_start_month, carryover_enabled (Standard 1)
 
-Das Feld `groups.kind` wird angelegt, aber in Phase 1 und 2 verhält sich jede Gruppe gleich. WG-Sonderfunktionen kommen später (Phase 3, nicht bauen).
+Das Feld `groups.kind` ist beim Anlegen einer Gruppe wählbar (Standard oder WG) und wird als kleines Label angezeigt, in Phase 1 und 2 verhält sich aber jede Gruppe gleich. WG-Sonderfunktionen kommen später (Phase 3, nicht bauen).
 Das Feld `groups.currency` wird angelegt, in Phase 1 und 2 gibt es aber nur EUR. Kein Währungsumrechnen bauen.
 
 ## 4. Rechenlogik
@@ -103,7 +103,7 @@ Bewusst einfach, aber nicht fahrlässig:
 2. Setup-Seite (nur bei leerer DB), Login, Passwort ändern, Logout.
 3. Admin-Bereich: User anlegen, Passwort zurücksetzen.
 4. Gruppen-Übersicht als Karten-Raster: pro Gruppe Name, Anzahl Mitglieder und groß der eigene Saldo. Umschaltbar zwischen Raster- und Listenansicht. Archivierte Gruppen per Filter einblendbar.
-5. Gruppe anlegen (Name, Mitglieder aus den bestehenden Usern), Mitglieder hinzufügen, Gruppe archivieren (nur wenn alle Salden 0).
+5. Gruppe anlegen (Name, Art Standard/WG, Mitglieder aus den bestehenden Usern), Mitglieder hinzufügen, Gruppe archivieren (nur wenn alle Salden 0).
 6. Gruppendetail: Liste der Ausgaben und Ausgleichszahlungen, nach Datum absteigend, mit Monatsfilter. Salden aller Mitglieder. Ausgleichsvorschläge.
 7. Ausgabe erfassen und bearbeiten: Betrag, Beschreibung, Datum, wer hat bezahlt, wer ist beteiligt, Aufteilung gleich, nach exakten Beträgen oder nach Anteilen. Löschen als Soft Delete mit Bestätigung.
 
@@ -125,26 +125,27 @@ Noch nicht bauen. Wird später spezifiziert.
 
 ## 7. Design
 
-Gestalterische Referenz ist das Interface von **fontshare.com**. Der Nutzer hat Screenshots geliefert, daraus abgeleitet:
+Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (viel Weißraum, große Zahlen, kleine fette Metazeilen, reduzierte Bedienelemente), aber nicht als 1:1-Kopie – Flächen, Radien und Bedienelemente orientieren sich eher am Cloudflare-Dashboard und an der Claude-App.
 
-**Farben** (aus den Screenshots gemessen, als Startwerte):
-- Hintergrund `#FFFFE6` (helles Creme-Gelb)
-- Text `#10100E` (fast Schwarz)
-- Haarlinien `#E8E8D1`
-- Sekundärtext und inaktive Elemente `#C0C0AD`
-- Dunkelmodus als Umkehrung: Hintergrund `#10100E`, Text `#FFFFE6`, Linien und Sekundärtext passend abgeleitet. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis) wie im Original, Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
+**Farben** – helle Graustufen, kein Gelb, keine Buntfarben:
+- Seitenhintergrund `#F5F5F3` (helles, minimal warmes Grau)
+- Flächen (Karten, Panels, Listen) `#FFFFFF`
+- Text `#1A1A18`
+- Linien `#E3E3E0`
+- Sekundärtext und inaktive Elemente `#6E6E66`
+- Dunkelmodus passend abgeleitet: Hintergrund `#131312`, Flächen `#1C1C1A`, Text `#ECECE8`, Linien `#2A2A27`, Sekundär `#8D8D84`. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis), Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
 
-**Keine weiteren Farben**, keine Farbakzente, keine Schatten, keine Verläufe, keine Rundungen (Radius-Tokens auf 0).
+**Erlaubt sind:** dezente Rundungen (Karten/Panels/Buttons ~8px, kleine Elemente ~6px), ein leichter Schatten nur für schwebende Panels, ein halbtransparenter Scrim hinter Panels. **Weiterhin tabu:** Buntfarben, Farbakzente, Verläufe, dekorative Schatten auf Karten oder Listen.
 
-**Aufbau-Prinzipien aus der Referenz:**
-- Struktur entsteht ausschließlich durch 1px-Haarlinien und Weißraum.
-- **Kopfzeile:** links die Wortmarke „moneten" groß und fett. Daneben die Navigation als gleich breite Zellen, getrennt durch vertikale Haarlinien: **Monat**, **Gruppen**, **Konto**. Die aktive Zelle ist schwarz gefüllt mit invertiertem Text, darunter klein links eine Zahl (bei Gruppen die Anzahl aktiver Gruppen). Die Zelle ganz rechts zeigt in Sekundärfarbe den Gesamtsaldo über alle Gruppen, z. B. „Du bekommst 42,50 €" oder „Alles ausgeglichen" (analog zu „No styles selected" im Original).
-- **Werkzeugleiste:** reine Text-Bedienelemente. Inaktiv in Sekundärfarbe, aktiv in Textfarbe. Dropdowns mit kleinem Dreieck. Wo das Original den Größen-Regler hat, sitzt bei uns die Monatsnavigation.
-- **Große Zahl links** über Listen und Rastern (im Original die Anzahl der Fonts), daneben Umschalter Liste/Raster und Sortierung als Textlinks.
-- **Karten-Raster:** Zellen mit Haarlinien. Oben eine Metazeile klein, fett, in Sekundärfarbe (Name links, Zusatzinfos rechts). Darunter als Hauptinhalt der Betrag in sehr großer Schrift, so wie im Original das Schriftmuster. Unten eine kleine Fußzeile. Hover und Fokus: 1px-Rahmen in Textfarbe, Metazeile wechselt auf Textfarbe.
-- **Listenansicht:** Zeilen durch Haarlinien getrennt, kleines Label in Sekundärfarbe oben, darunter großer Text, rechts ein fetter Text-Button wie „+ Add Style" im Original (bei uns z. B. „+ Ausgabe").
-- **Panels und Formulare:** Kasten mit Haarlinien-Rahmen wie das Properties-Dropdown im Original. Beschriftung über dem Feld, Eingabefelder mit Haarlinie unten.
-- **Mobil zuerst mitdenken:** Die Freunde nutzen die App vor allem am Handy. Auf schmalen Bildschirmen: Wortmarke plus Menü-Icon (zwei Linien wie im Original), Navigation als volle Liste, Karten einspaltig, große Zahlen skalieren über `clamp()`-Tokens. Safe-Area-Abstände für iPhones berücksichtigen. Die App soll als Web-App auf den Homescreen gelegt werden können (Manifest, Icons).
+**Aufbau-Prinzipien:**
+- Struktur durch Flächen auf grauem Grund plus 1px-Linien und Weißraum.
+- **Kopfzeile:** links die Wortmarke „moneten" groß und fett, auf dem Seitenhintergrund mit Haarlinie unten. Navigation als Tabs: **Monat**, **Gruppen**, **Konto** – der aktive Tab dunkel gefüllt mit invertiertem Text und Rundung, darunter klein eine Zahl (bei Gruppen die Anzahl aktiver Gruppen). Rechts in Sekundärfarbe der Gesamtsaldo über alle Gruppen, z. B. „Du bekommst 42,50 €" oder „Alles ausgeglichen".
+- **Werkzeugleiste:** Text-Bedienelemente für Umschalter und Filter (inaktiv Sekundär-, aktiv Textfarbe), Dropdowns mit kleinem Dreieck. Primäre Aktionen („+ Ausgabe", „Speichern") als kompakte, dunkel gefüllte Buttons mit Rundung; sekundäre Aktionen als Textlinks.
+- **Große Zahl links** über Listen und Rastern, daneben Umschalter Liste/Raster und Sortierung als Textlinks.
+- **Karten-Raster:** weiße Karten mit 1px-Rahmen, Rundung und Abstand zueinander (kein zusammenhängendes Haarlinien-Raster). Oben eine Metazeile klein, fett, in Sekundärfarbe (Name links, Zusatzinfos rechts). Darunter der Betrag in sehr großer Schrift, unten eine kleine Fußzeile. Hover und Fokus: Rahmen wechselt auf Textfarbe, Metazeile ebenso.
+- **Listen:** in einer weißen Fläche mit Rahmen und Rundung, Zeilen durch Haarlinien getrennt. Kleines Label in Sekundärfarbe oben, darunter großer Text, rechts Betrag oder Aktion.
+- **Panels und Formulare:** weiße Panels mit Rahmen, Rundung und leichtem Schatten über einem Scrim. Beschriftung über dem Feld, Eingabefelder als Kästen mit 1px-Rahmen und kleiner Rundung.
+- **Mobil zuerst mitdenken:** Die Freunde nutzen die App vor allem am Handy. Auf schmalen Bildschirmen: Wortmarke plus Menü-Icon (zwei Linien), Navigation als volle Liste, Karten einspaltig, große Zahlen skalieren über `clamp()`-Tokens. Safe-Area-Abstände für iPhones berücksichtigen. Die App soll als Web-App auf den Homescreen gelegt werden können (Manifest, Icons).
 
 ## 8. Schrift
 

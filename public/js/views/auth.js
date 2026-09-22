@@ -45,7 +45,7 @@ export function renderSetup(ctx) {
       field('Anzeigename', displayName),
       field('Passwort', password),
       error,
-      el('button', { className: 'textlink strong', type: 'submit' }, 'Admin-Account anlegen')
+      el('button', { className: 'button', type: 'submit' }, 'Admin-Account anlegen')
     );
     return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
   });
@@ -78,7 +78,7 @@ export function renderLogin(ctx) {
       field('Benutzername', username),
       field('Passwort', password),
       error,
-      el('button', { className: 'textlink strong', type: 'submit' }, 'Anmelden')
+      el('button', { className: 'button', type: 'submit' }, 'Anmelden')
     );
     return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
   });
@@ -112,7 +112,7 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
       field('Aktuelles Passwort', current),
       field('Neues Passwort', next),
       error,
-      el('button', { className: 'textlink strong', type: 'submit' }, 'Passwort ändern')
+      el('button', { className: 'button', type: 'submit' }, 'Passwort ändern')
     );
     return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
   });
