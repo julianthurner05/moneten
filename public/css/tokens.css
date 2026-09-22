@@ -1,0 +1,95 @@
+/* moneten – Design-Tokens und Schrift. Nur hier stehen Rohwerte. */
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Variable.woff2') format('woff2');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* Schrift */
+  --font-sans: 'General Sans', system-ui, sans-serif;
+
+  /* Farben (hell) */
+  --color-bg: #FFFFE6;
+  --color-text: #10100E;
+  --color-line: #E8E8D1;
+  --color-secondary: #C0C0AD;
+
+  /* Schriftgrößen */
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-base: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.375rem, 3vw, 1.75rem);
+  --text-big: clamp(1.875rem, 4.5vw, 3rem);
+  --text-huge: clamp(3rem, 9vw, 6rem);
+  --text-wordmark: clamp(1.375rem, 3.5vw, 1.75rem);
+
+  /* Zeilenhöhen */
+  --leading-tight: 1.05;
+  --leading-snug: 1.25;
+  --leading-normal: 1.5;
+
+  /* Schriftgewichte */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Buchstabenabstände */
+  --tracking-wide: 0.02em;
+
+  /* Abstände */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Linien und Radien */
+  --hairline: 1px;
+  --radius: 0;
+
+  /* Fokus */
+  --focus-width: 2px;
+  --focus-offset: 3px;
+
+  /* Bewegung */
+  --duration-fast: 150ms;
+  --duration: 250ms;
+  --duration-slow: 400ms;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --stagger-step: 40ms;
+
+  /* Ebenen */
+  --z-header: 10;
+  --z-overlay: 20;
+
+  /* Maße */
+  --header-height: 4rem;
+  --panel-max-width: 26rem;
+  --content-max-width: 90rem;
+  --tap-target: 2.75rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #10100E;
+    --color-text: #FFFFE6;
+    --color-line: #2B2B22;
+    --color-secondary: #6E6E5C;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #10100E;
+  --color-text: #FFFFE6;
+  --color-line: #2B2B22;
+  --color-secondary: #6E6E5C;
+}
