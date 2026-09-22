@@ -671,13 +671,18 @@ button.card {
   transition: background-color var(--duration-fast) var(--ease), border-color var(--duration) var(--ease);
 }
 
-.row-clickable {
+.row-clickable,
+a.row {
   cursor: pointer;
+  width: calc(100% + 2 * var(--space-3));
+  margin-inline: calc(-1 * var(--space-3));
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-sm);
 }
 
-.row-clickable:hover .row-title,
-a.row:hover .row-title {
-  color: var(--color-secondary);
+.row-clickable:hover,
+a.row:hover {
+  background-color: var(--color-field);
 }
 
 .row-muted .row-title,
