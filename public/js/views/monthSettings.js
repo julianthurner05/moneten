@@ -70,27 +70,24 @@ function build(ctx, data) {
   });
   const optionsError = el('p', { className: 'form-error', role: 'alert' });
 
+  // Der Schalter speichert sich selbst – ohne eigenen Speichern-Button.
+  carryover.addEventListener('change', async () => {
+    try {
+      await api('/api/personal/settings', {
+        method: 'PUT',
+        body: { budgetStartMonth: data.settings.budgetStartMonth ?? null, carryoverEnabled: carryover.checked },
+      });
+    } catch (err) {
+      carryover.checked = !carryover.checked;
+      optionsError.textContent = err.message;
+      optionsError.classList.add('is-visible');
+    }
+  });
   const options = el(
-    'form',
-    {
-      className: 'settings-options',
-      onSubmit: async (event) => {
-        event.preventDefault();
-        try {
-          await api('/api/personal/settings', {
-            method: 'PUT',
-            body: { budgetStartMonth: data.settings.budgetStartMonth ?? null, carryoverEnabled: carryover.checked },
-          });
-          ctx.refresh();
-        } catch (err) {
-          optionsError.textContent = err.message;
-          optionsError.classList.add('is-visible');
-        }
-      },
-    },
+    'div',
+    { className: 'settings-options' },
     el('div', { className: 'check-row' }, carryover, el('label', { for: 'settings-carryover' }, 'Übrig des Vormonats übertragen')),
-    optionsError,
-    el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'submit' }, 'Speichern'))
+    optionsError
   );
 
   const logout = el(

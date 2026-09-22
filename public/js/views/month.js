@@ -46,11 +46,13 @@ function build(ctx, data) {
       el(
         'div',
         { className: 'stat' },
-        el('div', { className: 'stat-label' }, 'Budget'),
-        el('div', { className: 'stat-value' }, formatEuro(data.budgetCents)),
-        data.uebertragCents !== 0
-          ? el('div', { className: 'stat-foot' }, `davon ${formatEuro(data.uebertragCents)} Übertrag`)
-          : null
+        el(
+          'div',
+          { className: 'stat-label' },
+          el('span', {}, 'Budget'),
+          data.uebertragCents !== 0 ? el('span', {}, `davon ${formatEuro(data.uebertragCents)} Übertrag`) : null
+        ),
+        el('div', { className: 'stat-value' }, formatEuro(data.budgetCents))
       ),
       el(
         'div',

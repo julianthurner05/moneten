@@ -66,6 +66,8 @@ function build(ctx, data) {
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
   // Monatsumschalter und Saldo mittig; die Details klappen darunter auf.
+  // Ist der Monat ausgeglichen, gibt es nichts aufzuklappen.
+  const showDetails = monthSuggestions.length > 0;
   const balanceClass = myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : '';
   const detailsInner = el(
     'div',
@@ -128,10 +130,10 @@ function build(ctx, data) {
         el('span', {}, formatEuroParts(myBalance).number),
         el('span', { className: 'hero-euro' }, formatEuroParts(myBalance).symbol)
       ),
-      infoButton
+      showDetails ? infoButton : null
     ),
-    detailsButton,
-    details,
+    showDetails ? detailsButton : null,
+    showDetails ? details : null,
     group.archived ? el('div', { className: 'detail-meta' }, el('span', {}, 'Archiviert')) : null
   );
 
