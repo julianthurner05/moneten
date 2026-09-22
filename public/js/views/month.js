@@ -55,8 +55,14 @@ function build(ctx, data) {
       el(
         'div',
         { className: 'stat' },
-        el('div', { className: 'stat-label' }, 'Ausgaben'),
-        el('div', { className: 'stat-value' }, formatEuro(data.ausgabenCents))
+        el('div', { className: 'stat-label' }, 'Fixkosten'),
+        el('div', { className: 'stat-value' }, formatEuro(data.fixkostenCents))
+      ),
+      el(
+        'div',
+        { className: 'stat' },
+        el('div', { className: 'stat-label' }, 'Variable Ausgaben'),
+        el('div', { className: 'stat-value' }, formatEuro(data.variabelCents))
       ),
       el(
         'div',
