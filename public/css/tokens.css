@@ -38,6 +38,9 @@
   --text-display: clamp(2rem, 4.5vw, 3rem);
   --text-huge: clamp(3.5rem, 10vw, 7rem);
 
+  /* Buchstabenabstände */
+  --tracking-small: 0.01em;
+
   /* Zeilenhöhen */
   --leading-tight: 1.05;
   --leading-snug: 1.3;
