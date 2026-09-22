@@ -362,7 +362,7 @@ select {
   border: none;
   padding: 0;
   cursor: pointer;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 
 .select-arrow {
@@ -374,9 +374,10 @@ select {
 
 .field .select-wrap {
   width: 100%;
-  border-bottom: var(--hairline) solid var(--color-line);
-  padding: var(--space-2) 0;
-  transition: border-color var(--duration) var(--ease);
+  background: var(--color-field);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  transition: background-color var(--duration) var(--ease);
 }
 
 .field select {
@@ -541,6 +542,7 @@ a.row:hover .row-title {
   color: var(--color-secondary);
   padding-block: var(--space-5);
   margin: 0;
+  text-align: center;
 }
 
 .stat-grid + .card-grid {
@@ -556,8 +558,15 @@ a.row:hover .row-title {
   text-align: center;
 }
 
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+  gap: var(--space-4) var(--space-7);
+  align-items: start;
+}
+
 .category-section {
-  margin-top: var(--space-8);
+  margin-top: var(--space-7);
 }
 
 .category-head {
@@ -582,6 +591,42 @@ a.row:hover .row-title {
 .konto-link {
   margin-top: var(--space-9);
   text-align: center;
+}
+
+.deposit-note {
+  margin: var(--space-9) auto 0;
+  max-width: 28rem;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  color: var(--color-secondary);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.transfer-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.transfer-chip {
+  background: var(--color-field);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
+}
+
+.transfer-chip.is-done {
+  background: var(--color-text);
+  color: var(--color-bg);
 }
 
 .stat-value.is-positive {
@@ -631,12 +676,10 @@ a.row:hover .row-title {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
+  display: flex;
   overflow-y: auto;
   background: var(--color-scrim);
-  padding-top: var(--space-8);
-  padding-left: max(var(--space-4), env(safe-area-inset-left));
-  padding-right: max(var(--space-4), env(safe-area-inset-right));
-  padding-bottom: max(var(--space-8), env(safe-area-inset-bottom));
+  padding: max(var(--space-5), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-left));
   opacity: 0;
   transition: opacity var(--duration) var(--ease);
 }
@@ -650,8 +693,9 @@ a.row:hover .row-title {
   border: var(--hairline) solid var(--color-line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-panel);
+  width: 100%;
   max-width: var(--panel-max-width);
-  margin-inline: auto;
+  margin: auto;
   padding: var(--space-6);
   transform: translateY(var(--space-2));
   transition: transform var(--duration) var(--ease), background-color var(--duration) var(--ease),
@@ -696,13 +740,12 @@ input[type='password'],
 input[type='date'],
 input[type='month'] {
   width: 100%;
-  background: transparent;
+  background: var(--color-field);
   border: none;
-  border-bottom: var(--hairline) solid var(--color-line);
-  border-radius: 0;
-  padding: var(--space-2) 0;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
   font-size: var(--text-base);
-  transition: border-color var(--duration) var(--ease);
+  transition: background-color var(--duration) var(--ease);
 }
 
 input::placeholder {
@@ -910,6 +953,32 @@ a.privat-toggle:hover {
   width: 100%;
 }
 
+.hero-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-1)));
+  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+}
+
+.hero-details.is-open {
+  opacity: 1;
+  transform: none;
+}
+
+.hero-detail-row {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-4);
+  font-size: var(--text-base);
+}
+
+.info-button.is-active {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
 .hero-label,
 .hero-foot {
   font-size: var(--text-sm);
@@ -978,6 +1047,7 @@ a.privat-toggle:hover {
 .date-chip-month {
   font-size: var(--text-sm);
   color: var(--color-secondary);
+  margin-bottom: var(--space-1);
 }
 
 .date-chip-day {
@@ -1191,7 +1261,18 @@ input[type='month'] {
 
 /* ---------- Schmale Bildschirme ---------- */
 
+@media (min-width: 768px) {
+  .hero-centered {
+    padding-block: var(--space-8) calc(var(--space-9) + var(--space-6));
+    gap: var(--space-6);
+  }
+}
+
 @media (max-width: 767px) {
+  .hero-value {
+    font-size: min(4.75rem, 19vw);
+  }
+
   .header-inner {
     flex-wrap: wrap;
     gap: var(--space-2) var(--space-4);

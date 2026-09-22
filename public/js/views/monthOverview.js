@@ -14,6 +14,21 @@ function build(ctx, data) {
     'div',
     { className: 'hero hero-centered' },
     el('div', { className: 'month-title' }, 'Übersicht'),
+    (data.categories ?? []).length > 0
+      ? el(
+          'div',
+          { className: 'stat-grid' },
+          data.categories.map((category) =>
+            el(
+              'div',
+              { className: 'stat' },
+              el('div', { className: 'stat-label' }, category.name),
+              el('div', { className: 'stat-value' }, formatEuro(category.avgCents)),
+              el('div', { className: 'stat-foot' }, 'Ø pro Monat')
+            )
+          )
+        )
+      : null,
     el('a', { className: 'textlink', href: '#/monat' }, 'Zurück zum aktuellen Monat')
   );
 

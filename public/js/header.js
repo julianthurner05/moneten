@@ -101,6 +101,9 @@ export function renderHeader(state) {
     )
   );
 
+  // Wer (außer Admin) nur in einer Gruppe ist, braucht kein Dropdown.
+  const activeGroups = state.groups.filter((g) => !g.archived);
+  const singleGroup = !state.user.isAdmin && activeGroups.length <= 1;
   const left = privat
     ? el(
         'a',
@@ -108,7 +111,13 @@ export function renderHeader(state) {
         el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '←'),
         el('span', { className: 'workspace-name' }, 'Gruppen')
       )
-    : buildWorkspace(state);
+    : singleGroup
+      ? el(
+          'div',
+          { className: 'workspace-button workspace-static' },
+          el('span', { className: 'workspace-name' }, state.selectedGroup ? state.selectedGroup.name : 'moneten')
+        )
+      : buildWorkspace(state);
 
   const privatToggle = privat
     ? el('span', { className: 'privat-toggle is-embedded', 'aria-current': 'true' }, 'Privat')

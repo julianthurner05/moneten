@@ -16,6 +16,40 @@ function build(ctx, data) {
   const { group, members, einzugPersonal } = data;
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
+  const transfers = new Set((data.einzugTransfers ?? []).map((t) => `${t.expenseId}|${t.userId}`));
+
+  // Pro Person festhalten, dass der Anteil überwiesen wurde (rein informativ).
+  const transferChips = (expense) =>
+    el(
+      'div',
+      { className: 'transfer-chips' },
+      expense.shares
+        .filter((s) => s.userId !== expense.paidBy)
+        .map((s) => {
+          const done = transfers.has(`${expense.id}|${s.userId}`);
+          return el(
+            'button',
+            {
+              className: `transfer-chip${done ? ' is-done' : ''}`,
+              type: 'button',
+              title: done ? 'Überwiesen – Klick entfernt den Vermerk' : 'Als überwiesen vermerken',
+              onClick: async (event) => {
+                event.stopPropagation();
+                try {
+                  await api(`/api/groups/${group.id}/einzug-transfers`, {
+                    method: 'POST',
+                    body: { expenseId: expense.id, userId: s.userId, transferred: !done },
+                  });
+                  ctx.refresh();
+                } catch {
+                  // Fehler still ignorieren – nächster Refresh zeigt den Stand
+                }
+              },
+            },
+            `${name(s.userId)}${done ? ' ✓' : ''}`
+          );
+        })
+    );
 
   // Kaution läuft gesondert: fest vermerkt, zählt nicht zu den Einzugskosten.
   const deposits = data.expenses.filter((e) => e.isEinzug && e.isDeposit);
@@ -35,8 +69,7 @@ function build(ctx, data) {
       'div',
       { className: 'stat' },
       el('div', { className: 'stat-label' }, 'Gemeinsam – dein Anteil'),
-      el('div', { className: 'stat-value' }, formatEuro(mySharedSum)),
-      el('div', { className: 'stat-foot' }, `von ${formatEuro(sharedSum)} gesamt`)
+      el('div', { className: 'stat-value' }, formatEuro(mySharedSum))
     ),
     el(
       'div',
@@ -54,22 +87,32 @@ function build(ctx, data) {
           { className: 'row-list', 'data-stagger': '' },
           shared.map((expense) =>
             el(
-              group.archived ? 'div' : 'button',
-              group.archived
-                ? { className: 'row' }
-                : {
-                    className: 'row row-clickable',
-                    type: 'button',
-                    onClick: () => openExpenseForm(ctx, group, members, expense, {}),
-                  },
+              'div',
+              { className: 'row' },
               dateChip(expense.spentOn),
               el(
                 'div',
                 { className: 'row-main' },
                 el('div', { className: 'row-title' }, expense.description),
-                el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`)
+                el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`),
+                group.archived ? null : transferChips(expense)
               ),
-              el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
+              el(
+                'div',
+                { className: 'row-side' },
+                el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)),
+                group.archived
+                  ? null
+                  : el(
+                      'button',
+                      {
+                        className: 'textlink',
+                        type: 'button',
+                        onClick: () => openExpenseForm(ctx, group, members, expense, {}),
+                      },
+                      'Bearbeiten'
+                    )
+              )
             )
           )
         );
@@ -98,21 +141,17 @@ function build(ctx, data) {
   const depositBlock =
     deposits.length === 0
       ? null
-      : [
-          el('div', { className: 'section-label' }, 'Kaution – zählt nicht mit'),
-          el(
+      : deposits.map((expense) => {
+          const perPerson = expense.shares[0]?.shareCents ?? Math.round(expense.amountCents / members.length);
+          return el(
             'div',
-            { className: 'row-list' },
-            deposits.map((expense) =>
-              el(
-                'div',
-                { className: 'row row-muted' },
-                el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, expense.description)),
-                el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
-              )
-            )
-          ),
-        ];
+            { className: 'deposit-note' },
+            el('span', {}, expense.description),
+            el('span', {}, formatEuro(expense.amountCents)),
+            el('span', {}, `${formatEuro(perPerson)} p.\u202fP.`),
+            el('span', {}, 'Überwiesen ✓')
+          );
+        });
 
   const fab = group.archived
     ? null

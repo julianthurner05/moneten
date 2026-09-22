@@ -1,16 +1,10 @@
 // Vorgegebene Kategorien: werden für jeden User automatisch angelegt.
 
+// Fixe Kategorien – in der Oberfläche nicht änderbar.
 export const DEFAULT_CATEGORIES = [
-  { name: 'Lebensmittel', counts: 1 },
-  { name: 'Essen gehen', counts: 1 },
+  { name: 'Einkaufen', counts: 1 },
   { name: 'Freizeit', counts: 1 },
-  { name: 'Mobilität', counts: 1 },
-  { name: 'Haushalt', counts: 1 },
-  { name: 'Kleidung & Pflege', counts: 1 },
-  { name: 'Gesundheit', counts: 1 },
-  { name: 'Abos & Handy', counts: 1 },
-  { name: 'Sonstiges', counts: 1 },
-  { name: 'Rücklagen', counts: 0 },
+  { name: 'Reisen', counts: 1 },
 ];
 
 /** Legt die Standard-Kategorien an, falls der User noch keine hat. */

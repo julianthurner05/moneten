@@ -12,7 +12,7 @@ export async function onRequestGet({ env, data, params }) {
 
   await ensureDefaultCategories(env, data.user.id);
 
-  const [members, expenses, shares, settlements, myMappings, myCategories, einzugPersonal] =
+  const [members, expenses, shares, settlements, myMappings, myCategories, einzugPersonal, einzugTransfers] =
     await env.DB.batch([
       env.DB.prepare(
         `SELECT u.id, u.display_name FROM group_members m
@@ -44,6 +44,11 @@ export async function onRequestGet({ env, data, params }) {
         `SELECT id, description, amount_cents, spent_on FROM einzug_personal
          WHERE group_id = ? AND user_id = ? ORDER BY spent_on DESC, created_at DESC`
       ).bind(group.id, data.user.id),
+      env.DB.prepare(
+        `SELECT t.expense_id, t.user_id FROM einzug_transfers t
+         JOIN group_expenses e ON e.id = t.expense_id
+         WHERE e.group_id = ?`
+      ).bind(group.id),
     ]);
 
   const sharesByExpense = new Map();
@@ -98,5 +103,6 @@ export async function onRequestGet({ env, data, params }) {
       amountCents: e.amount_cents,
       spentOn: e.spent_on,
     })),
+    einzugTransfers: einzugTransfers.results.map((t) => ({ expenseId: t.expense_id, userId: t.user_id })),
   });
 }

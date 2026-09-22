@@ -17,59 +17,9 @@ function build(ctx, data) {
       'div',
       {},
       el('div', { className: 'detail-meta' }, el('a', { className: 'textlink', href: '#/monat' }, '← Monat')),
-      el('div', { className: 'month-title' }, 'Einstellungen')
+      el('div', { className: 'month-title' }, 'Budgetplanung')
     )
   );
-
-  // --- Kategorien ---
-  const categories = [...data.categories].sort((a, b) => a.sortOrder - b.sortOrder);
-
-  const moveCategory = async (index, delta) => {
-    const other = index + delta;
-    if (other < 0 || other >= categories.length) return;
-    await api(`/api/personal/categories/${categories[index].id}`, {
-      method: 'PUT',
-      body: { sortOrder: categories[other].sortOrder },
-    });
-    await api(`/api/personal/categories/${categories[other].id}`, {
-      method: 'PUT',
-      body: { sortOrder: categories[index].sortOrder },
-    });
-    ctx.refresh();
-  };
-
-  const categoryRows =
-    categories.length === 0
-      ? el('p', { className: 'empty-note' }, 'Noch keine Kategorien.')
-      : el(
-          'div',
-          { className: 'row-list', 'data-stagger': '' },
-          categories.map((category, index) =>
-            el(
-              'div',
-              { className: 'row' },
-              el(
-                'div',
-                { className: 'row-main' },
-                el(
-                  'div',
-                  { className: 'row-label' },
-                  [category.countsTowardMonth ? 'Zählt ins Budget' : 'Zählt nicht', category.archived ? 'Archiviert' : null]
-                    .filter(Boolean)
-                    .join(' · ')
-                ),
-                el('div', { className: 'row-title' }, category.name)
-              ),
-              el(
-                'div',
-                { className: 'row-side' },
-                el('button', { className: 'textlink', type: 'button', 'aria-label': `${category.name} nach oben`, onClick: () => moveCategory(index, -1) }, '↑'),
-                el('button', { className: 'textlink', type: 'button', 'aria-label': `${category.name} nach unten`, onClick: () => moveCategory(index, 1) }, '↓'),
-                el('button', { className: 'textlink', type: 'button', onClick: () => openCategoryForm(ctx, category) }, 'Bearbeiten')
-              )
-            )
-          )
-        );
 
   // --- Wiederkehrende Posten ---
   const recurringBlock = (kind, title, addLabel) => {
@@ -157,70 +107,11 @@ function build(ctx, data) {
     'div',
     { className: 'view' },
     head,
-    el(
-      'div',
-      { className: 'settings-block-head' },
-      el('div', { className: 'section-label' }, 'Kategorien'),
-      el('button', { className: 'textlink', type: 'button', onClick: () => openCategoryForm(ctx, null) }, '+ Kategorie')
-    ),
-    categoryRows,
     recurringBlock('income', 'Wiederkehrende Einnahmen', '+ Einnahme'),
     recurringBlock('fixed', 'Fixkosten', '+ Fixkosten'),
     el('div', { className: 'section-label' }, 'Optionen'),
     options
   );
-}
-
-function openCategoryForm(ctx, category) {
-  openPanel((close) => {
-    const isEdit = !!category;
-    const name = el('input', { id: 'cat-name', type: 'text', required: true, value: category?.name ?? '' });
-    const counts = el('input', {
-      id: 'cat-counts',
-      type: 'checkbox',
-      checked: category ? category.countsTowardMonth : true,
-    });
-    const archived = el('input', { id: 'cat-archived', type: 'checkbox', checked: category?.archived ?? false });
-    const error = el('p', { className: 'form-error', role: 'alert' });
-
-    return el(
-      'form',
-      {
-        onSubmit: async (event) => {
-          event.preventDefault();
-          try {
-            if (isEdit) {
-              await api(`/api/personal/categories/${category.id}`, {
-                method: 'PUT',
-                body: { name: name.value, countsTowardMonth: counts.checked, archived: archived.checked },
-              });
-            } else {
-              await api('/api/personal/categories', {
-                method: 'POST',
-                body: { name: name.value, countsTowardMonth: counts.checked },
-              });
-            }
-            close();
-            ctx.refresh();
-          } catch (err) {
-            error.textContent = err.message;
-            error.classList.add('is-visible');
-          }
-        },
-      },
-      el('h2', { className: 'panel-title' }, isEdit ? 'Kategorie bearbeiten' : 'Neue Kategorie'),
-      el('div', { className: 'field' }, el('label', { className: 'field-label', for: 'cat-name' }, 'Name'), name),
-      el('div', { className: 'check-row' }, counts, el('label', { for: 'cat-counts' }, 'Zählt ins Monatsbudget')),
-      isEdit ? el('div', { className: 'check-row' }, archived, el('label', { for: 'cat-archived' }, 'Archiviert')) : null,
-      error,
-      el(
-        'div',
-        { className: 'panel-actions' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'button', type: 'submit' }, 'Speichern')
-      )
-    );
-  });
 }
 
 function openRecurringForm(ctx, kind, item) {

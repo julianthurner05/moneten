@@ -105,7 +105,7 @@ export function openPanel(buildContent, { onClose } = {}) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => overlay.classList.add('is-open'));
   });
-  panel.querySelector('input, select, button')?.focus();
+  // Kein Autofokus: am Handy würde sonst sofort die Tastatur aufgehen.
   return close;
 }
 

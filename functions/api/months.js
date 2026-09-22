@@ -1,6 +1,6 @@
 // Übersicht aller Monate seit dem Startmonat: Budget, Ausgaben, Übrig je Monat.
 
-import { computeOverview, isMonthString, monthAdd, recurringSum } from '../../shared/month.js';
+import { computeOverview, isMonthString, monthAdd, monthCount, recurringSum } from '../../shared/month.js';
 import { json } from '../../shared/http.js';
 
 const MAX_MONTHS = 120;
@@ -9,7 +9,7 @@ export async function onRequestGet({ env, data }) {
   const userId = data.user.id;
   const now = new Date().toISOString().slice(0, 7);
 
-  const [settingsRow, recurringRows, entrySumsRows, shareSumsRows] = await env.DB.batch([
+  const [settingsRow, recurringRows, entrySumsRows, shareSumsRows, categoryRows, categorySumRows, mappedSumRows] = await env.DB.batch([
     env.DB.prepare('SELECT budget_start_month, carryover_enabled FROM user_settings WHERE user_id = ?').bind(
       userId
     ),
@@ -29,6 +29,21 @@ export async function onRequestGet({ env, data }) {
        JOIN group_expenses e ON e.id = s.expense_id
        WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0
        GROUP BY month`
+    ).bind(userId),
+    env.DB.prepare(
+      'SELECT id, name FROM personal_categories WHERE user_id = ? AND archived = 0 AND counts_toward_month = 1 ORDER BY sort_order, name'
+    ).bind(userId),
+    env.DB.prepare(
+      `SELECT substr(spent_on, 1, 7) AS month, category_id, SUM(amount_cents) AS cents
+       FROM personal_entries WHERE user_id = ? GROUP BY month, category_id`
+    ).bind(userId),
+    env.DB.prepare(
+      `SELECT substr(e.spent_on, 1, 7) AS month, m.category_id, SUM(s.share_cents) AS cents
+       FROM expense_shares s
+       JOIN group_expenses e ON e.id = s.expense_id
+       JOIN personal_expense_categories m ON m.expense_id = e.id AND m.user_id = s.user_id
+       WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0
+       GROUP BY month, m.category_id`
     ).bind(userId),
   ]);
 
@@ -73,5 +88,20 @@ export async function onRequestGet({ env, data }) {
     m = monthAdd(m, -1);
   }
 
-  return json({ months });
+  // Durchschnitt pro Kategorie seit dem Startmonat.
+  const avgMonths = monthCount(start, now);
+  const avgSums = new Map();
+  for (const rows of [categorySumRows.results, mappedSumRows.results]) {
+    for (const row of rows) {
+      if (row.month >= start && row.month <= now) {
+        avgSums.set(row.category_id, (avgSums.get(row.category_id) ?? 0) + (row.cents ?? 0));
+      }
+    }
+  }
+  const categories = categoryRows.results.map((c) => ({
+    name: c.name,
+    avgCents: Math.round((avgSums.get(c.id) ?? 0) / avgMonths),
+  }));
+
+  return json({ months, categories });
 }

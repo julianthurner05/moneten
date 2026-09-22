@@ -13,7 +13,7 @@ export async function renderAccount(ctx) {
       el(
         'div',
         { className: 'hero hero-centered' },
-        el('div', { className: 'month-title' }, 'Konto'),
+        el('div', { className: 'month-title' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto'),
         el('a', { className: 'textlink', href: '#/monat' }, '← Privat')
       ),
       buildAccountSection(ctx, users)

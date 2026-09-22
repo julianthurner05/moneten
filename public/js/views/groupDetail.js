@@ -66,8 +66,61 @@ function build(ctx, data) {
     .filter((entry) => monthOf(entry.date) === month)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
-  // Monatsumschalter und Saldo mittig, mit viel Luft nach unten.
+  // Monatsumschalter und Saldo mittig; die Details klappen darunter auf.
   const balanceClass = myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : '';
+  const details = el(
+    'div',
+    { className: 'hero-details' },
+    monthSuggestions.length === 0
+      ? el('div', { className: 'hero-detail-row' }, el('span', {}, 'In diesem Monat ist alles ausgeglichen.'))
+      : monthSuggestions.map((s) =>
+          el(
+            'div',
+            { className: 'hero-detail-row' },
+            el(
+              'span',
+              {},
+              s.toUser === me ? `${name(s.fromUser)} schuldet dir` : `Du schuldest ${name(s.toUser)}`
+            ),
+            el(
+              'span',
+              { className: `row-amount${s.toUser === me ? ' is-positive' : ' is-negative'}` },
+              formatEuro(s.amountCents)
+            )
+          )
+        )
+  );
+  details.style.display = 'none';
+
+  const infoButton = el(
+    'button',
+    {
+      className: 'info-button',
+      type: 'button',
+      'aria-label': 'Wer schuldet wem?',
+      'aria-expanded': 'false',
+      onClick: () => {
+        const open = details.style.display === 'none';
+        infoButton.setAttribute('aria-expanded', String(open));
+        infoButton.classList.toggle('is-active', open);
+        if (open) {
+          details.style.display = '';
+          requestAnimationFrame(() => requestAnimationFrame(() => details.classList.add('is-open')));
+        } else {
+          details.classList.remove('is-open');
+          details.addEventListener(
+            'transitionend',
+            () => {
+              if (!details.classList.contains('is-open')) details.style.display = 'none';
+            },
+            { once: true }
+          );
+        }
+      },
+    },
+    'i'
+  );
+
   const hero = el(
     'div',
     { className: 'hero hero-centered' },
@@ -79,17 +132,9 @@ function build(ctx, data) {
       'div',
       { className: 'hero-row' },
       el('div', { className: `hero-value${balanceClass}` }, formatEuro(myBalance)),
-      el(
-        'button',
-        {
-          className: 'info-button',
-          type: 'button',
-          'aria-label': 'Wer schuldet wem?',
-          onClick: () => openBalanceInfo(ctx, name, monthSuggestions),
-        },
-        'i'
-      )
+      infoButton
     ),
+    details,
     group.archived ? el('div', { className: 'detail-meta' }, el('span', {}, 'Archiviert')) : null
   );
 
@@ -193,46 +238,6 @@ function build(ctx, data) {
       );
 
   return el('div', { className: 'view' }, hero, entryList, fab);
-}
-
-function openBalanceInfo(ctx, name, monthSuggestions) {
-  openPanel((close) =>
-    el(
-      'div',
-      {},
-      monthSuggestions.length === 0
-        ? el('p', { className: 'panel-message' }, 'In diesem Monat ist alles ausgeglichen.')
-        : el(
-            'div',
-            { className: 'row-list' },
-            monthSuggestions.map((s) =>
-              el(
-                'div',
-                { className: 'row' },
-                el(
-                  'div',
-                  { className: 'row-main' },
-                  el(
-                    'div',
-                    { className: 'row-title' },
-                    s.toUser === ctx.state.user.id ? `${name(s.fromUser)} schuldet dir` : `Du schuldest ${name(s.toUser)}`
-                  )
-                ),
-                el(
-                  'div',
-                  { className: 'row-side' },
-                  el(
-                    'div',
-                    { className: `row-amount${s.toUser === ctx.state.user.id ? ' is-positive' : ' is-negative'}` },
-                    formatEuro(s.amountCents)
-                  )
-                )
-              )
-            )
-          ),
-      el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'button', onClick: () => close() }, 'OK'))
-    )
-  );
 }
 
 async function openAddMember(ctx, group, members) {

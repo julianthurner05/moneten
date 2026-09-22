@@ -13,16 +13,6 @@ export async function renderMonth(ctx, month) {
   ctx.show('monat', () => build(ctx, data));
 }
 
-/** Dünner Anzeigebalken, ratio 0–1. */
-function meter(ratio) {
-  const clamped = Math.max(0, Math.min(1, ratio));
-  return el(
-    'div',
-    { className: 'meter' },
-    el('div', { className: 'meter-fill', style: `width: ${(clamped * 100).toFixed(1)}%` })
-  );
-}
-
 function build(ctx, data) {
   const month = data.month;
   const mappedByCategory = new Map();
@@ -36,14 +26,15 @@ function build(ctx, data) {
     entriesByCategory.get(entry.categoryId).push(entry);
   }
 
-  const visible = data.categories.filter(
-    (c) => (!c.archived || c.monthSumCents !== 0) && (c.monthSumCents !== 0 || entriesByCategory.has(c.id) || mappedByCategory.has(c.id))
+  // Die fixen Kategorien sind immer sichtbar; alte/archivierte nur mit Inhalt.
+  const counting = data.categories.filter((c) => !c.archived && c.countsTowardMonth);
+  const nonCounting = data.categories.filter(
+    (c) =>
+      (c.archived || !c.countsTowardMonth) &&
+      (c.monthSumCents !== 0 || entriesByCategory.has(c.id) || mappedByCategory.has(c.id))
   );
-  const counting = visible.filter((c) => c.countsTowardMonth);
-  const nonCounting = visible.filter((c) => !c.countsTowardMonth);
 
   // Statistik groß und mittig oben, darunter beim Scrollen die Listen.
-  const spentRatio = data.budgetCents > 0 ? data.ausgabenCents / data.budgetCents : 0;
   const hero = el(
     'div',
     { className: 'hero hero-centered' },
@@ -64,11 +55,7 @@ function build(ctx, data) {
         'div',
         { className: 'stat' },
         el('div', { className: 'stat-label' }, 'Ausgaben'),
-        el('div', { className: 'stat-value' }, formatEuro(data.ausgabenCents)),
-        data.budgetCents > 0 ? meter(spentRatio) : null,
-        data.budgetCents > 0
-          ? el('div', { className: 'stat-foot' }, `${Math.round(spentRatio * 100)} % des Budgets`)
-          : null
+        el('div', { className: 'stat-value' }, formatEuro(data.ausgabenCents))
       ),
       el(
         'div',
@@ -97,12 +84,7 @@ function build(ctx, data) {
       el(
         'div',
         { className: 'category-head' },
-        el(
-          'div',
-          {},
-          el('div', { className: 'category-name' }, category.name),
-          el('div', { className: 'row-label' }, `Ø ${formatEuro(category.avgCents)} pro Monat`)
-        ),
+        el('div', { className: 'category-name' }, category.name),
         el('div', { className: 'category-sum' }, formatEuro(category.monthSumCents))
       ),
       rows.length === 0
@@ -128,8 +110,8 @@ function build(ctx, data) {
                 );
               }
               return el(
-                'a',
-                { className: 'row', href: `#/gruppen/${share.groupId}` },
+                'div',
+                { className: 'row' },
                 dateChip(share.spentOn),
                 el(
                   'div',
@@ -144,57 +126,52 @@ function build(ctx, data) {
     );
   };
 
-  const countingBlock =
-    counting.length === 0
-      ? el('p', { className: 'empty-note' }, 'Noch keine Einträge in diesem Monat.')
-      : counting.map(categorySection);
+  const sections = [...counting.map(categorySection)];
 
-  const nonCountingBlock =
-    nonCounting.length === 0
-      ? null
-      : [el('div', { className: 'section-label' }, 'Zählt nicht ins Monatsbudget'), nonCounting.map(categorySection)];
+  if (nonCounting.length > 0) sections.push(...nonCounting.map(categorySection));
 
-  let sharesBlock = null;
-  if (data.groupShares.length > 0) {
-    sharesBlock = [
-      el('div', { className: 'section-label' }, 'Deine Anteile aus Gruppen'),
-      data.groupShares.map((group) =>
-        el(
-          'section',
-          { className: 'category-section' },
+  const sharesSections = data.groupShares.map((group) =>
+    el(
+      'section',
+      { className: 'category-section' },
+      el(
+        'div',
+        { className: 'category-head' },
+        el('div', { className: 'category-name' }, group.groupName),
+        el('div', { className: 'category-sum' }, formatEuro(group.sumCents))
+      ),
+      el(
+        'div',
+        { className: 'row-list', 'data-stagger': '' },
+        group.items.map((item) =>
           el(
             'div',
-            { className: 'category-head' },
-            el('a', { className: 'category-name', href: `#/gruppen/${group.groupId}` }, group.groupName),
-            el('div', { className: 'category-sum' }, formatEuro(group.sumCents))
-          ),
-          el(
-            'div',
-            { className: 'row-list', 'data-stagger': '' },
-            group.items.map((item) =>
-              el(
-                'a',
-                { className: 'row', href: `#/gruppen/${group.groupId}` },
-                dateChip(item.spentOn),
-                el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, item.description)),
-                el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(item.shareCents)))
-              )
-            )
+            { className: 'row' },
+            dateChip(item.spentOn),
+            el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, item.description)),
+            el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(item.shareCents)))
           )
         )
-      ),
-    ];
-  }
+      )
+    )
+  );
+
+  sections.push(...sharesSections);
 
   const kontoLink = el(
     'div',
     { className: 'konto-link' },
-    el('a', { className: 'privat-toggle', href: '#/konto' }, 'Konto')
+    el('a', { className: 'privat-toggle', href: '#/konto' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto')
   );
+
+  const listArea =
+    sections.length === 0
+      ? el('p', { className: 'empty-note' }, 'Noch keine Einträge in diesem Monat.')
+      : el('div', { className: 'category-grid' }, sections);
 
   const fab = buildFab([{ label: 'Eintrag', onClick: () => openNewEntry(ctx, data) }]);
 
-  return el('div', { className: 'view' }, hero, countingBlock, nonCountingBlock, sharesBlock, kontoLink, fab);
+  return el('div', { className: 'view' }, hero, listArea, kontoLink, fab);
 }
 
 function noticePanel(message) {
