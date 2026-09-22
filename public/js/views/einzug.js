@@ -1,7 +1,7 @@
 // Einzug-Bereich einer WG-Gruppe: gemeinsame Einzugs-Ausgaben plus privater Bereich.
 
 import { api } from '../api.js';
-import { dateChip } from '../controls.js';
+import { createDatePicker, dateChip } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { centsToInput, formatDate, formatEuro, parseEuroInput, todayIso } from '../format.js';
@@ -102,8 +102,14 @@ function build(ctx, data) {
           { className: 'row-list', 'data-stagger': '' },
           shared.map((expense) =>
             el(
-              'div',
-              { className: 'row' },
+              group.archived ? 'div' : 'button',
+              group.archived
+                ? { className: 'row' }
+                : {
+                    className: 'row row-clickable',
+                    type: 'button',
+                    onClick: () => openExpenseForm(ctx, group, members, expense, {}),
+                  },
               dateChip(expense.spentOn),
               el(
                 'div',
@@ -112,22 +118,7 @@ function build(ctx, data) {
                 el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`),
                 group.archived ? null : transferChips(expense)
               ),
-              el(
-                'div',
-                { className: 'row-side' },
-                el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)),
-                group.archived
-                  ? null
-                  : el(
-                      'button',
-                      {
-                        className: 'textlink',
-                        type: 'button',
-                        onClick: () => openExpenseForm(ctx, group, members, expense, {}),
-                      },
-                      'Bearbeiten'
-                    )
-              )
+              el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
             )
           ),
           depositRows
@@ -185,7 +176,7 @@ function openPrivateForm(ctx, group, item) {
       placeholder: '0,00',
       value: item ? centsToInput(item.amountCents) : '',
     });
-    const date = el('input', { id: 'einzug-date', type: 'date', required: true, value: item?.spentOn ?? todayIso() });
+    const date = createDatePicker({ id: 'einzug-date', value: item?.spentOn ?? todayIso() });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const showError = (message) => {
@@ -235,7 +226,7 @@ function openPrivateForm(ctx, group, item) {
       el('h2', { className: 'panel-title' }, isEdit ? 'Privaten Eintrag bearbeiten' : 'Neuer privater Eintrag'),
       wrap('Beschreibung', description, 'einzug-desc'),
       wrap('Betrag', amount, 'einzug-amount'),
-      wrap('Datum', date, 'einzug-date'),
+      wrap('Datum', date.root, 'einzug-date'),
       error,
       el(
         'div',

@@ -4,7 +4,8 @@ const euroFormat = new Intl.NumberFormat('de-AT', { style: 'currency', currency:
 const dateFormat = new Intl.DateTimeFormat('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
 const monthFormat = new Intl.DateTimeFormat('de-AT', { month: 'long', year: 'numeric' });
 
-export function formatEuro(cents) {
+/** Betrag und €-Zeichen getrennt – fürs große Saldo mit kleinem Symbol. */
+export function formatEuroParts(cents) {
   // de-AT stellt das €-Zeichen voran; laut Vorgabe steht es nach dem Betrag (1.234,56 €).
   const parts = euroFormat.formatToParts(cents / 100);
   const symbol = parts.find((p) => p.type === 'currency')?.value ?? '€';
@@ -12,7 +13,12 @@ export function formatEuro(cents) {
     .filter((p) => p.type !== 'currency' && p.type !== 'literal')
     .map((p) => p.value)
     .join('');
-  return `${number} ${symbol}`;
+  return { number, symbol };
+}
+
+export function formatEuro(cents) {
+  const { number, symbol } = formatEuroParts(cents);
+  return `${number}\u00A0${symbol}`;
 }
 
 /** Eingabe wie "12,5", "1.234,56" oder "12.50" nach Cent. Gibt null bei Unlesbarem. */

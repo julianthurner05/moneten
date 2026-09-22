@@ -4,7 +4,7 @@ import { api } from '../api.js';
 import { dateChip, monthSwitch, suggestFromBalances } from '../controls.js';
 import { el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
-import { currentMonth, formatEuro, monthOf } from '../format.js';
+import { currentMonth, formatEuro, formatEuroParts, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
 import { openSettlementForm } from './settlementForm.js';
 
@@ -135,7 +135,12 @@ function build(ctx, data) {
     el(
       'div',
       { className: 'hero-row' },
-      el('div', { className: `hero-value${balanceClass}` }, formatEuro(myBalance)),
+      el(
+        'div',
+        { className: `hero-value${balanceClass}` },
+        el('span', {}, formatEuroParts(myBalance).number),
+        el('span', { className: 'hero-euro' }, formatEuroParts(myBalance).symbol)
+      ),
       infoButton
     ),
     detailsButton,
@@ -234,61 +239,9 @@ function build(ctx, data) {
             badge: reminder,
             onClick: () => openSettlementForm(ctx, group, members, { suggestions: mySuggestions, me }),
           },
-          {
-            label: 'Mitglied',
-            onClick: () => openAddMember(ctx, group, members),
-          },
         ],
         { badge: reminder }
       );
 
   return el('div', { className: 'view' }, hero, entryList, fab);
-}
-
-async function openAddMember(ctx, group, members) {
-  const { users } = await api('/api/users');
-  const memberIds = new Set(members.map((m) => m.id));
-  const candidates = users.filter((user) => !memberIds.has(user.id));
-  if (candidates.length === 0) {
-    noticePanel('Alle Accounts sind schon Mitglied.');
-    return;
-  }
-  openPanel((close) => {
-    const select = el(
-      'select',
-      { id: 'add-member' },
-      candidates.map((user) => el('option', { value: user.id }, user.displayName))
-    );
-    const error = el('p', { className: 'form-error', role: 'alert' });
-    return el(
-      'form',
-      {
-        onSubmit: async (event) => {
-          event.preventDefault();
-          try {
-            await api(`/api/groups/${group.id}/members`, { method: 'POST', body: { userId: select.value } });
-            close();
-            ctx.refresh();
-          } catch (err) {
-            error.textContent = err.message;
-            error.classList.add('is-visible');
-          }
-        },
-      },
-      el('h2', { className: 'panel-title' }, 'Mitglied hinzufügen'),
-      el(
-        'div',
-        { className: 'field' },
-        el('label', { className: 'field-label', for: 'add-member' }, 'Account'),
-        el('span', { className: 'select-wrap' }, select, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾'))
-      ),
-      error,
-      el(
-        'div',
-        { className: 'panel-actions' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'button', type: 'submit' }, 'Hinzufügen')
-      )
-    );
-  });
 }

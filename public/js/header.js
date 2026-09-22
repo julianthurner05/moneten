@@ -123,20 +123,29 @@ export function renderHeader(state) {
     ? el('span', { className: 'privat-toggle is-embedded', 'aria-current': 'true' }, 'Privat')
     : el('a', { className: 'privat-toggle', href: '#/monat' }, 'Privat');
 
-  // Unter der Linie: im Gruppen-Modus die Tabs, im Privat-Modus Übersicht und Budgetplanung.
-  const tabs = privat
-    ? el(
-        'div',
-        { className: 'header-tabs' },
+  const tabContent = privat
+    ? [
         el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht'),
-        el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung')
-      )
+        el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung'),
+      ]
     : navItems.length > 0
-      ? el('div', { className: 'header-tabs' }, nav)
-      : null;
+      ? [nav]
+      : [];
 
-  header.replaceChildren(
-    el('div', { className: 'header-inner' }, left, el('div', { className: 'header-spacer' }), privatToggle),
-    ...(tabs ? [tabs] : [])
-  );
+  // Am Handy sitzen die Tabs unter der Linie, am Desktop in der Kopfzeile.
+  const mobile = matchMedia('(max-width: 767px)').matches;
+  if (mobile) {
+    header.replaceChildren(
+      el('div', { className: 'header-inner' }, left, el('div', { className: 'header-spacer' }), privatToggle),
+      ...(tabContent.length > 0 ? [el('div', { className: 'header-tabs' }, tabContent)] : [])
+    );
+  } else if (privat) {
+    header.replaceChildren(
+      el('div', { className: 'header-inner' }, left, el('div', { className: 'header-spacer' }), tabContent, privatToggle)
+    );
+  } else {
+    header.replaceChildren(
+      el('div', { className: 'header-inner' }, left, tabContent, el('div', { className: 'header-spacer' }), privatToggle)
+    );
+  }
 }

@@ -2,6 +2,7 @@
 // Eigene Daten, Passwort ändern, Abmelden – für Admins die User-Verwaltung.
 
 import { api } from '../api.js';
+import { createSelect } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 
 export async function renderAccount(ctx) {
@@ -85,6 +86,16 @@ function buildAccountSection(ctx, users) {
             el(
               'div',
               { className: 'row' },
+              el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, 'Mitglied hinzufügen')),
+              el(
+                'div',
+                { className: 'row-side' },
+                el('button', { className: 'textlink', type: 'button', onClick: () => openAddMemberForm(ctx, activeGroups, users) }, 'Auswählen')
+              )
+            ),
+            el(
+              'div',
+              { className: 'row' },
               el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, 'Gruppe archivieren')),
               el(
                 'div',
@@ -110,13 +121,56 @@ function buildAccountSection(ctx, users) {
   ];
 }
 
+function openAddMemberForm(ctx, groups, users) {
+  openPanel((close) => {
+    const groupSelect = createSelect({
+      id: 'member-group',
+      options: groups.map((group) => ({ value: group.id, label: group.name })),
+    });
+    const userSelect = createSelect({
+      id: 'member-user',
+      options: users.map((user) => ({ value: user.id, label: user.displayName })),
+    });
+    const error = el('p', { className: 'form-error', role: 'alert' });
+    const wrap = (label, select, forId) =>
+      el('div', { className: 'field' }, el('label', { className: 'field-label', for: forId }, label), select.root);
+
+    return el(
+      'form',
+      {
+        onSubmit: async (event) => {
+          event.preventDefault();
+          try {
+            await api(`/api/groups/${groupSelect.value}/members`, { method: 'POST', body: { userId: userSelect.value } });
+            ctx.state.groups = []; // Gruppen-Cache verwerfen
+            close();
+            ctx.refresh();
+          } catch (err) {
+            error.textContent = err.message;
+            error.classList.add('is-visible');
+          }
+        },
+      },
+      el('h2', { className: 'panel-title' }, 'Mitglied hinzufügen'),
+      wrap('Gruppe', groupSelect, 'member-group'),
+      wrap('Account', userSelect, 'member-user'),
+      error,
+      el(
+        'div',
+        { className: 'panel-actions' },
+        el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
+        el('button', { className: 'button', type: 'submit' }, 'Hinzufügen')
+      )
+    );
+  });
+}
+
 function openArchiveForm(ctx, groups) {
   openPanel((close) => {
-    const select = el(
-      'select',
-      { id: 'archive-group' },
-      groups.map((group) => el('option', { value: group.id }, group.name))
-    );
+    const select = createSelect({
+      id: 'archive-group',
+      options: groups.map((group) => ({ value: group.id, label: group.name })),
+    });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     return el(
@@ -156,7 +210,7 @@ function openArchiveForm(ctx, groups) {
         'div',
         { className: 'field' },
         el('label', { className: 'field-label', for: 'archive-group' }, 'Gruppe'),
-        el('span', { className: 'select-wrap' }, select, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
+        select.root,
         error
       ),
       el(

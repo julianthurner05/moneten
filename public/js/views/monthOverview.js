@@ -10,10 +10,18 @@ export async function renderMonthOverview(ctx) {
 }
 
 function build(ctx, data) {
-  const hero = el(
+  const head = el(
     'div',
-    { className: 'hero hero-centered' },
-    el('div', { className: 'month-title' }, 'Übersicht'),
+    { className: 'section-head' },
+    el(
+      'div',
+      {},
+      el('div', { className: 'detail-meta' }, el('a', { className: 'textlink', href: '#/monat' }, '← Monat')),
+      el('div', { className: 'month-title' }, 'Übersicht')
+    )
+  );
+
+  const stats =
     (data.categories ?? []).length > 0
       ? el(
           'div',
@@ -22,15 +30,17 @@ function build(ctx, data) {
             el(
               'div',
               { className: 'stat' },
-              el('div', { className: 'stat-label' }, category.name),
-              el('div', { className: 'stat-value' }, formatEuro(category.avgCents)),
-              el('div', { className: 'stat-foot' }, 'Ø pro Monat')
+              el(
+                'div',
+                { className: 'stat-label' },
+                el('span', {}, category.name),
+                el('span', {}, 'Ø pro Monat')
+              ),
+              el('div', { className: 'stat-value' }, formatEuro(category.avgCents))
             )
           )
         )
-      : null,
-    el('a', { className: 'textlink', href: '#/monat' }, 'Zurück zum aktuellen Monat')
-  );
+      : null;
 
   const list =
     data.months.length === 0
@@ -61,5 +71,5 @@ function build(ctx, data) {
           )
         );
 
-  return el('div', { className: 'view' }, hero, list);
+  return el('div', { className: 'view' }, head, stats, list);
 }

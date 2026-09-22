@@ -1,6 +1,7 @@
 // Ausgabe erfassen und bearbeiten, inklusive Aufteilung und Soft Delete.
 
 import { api } from '../api.js';
+import { createDatePicker, createSelect } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { centsToInput, parseEuroInput, todayIso } from '../format.js';
 
@@ -30,33 +31,30 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
       placeholder: '0,00',
       value: expense ? centsToInput(expense.amountCents) : '',
     });
-    const date = el('input', { id: 'exp-date', type: 'date', required: true, value: expense?.spentOn ?? todayIso() });
-    const paidBy = el(
-      'select',
-      { id: 'exp-paidby' },
-      members.map((member) =>
-        el(
-          'option',
-          { value: member.id, selected: member.id === (expense?.paidBy ?? ctx.state.user.id) },
-          member.displayName
-        )
-      )
-    );
-    const splitMode = el(
-      'select',
-      { id: 'exp-split' },
-      el('option', { value: 'equal', selected: (expense?.splitMode ?? 'equal') === 'equal' }, 'Gleich aufteilen'),
-      el('option', { value: 'exact', selected: expense?.splitMode === 'exact' }, 'Exakte Beträge'),
-      el('option', { value: 'shares', selected: expense?.splitMode === 'shares' }, 'Nach Anteilen')
-    );
-    const myCategory = el(
-      'select',
-      { id: 'exp-category' },
-      el('option', { value: '', selected: !expense?.myCategoryId }, 'Keine'),
-      myCategories.map((c) =>
-        el('option', { value: c.id, selected: c.id === expense?.myCategoryId }, c.name)
-      )
-    );
+    const date = createDatePicker({ id: 'exp-date', value: expense?.spentOn ?? todayIso() });
+    const paidBy = createSelect({
+      id: 'exp-paidby',
+      options: members.map((member) => ({ value: member.id, label: member.displayName })),
+      value: expense?.paidBy ?? ctx.state.user.id,
+    });
+    const splitMode = createSelect({
+      id: 'exp-split',
+      options: [
+        { value: 'equal', label: 'Gleich aufteilen' },
+        { value: 'exact', label: 'Exakte Beträge' },
+        { value: 'shares', label: 'Nach Anteilen' },
+      ],
+      value: expense?.splitMode ?? 'equal',
+      onChange: () => {
+        for (const { detail } of participantRows) detail.style.display = 'none';
+        updateDetailVisibility();
+      },
+    });
+    const myCategory = createSelect({
+      id: 'exp-category',
+      options: [{ value: '', label: 'Keine' }, ...myCategories.map((c) => ({ value: c.id, label: c.name }))],
+      value: expense?.myCategoryId ?? '',
+    });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     // Pro Mitglied: Checkbox plus Detail-Eingabe für exakte Beträge bzw. Anteile.
@@ -105,10 +103,6 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
 
     for (const { detail } of participantRows) detail.style.display = 'none';
     updateDetailVisibility();
-    splitMode.addEventListener('change', () => {
-      for (const { detail } of participantRows) (detail.style.display = 'none');
-      updateDetailVisibility();
-    });
 
     const showError = (message) => {
       error.textContent = message;
@@ -198,24 +192,12 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
     const advanced = el(
       'div',
       { className: 'form-advanced' },
-      wrap('Datum', date, 'exp-date'),
-      wrap(
-        'Bezahlt von',
-        el('span', { className: 'select-wrap' }, paidBy, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
-        'exp-paidby'
-      ),
-      wrap(
-        'Aufteilung',
-        el('span', { className: 'select-wrap' }, splitMode, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
-        'exp-split'
-      ),
+      wrap('Datum', date.root, 'exp-date'),
+      wrap('Bezahlt von', paidBy.root, 'exp-paidby'),
+      wrap('Aufteilung', splitMode.root, 'exp-split'),
       el('div', { className: 'field' }, el('span', { className: 'field-label' }, 'Beteiligt'), participantRows.map((r) => r.row)),
       !einzug && myCategories.length > 0
-        ? wrap(
-            'Deine Kategorie im Monat',
-            el('span', { className: 'select-wrap' }, myCategory, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
-            'exp-category'
-          )
+        ? wrap('Deine Kategorie im Monat', myCategory.root, 'exp-category')
         : null
     );
 

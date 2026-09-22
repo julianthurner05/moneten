@@ -1,6 +1,7 @@
 // Persönlichen Eintrag erfassen, bearbeiten und löschen.
 
 import { api } from '../api.js';
+import { createDatePicker, createSelect } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { centsToInput, parseEuroInput, todayIso } from '../format.js';
 
@@ -17,13 +18,12 @@ export function openEntryForm(ctx, categories, entry, { defaultCategoryId, month
       placeholder: '0,00',
       value: entry ? centsToInput(entry.amountCents) : '',
     });
-    const date = el('input', { id: 'entry-date', type: 'date', required: true, value: entry?.spentOn ?? todayIso() });
-    const selectedCategory = entry?.categoryId ?? defaultCategoryId ?? categories[0]?.id;
-    const category = el(
-      'select',
-      { id: 'entry-category' },
-      categories.map((c) => el('option', { value: c.id, selected: c.id === selectedCategory }, c.name))
-    );
+    const date = createDatePicker({ id: 'entry-date', value: entry?.spentOn ?? todayIso() });
+    const category = createSelect({
+      id: 'entry-category',
+      options: categories.map((c) => ({ value: c.id, label: c.name })),
+      value: entry?.categoryId ?? defaultCategoryId ?? categories[0]?.id,
+    });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const showError = (message) => {
@@ -78,12 +78,8 @@ export function openEntryForm(ctx, categories, entry, { defaultCategoryId, month
       el('h2', { className: 'panel-title' }, isEdit ? 'Eintrag bearbeiten' : 'Neuer Eintrag'),
       wrap('Beschreibung', description, 'entry-desc'),
       wrap('Betrag', amount, 'entry-amount'),
-      wrap('Datum', date, 'entry-date'),
-      wrap(
-        'Kategorie',
-        el('span', { className: 'select-wrap' }, category, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
-        'entry-category'
-      ),
+      wrap('Datum', date.root, 'entry-date'),
+      wrap('Kategorie', category.root, 'entry-category'),
       error,
       el(
         'div',

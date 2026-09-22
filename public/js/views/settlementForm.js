@@ -1,6 +1,7 @@
 // Begleichung erfassen. Die Lightbox schlägt vor, was an wen zu begleichen wäre.
 
 import { api } from '../api.js';
+import { createDatePicker, createSelect } from '../controls.js';
 import { el, openPanel } from '../dom.js';
 import { centsToInput, parseEuroInput, todayIso } from '../format.js';
 
@@ -12,15 +13,13 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me }
   const initial = suggestions.find((s) => s.fromUser === me) ?? suggestions[0] ?? null;
 
   openPanel((close) => {
-    const memberOptions = (selectedId) =>
-      members.map((member) => el('option', { value: member.id, selected: member.id === selectedId }, member.displayName));
-
-    const fromUser = el('select', { id: 'set-from' }, memberOptions(initial?.fromUser ?? me));
-    const toUser = el(
-      'select',
-      { id: 'set-to' },
-      memberOptions(initial?.toUser ?? members.find((m) => m.id !== (initial?.fromUser ?? me))?.id)
-    );
+    const memberOptions = members.map((member) => ({ value: member.id, label: member.displayName }));
+    const fromUser = createSelect({ id: 'set-from', options: memberOptions, value: initial?.fromUser ?? me });
+    const toUser = createSelect({
+      id: 'set-to',
+      options: memberOptions,
+      value: initial?.toUser ?? members.find((m) => m.id !== (initial?.fromUser ?? me))?.id,
+    });
     const amount = el('input', {
       id: 'set-amount',
       type: 'text',
@@ -29,7 +28,7 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me }
       placeholder: '0,00',
       value: initial ? centsToInput(initial.amountCents) : '',
     });
-    const date = el('input', { id: 'set-date', type: 'date', required: true, value: todayIso() });
+    const date = createDatePicker({ id: 'set-date', value: todayIso() });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const applySuggestion = (s) => {
@@ -60,8 +59,6 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me }
 
     const wrap = (label, input, forId) =>
       el('div', { className: 'field' }, el('label', { className: 'field-label', for: forId }, label), input);
-    const selectWrap = (select) =>
-      el('span', { className: 'select-wrap' }, select, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾'));
 
     return el(
       'form',
@@ -89,10 +86,10 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me }
       },
       el('h2', { className: 'panel-title' }, 'Begleichung'),
       suggestionBlock,
-      wrap('Von', selectWrap(fromUser), 'set-from'),
-      wrap('An', selectWrap(toUser), 'set-to'),
+      wrap('Von', fromUser.root, 'set-from'),
+      wrap('An', toUser.root, 'set-to'),
       wrap('Betrag', amount, 'set-amount'),
-      wrap('Datum', date, 'set-date'),
+      wrap('Datum', date.root, 'set-date'),
       error,
       el(
         'div',
