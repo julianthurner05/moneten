@@ -47,7 +47,7 @@ function build(ctx, users) {
   const head = el(
     'div',
     { className: 'section-head' },
-    el('div', { className: 'big-count' }, users ? String(users.length) : '1'),
+    el('div', { className: 'month-title' }, 'Konto'),
     el(
       'div',
       { className: 'toolbar' },

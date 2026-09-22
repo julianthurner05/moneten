@@ -1,52 +1,43 @@
-/* moneten – Design-Tokens und Schrift. Nur hier stehen Rohwerte. */
+/* moneten – Design-Tokens und Schrift. Nur hier stehen Rohwerte.
+   Ein einziger Schriftschnitt (GT Standard Regular) – Hierarchie entsteht
+   ausschließlich über Größe, Weißraum und Farbe, nie über Fettung. */
 
+/* Die Trial-Version enthält keine Umlaute und kein Ø – diese Zeichen fallen
+   über unicode-range auf die Systemschrift zurück. Mit der Vollversion der
+   Schrift die unicode-range-Zeile einfach entfernen. */
 @font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/GeneralSans-Variable.woff2') format('woff2');
-  font-weight: 200 700;
+  font-family: 'GT Standard';
+  src: url('/fonts/GT-Standard-L-Standard-Regular-Trial.otf') format('opentype');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
+  unicode-range: U+0020-007E, U+00B7, U+00DF, U+2010-2015, U+2018-201E, U+2026, U+2190, U+2192, U+20AC, U+25BE;
 }
 
 :root {
   /* Schrift */
-  --font-sans: 'General Sans', system-ui, sans-serif;
+  --font-sans: 'GT Standard', system-ui, sans-serif;
 
-  /* Farben (hell) – helle Graugrün-Töne mit einem dunkelgrünen Akzent */
-  --color-bg: #EFF1EB;
-  --color-surface: #FFFFFF;
-  --color-text: #191C17;
-  --color-line: #DFE3DA;
-  --color-secondary: #6C7266;
-  --color-accent: #2F3D2C;
-  --color-on-accent: #F3F6EF;
-  --color-scrim: rgba(25, 28, 23, 0.35);
-  --shadow-panel: 0 12px 32px rgba(25, 28, 23, 0.14);
+  /* Farben (hell) – helles Salbeigrau, dunkle Konturen, monochrom */
+  --color-bg: #EDEFE6;
+  --color-surface: #F5F6F0;
+  --color-text: #1A1D14;
+  --color-border: #1A1D14;
+  --color-line: #CDD0C2;
+  --color-secondary: #7A7E6F;
+  --color-scrim: rgba(26, 29, 20, 0.3);
+  --shadow-panel: 0 16px 40px rgba(26, 29, 20, 0.16);
 
-  /* Schriftgrößen */
-  --text-xs: 0.6875rem;
+  /* Schriftgrößen – bewusst wenige */
   --text-sm: 0.8125rem;
-  --text-base: 1rem;
-  --text-lg: 1.25rem;
-  --text-xl: clamp(1.375rem, 3vw, 1.75rem);
-  --text-big: clamp(1.75rem, 4vw, 2.5rem);
-  --text-huge: clamp(3rem, 9vw, 6rem);
-  --text-wordmark: clamp(1.375rem, 3.5vw, 1.75rem);
+  --text-base: 1.0625rem;
+  --text-display: clamp(2rem, 4.5vw, 3rem);
+  --text-huge: clamp(3.25rem, 8vw, 5.5rem);
 
   /* Zeilenhöhen */
   --leading-tight: 1.05;
-  --leading-snug: 1.25;
+  --leading-snug: 1.3;
   --leading-normal: 1.5;
-
-  /* Schriftgewichte */
-  --weight-regular: 400;
-  --weight-medium: 500;
-  --weight-semibold: 600;
-  --weight-bold: 700;
-
-  /* Buchstabenabstände */
-  --tracking-wide: 0.02em;
-  --tracking-caps: 0.07em;
 
   /* Abstände */
   --space-1: 0.25rem;
@@ -56,13 +47,16 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 3rem;
-  --space-8: 4rem;
+  --space-8: 4.5rem;
 
   /* Linien und Radien */
   --hairline: 1px;
-  --radius: 0.75rem;
-  --radius-sm: 0.5rem;
-  --radius-xs: 0.3125rem;
+  --radius: 1rem;
+  --radius-sm: 0.625rem;
+  --radius-full: 999px;
+
+  /* Balken (Dashboard-Anzeigen) */
+  --meter-height: 0.25rem;
 
   /* Fokus */
   --focus-width: 2px;
@@ -80,34 +74,32 @@
   --z-overlay: 20;
 
   /* Maße */
-  --header-height: 4rem;
+  --header-height: 4.5rem;
   --panel-max-width: 26rem;
-  --content-max-width: 90rem;
+  --content-max-width: 72rem;
   --tap-target: 2.75rem;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-bg: #141613;
-    --color-surface: #1C1F1A;
-    --color-text: #ECEFE7;
-    --color-line: #2A2E27;
-    --color-secondary: #8B9183;
-    --color-accent: #C7D9B8;
-    --color-on-accent: #1C2417;
+    --color-bg: #171912;
+    --color-surface: #1E211A;
+    --color-text: #EDEFE6;
+    --color-border: #EDEFE6;
+    --color-line: #383C2F;
+    --color-secondary: #8E9280;
     --color-scrim: rgba(0, 0, 0, 0.5);
-    --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.5);
+    --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5);
   }
 }
 
 :root[data-theme="dark"] {
-  --color-bg: #141613;
-  --color-surface: #1C1F1A;
-  --color-text: #ECEFE7;
-  --color-line: #2A2E27;
-  --color-secondary: #8B9183;
-  --color-accent: #C7D9B8;
-  --color-on-accent: #1C2417;
+  --color-bg: #171912;
+  --color-surface: #1E211A;
+  --color-text: #EDEFE6;
+  --color-border: #EDEFE6;
+  --color-line: #383C2F;
+  --color-secondary: #8E9280;
   --color-scrim: rgba(0, 0, 0, 0.5);
-  --shadow-panel: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.5);
 }

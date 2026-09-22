@@ -90,7 +90,7 @@ function build(ctx, data) {
   const head = el(
     'div',
     { className: 'section-head' },
-    el('div', { className: 'big-count' }, String(groups.length)),
+    el('div', { className: 'month-title' }, 'Alle Gruppen'),
     toolbar
   );
 

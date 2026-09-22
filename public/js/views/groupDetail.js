@@ -103,7 +103,7 @@ function build(ctx, data) {
         el('span', {}, members.length === 1 ? '1 Mitglied' : `${members.length} Mitglieder`),
         group.archived ? el('span', {}, 'Archiviert') : null
       ),
-      el('div', { className: 'big-count' }, String(filtered.length))
+      el('div', { className: 'month-title' }, group.name)
     ),
     toolbar
   );

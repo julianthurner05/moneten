@@ -131,16 +131,18 @@ Bewusst einfach, aber nicht fahrlässig:
 
 Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (viel Weißraum, große Zahlen, kleine fette Metazeilen, reduzierte Bedienelemente), aber nicht als 1:1-Kopie – Flächen, Radien und Bedienelemente orientieren sich eher am Cloudflare-Dashboard und an der Claude-App.
 
-**Farben** – helle Graugrün-Töne, kein Gelb, ein einziger Akzent:
-- Seitenhintergrund `#EFF1EB` (helles Graugrün)
-- Flächen (Karten, Panels, Listen) `#FFFFFF`
-- Text `#191C17`
-- Linien `#DFE3DA`
-- Sekundärtext und inaktive Elemente `#6C7266`
-- Akzent (aktive Tabs, primäre Buttons) `#2F3D2C` mit Text `#F3F6EF`
-- Dunkelmodus passend abgeleitet: Hintergrund `#141613`, Flächen `#1C1F1A`, Text `#ECEFE7`, Linien `#2A2E27`, Sekundär `#8B9183`, Akzent `#C7D9B8` mit Text `#1C2417`. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis), Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
+**Gestaltungshaltung: Schweizer Grafikdesign.** Ein einziger Schriftschnitt (Regular), keine Fettung (`font-synthesis: none`), keine Versalien. Hierarchie entsteht ausschließlich über Größe, Weißraum und Farbe. Bewusst wenige Schriftgrößen (klein / Grundgröße / Display), nie viele Größen auf einem Fleck. Viel Weißraum, großzügige Abstände. Keine großen Eintrags-Zähler.
 
-**Erlaubt sind:** Rundungen (Karten/Panels ~12px, Buttons/kleine Elemente ~8px), ein leichter Schatten für schwebende Panels und Dropdowns, ein halbtransparenter Scrim hinter Panels, der eine dunkelgrüne Akzent. Kleine Labels (Metazeilen, Feldbeschriftungen) in Versalien mit Buchstabenabstand. **Weiterhin tabu:** weitere Buntfarben, Verläufe, dekorative Schatten auf Karten oder Listen.
+**Farben** – monochrom auf hellem Salbeigrau, dunkle Konturen (wie ein technisches Interface):
+- Seitenhintergrund `#EDEFE6`
+- Hover-/Nebenfläche `#F5F6F0`
+- Text und Karten-Konturen `#1A1D14`
+- Trennlinien (weich, in Listen) `#CDD0C2`
+- Sekundärtext `#7A7E6F`
+- Kein Buntakzent; primäre Aktionen sind dunkle Pillen (Textfarbe gefüllt, Hintergrundfarbe als Schrift).
+- Dunkelmodus als Umkehrung: Hintergrund `#171912`, Fläche `#1E211A`, Text/Konturen `#EDEFE6`, Linien `#383C2F`, Sekundär `#8E9280`. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis), Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
+
+**Bausteine:** Karten und Listen als transparente Flächen mit 1px-Kontur in Textfarbe und ~16px-Rundung (wie skizzierte Interface-Rahmen), innen weiche Haarlinien. Buttons und aktive Nav-Punkte als dunkle Pillen (voll gerundet). Dashboard-Anzeigen: dünne Balken (4px, voll gerundet) z. B. für Ausgaben-zu-Budget und Kategorie-Anteile; Beträge mit `font-variant-numeric: tabular-nums` in Listen. Panels/Dropdowns mit Kontur und weichem Schatten über einem Scrim. **Tabu:** Buntfarben, Verläufe, Fettung, Versalien, dekorative Schatten auf Karten.
 
 **Aufbau-Prinzipien:**
 - Struktur durch Flächen auf graugrünem Grund plus 1px-Linien und Weißraum. Keine Wortmarke/Logo in der Kopfzeile.
@@ -154,7 +156,7 @@ Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (vi
 
 ## 8. Schrift
 
-- Die Schriftdateien liegen in `public/fonts/`. Aktuell **General Sans** von Fontshare (WOFF2).
+- Die Schriftdateien liegen in `public/fonts/`. Aktuell **GT Standard** (Regular, OTF) – bewusst nur dieser eine Schnitt.
 - `@font-face`-Regeln ausschließlich in `css/tokens.css`. Überall sonst nur das Token `--font-sans` verwenden.
 - Die Schrift muss mit minimalem Aufwand tauschbar sein: Dateien ersetzen, `@font-face` in `tokens.css` anpassen, fertig. Keine Schriftnamen außerhalb von `tokens.css`.
 - Fallback-Stack angeben (`system-ui, sans-serif`), `font-display: swap`.

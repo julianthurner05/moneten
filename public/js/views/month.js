@@ -11,6 +11,16 @@ export async function renderMonth(ctx, month) {
   ctx.show('monat', () => build(ctx, data));
 }
 
+/** Dünner Anzeigebalken, ratio 0–1. */
+function meter(ratio) {
+  const clamped = Math.max(0, Math.min(1, ratio));
+  return el(
+    'div',
+    { className: 'meter' },
+    el('div', { className: 'meter-fill', style: `width: ${(clamped * 100).toFixed(1)}%` })
+  );
+}
+
 function build(ctx, data) {
   const month = data.month;
   const visibleCategories = data.categories.filter((c) => !c.archived || c.monthSumCents !== 0);
@@ -54,20 +64,34 @@ function build(ctx, data) {
     toolbar
   );
 
+  const spentRatio = data.budgetCents > 0 ? data.ausgabenCents / data.budgetCents : 0;
   const stats = el(
     'div',
     { className: 'stat-grid', 'data-stagger': '' },
-    [
-      ['Budget', data.budgetCents],
-      ['Ausgaben', data.ausgabenCents],
-      ['Übrig', data.uebrigCents],
-    ].map(([label, cents]) =>
-      el(
-        'div',
-        { className: 'stat' },
-        el('div', { className: 'stat-label' }, label),
-        el('div', { className: 'stat-value' }, formatEuro(cents))
-      )
+    el(
+      'div',
+      { className: 'stat' },
+      el('div', { className: 'stat-label' }, 'Budget'),
+      el('div', { className: 'stat-value' }, formatEuro(data.budgetCents)),
+      data.uebertragCents !== 0
+        ? el('div', { className: 'stat-foot' }, `davon ${formatEuro(data.uebertragCents)} Übertrag`)
+        : null
+    ),
+    el(
+      'div',
+      { className: 'stat' },
+      el('div', { className: 'stat-label' }, 'Ausgaben'),
+      el('div', { className: 'stat-value' }, formatEuro(data.ausgabenCents)),
+      data.budgetCents > 0 ? meter(spentRatio) : null,
+      data.budgetCents > 0
+        ? el('div', { className: 'stat-foot' }, `${Math.round(spentRatio * 100)} % des Budgets`)
+        : null
+    ),
+    el(
+      'div',
+      { className: 'stat' },
+      el('div', { className: 'stat-label' }, 'Übrig'),
+      el('div', { className: 'stat-value' }, formatEuro(data.uebrigCents))
     )
   );
 
@@ -86,6 +110,9 @@ function build(ctx, data) {
         category.archived ? el('span', {}, 'Archiviert') : null
       ),
       el('div', { className: 'card-amount' }, formatEuro(category.monthSumCents)),
+      category.countsTowardMonth && data.variabelCents > 0 && category.monthSumCents > 0
+        ? meter(category.monthSumCents / data.variabelCents)
+        : null,
       el('div', { className: 'card-foot' }, `Ø ${formatEuro(category.avgCents)} pro Monat`)
     );
 
