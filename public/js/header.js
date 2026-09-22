@@ -75,7 +75,7 @@ export function renderHeader(state) {
   const header = document.getElementById('header');
 
   if (!state.user) {
-    header.replaceChildren(el('div', { className: 'header-inner' }));
+    header.replaceChildren();
     return;
   }
 

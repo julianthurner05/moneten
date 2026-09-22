@@ -68,9 +68,9 @@ function build(ctx, data) {
 
   // Monatsumschalter und Saldo mittig; die Details klappen darunter auf.
   const balanceClass = myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : '';
-  const details = el(
+  const detailsInner = el(
     'div',
-    { className: 'hero-details' },
+    { className: 'reveal-inner' },
     monthSuggestions.length === 0
       ? el('div', { className: 'hero-detail-row' }, el('span', {}, 'In diesem Monat ist alles ausgeglichen.'))
       : monthSuggestions.map((s) =>
@@ -90,26 +90,14 @@ function build(ctx, data) {
           )
         )
   );
-  details.style.display = 'none';
+  const details = el('div', { className: 'hero-details reveal' }, detailsInner);
 
   const toggleDetails = () => {
-    const open = details.style.display === 'none';
+    const open = !details.classList.contains('is-open');
+    details.classList.toggle('is-open', open);
     for (const button of [infoButton, detailsButton]) {
       button.setAttribute('aria-expanded', String(open));
       button.classList.toggle('is-active', open);
-    }
-    if (open) {
-      details.style.display = '';
-      requestAnimationFrame(() => requestAnimationFrame(() => details.classList.add('is-open')));
-    } else {
-      details.classList.remove('is-open');
-      details.addEventListener(
-        'transitionend',
-        () => {
-          if (!details.classList.contains('is-open')) details.style.display = 'none';
-        },
-        { once: true }
-      );
     }
   };
 

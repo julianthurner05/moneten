@@ -9,6 +9,7 @@
 }
 
 html {
+  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-synthesis: none; /* keine künstliche Fettung des einzigen Schnitts */
@@ -1050,9 +1051,17 @@ input[type='checkbox']:disabled {
 /* ---------- Anmeldung und Setup ---------- */
 
 .auth-wrap {
+  min-height: 85dvh;
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding-top: var(--space-8);
+  gap: var(--space-6);
+}
+
+.auth-wordmark {
+  font-size: var(--text-display);
+  letter-spacing: -0.01em;
 }
 
 .auth-form {
@@ -1099,6 +1108,78 @@ input[type='checkbox']:disabled {
 
 .group-share-list {
   margin-bottom: var(--space-4);
+}
+
+/* ---------- Aufklapper: Inhalt darunter verschiebt sich weich mit ---------- */
+
+.reveal {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--duration) var(--ease);
+}
+
+.reveal.is-open {
+  grid-template-rows: 1fr;
+}
+
+.reveal > .reveal-inner {
+  min-height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(calc(-1 * var(--space-1)));
+  transition: visibility 0s var(--duration), opacity var(--duration) var(--ease),
+    transform var(--duration) var(--ease);
+}
+
+.reveal.is-open > .reveal-inner {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition: visibility 0s, opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
+}
+
+/* ---------- Ladebildschirm ---------- */
+
+#loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader);
+  background: var(--color-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  opacity: 1;
+  transition: opacity var(--duration-slow) var(--ease);
+}
+
+#loader.is-done {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.loader-value {
+  font-size: var(--text-huge);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.loader-bar {
+  width: 10rem;
+  height: var(--meter-height);
+  border-radius: var(--radius-full);
+  background: var(--color-field);
+  overflow: hidden;
+}
+
+.loader-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: var(--radius-full);
+  background: var(--color-text);
 }
 
 /* ---------- Einblend-Animationen ---------- */
@@ -1162,17 +1243,13 @@ a.privat-toggle:hover {
 }
 
 .hero-details {
+  width: 100%;
+}
+
+.hero-details .reveal-inner {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  opacity: 0;
-  transform: translateY(calc(-1 * var(--space-1)));
-  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
-}
-
-.hero-details.is-open {
-  opacity: 1;
-  transform: none;
 }
 
 .hero-detail-row {
@@ -1453,16 +1530,8 @@ a.privat-toggle:hover {
 
 /* ---------- Erweiterter Formularbereich ---------- */
 
-.form-advanced {
-  opacity: 0;
-  transform: translateY(calc(-1 * var(--space-1)));
-  transition: opacity var(--duration) var(--ease), transform var(--duration) var(--ease);
-  margin-top: var(--space-4);
-}
-
-.form-advanced.is-open {
-  opacity: 1;
-  transform: none;
+.form-advanced .reveal-inner {
+  padding-top: var(--space-4);
 }
 
 /* ---------- Begleichungs-Vorschläge ---------- */

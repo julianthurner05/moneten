@@ -189,9 +189,9 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
 
     // Schnell-Eingabe: Betrag und Beschreibung reichen – alles andere
     // (heute, von mir bezahlt, gleich auf alle) steckt hinter „Erweitert".
-    const advanced = el(
+    const advancedInner = el(
       'div',
-      { className: 'form-advanced' },
+      { className: 'reveal-inner' },
       wrap('Datum', date.root, 'exp-date'),
       wrap('Bezahlt von', paidBy.root, 'exp-paidby'),
       wrap('Aufteilung', splitMode.root, 'exp-split'),
@@ -200,35 +200,21 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
         ? wrap('Deine Kategorie im Monat', myCategory.root, 'exp-category')
         : null
     );
+    const advanced = el('div', { className: `form-advanced reveal${isEdit ? ' is-open' : ''}` }, advancedInner);
 
-    let advancedOpen = isEdit;
     const advancedToggle = el(
       'button',
       {
         className: 'textlink',
         type: 'button',
         onClick: () => {
-          advancedOpen = !advancedOpen;
-          advancedToggle.textContent = advancedOpen ? 'Weniger ▴' : 'Erweitert ▾';
-          if (advancedOpen) {
-            advanced.style.display = '';
-            requestAnimationFrame(() => requestAnimationFrame(() => advanced.classList.add('is-open')));
-          } else {
-            advanced.classList.remove('is-open');
-            advanced.addEventListener(
-              'transitionend',
-              () => {
-                if (!advanced.classList.contains('is-open')) advanced.style.display = 'none';
-              },
-              { once: true }
-            );
-          }
+          const open = !advanced.classList.contains('is-open');
+          advanced.classList.toggle('is-open', open);
+          advancedToggle.textContent = open ? 'Weniger ▴' : 'Erweitert ▾';
         },
       },
-      advancedOpen ? 'Weniger ▴' : 'Erweitert ▾'
+      isEdit ? 'Weniger ▴' : 'Erweitert ▾'
     );
-    advanced.style.display = advancedOpen ? '' : 'none';
-    if (advancedOpen) advanced.classList.add('is-open');
 
     return el(
       'form',

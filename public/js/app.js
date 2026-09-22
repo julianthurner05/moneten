@@ -192,5 +192,31 @@ document.addEventListener(
   true
 );
 
+// Ladebildschirm: Prozentzahl zählt hoch, springt auf 100, wenn die App bereit ist.
+const loader = document.getElementById('loader');
+const startLoader = () => {
+  const value = loader.querySelector('.loader-value');
+  const fill = loader.querySelector('.loader-fill');
+  let progress = 0;
+  let target = 88;
+  const tick = () => {
+    progress += (target - progress) * 0.09;
+    if (target === 100 && progress > 99.4) progress = 100;
+    value.textContent = `${Math.floor(progress)} %`;
+    fill.style.width = `${progress}%`;
+    if (progress < 100) {
+      requestAnimationFrame(tick);
+    } else {
+      loader.classList.add('is-done');
+      setTimeout(() => loader.remove(), 500);
+    }
+  };
+  requestAnimationFrame(tick);
+  return () => {
+    target = 100;
+  };
+};
+const finishLoader = startLoader();
+
 window.addEventListener('hashchange', handleRoute);
-handleRoute();
+handleRoute().finally(finishLoader);

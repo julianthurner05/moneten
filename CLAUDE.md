@@ -167,7 +167,10 @@ Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (vi
 - **Alle Werte als Tokens** in `tokens.css`: Farben, Abstände, Schriftgrößen, Zeilenhöhen, Linienstärken, Radien, Transition-Dauern und -Kurven, Breakpoints soweit möglich. Keine harten Werte im übrigen CSS. Vor dem Anlegen eines neuen Tokens prüfen, ob ein bestehendes passt.
 - **Font-Smoothing** global: `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`
 - **Nichts springt:** Alles, was erscheint oder verschwindet, bekommt eine weiche Transition, ebenso alles, was davon beeinflusst wird (z. B. Wrapper, deren Höhe sich ändert). Elemente erst nach Ende der Ausblend-Transition auf `display: none` setzen, beim Einblenden erst sichtbar machen, dann animieren.
-- **Keine geclippten Höhenanimationen** (kein Aufklappen per `overflow: hidden`). Stattdessen sanftes Einblenden mit kleinem Versatz (Stagger) auf Zeilen. Aufbau-Animationen einfach halten, Dinge eher nacheinander als alles gleichzeitig.
+- **Aufklapper** (Saldodetails, „Erweitert" im Formular) nutzen die `.reveal`-Komponente (`grid-template-rows` 0fr→1fr): der Inhalt darunter verschiebt sich weich mit. Ein globales Easing-Token (`--ease`) gilt für alle Übergänge. Listen blenden mit kleinem Versatz (Stagger) ein.
+- **Ladebildschirm** beim App-Start: große Prozentzahl zählt von 0 auf 100 mit kurzer Ladeleiste, blendet weich aus.
+- **Login/Setup:** vertikal zentriert mit „moneten"-Wortmarke darüber, ohne Kopfzeile/Linie, ohne Autofokus.
+- **App-Icon/Favicon:** €-Glyphe auf Seitenhintergrund (generiert, geometrisch gezeichnet).
 - **Fokus verändert keine Rahmen:** Beim Klicken in Formularfelder oder bei Autofokus bleibt die Linie/Border unverändert. Tastatur-Fokus trotzdem sichtbar machen, aber über `outline` mit Abstand, nicht über die Border.
 - **Keine ungefragten Zusatzelemente:** keine Sektions-Labels, keine Erklärtexte unter Überschriften, keine Deko-Punkte oder Akzente, die hier nicht beschrieben sind.
 - **Gleiche Elemente sind eine Komponente:** Was mehrfach vorkommt (Karte, Listenzeile, Panel, Button), wird einmal definiert und überall mit identischem CSS verwendet.

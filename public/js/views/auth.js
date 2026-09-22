@@ -47,7 +47,12 @@ export function renderSetup(ctx) {
       error,
       el('button', { className: 'button', type: 'submit' }, 'Admin-Account anlegen')
     );
-    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
+    return el(
+      'div',
+      { className: 'auth-wrap', 'data-stagger': '' },
+      el('div', { className: 'auth-wordmark' }, 'moneten'),
+      form
+    );
   });
 }
 
@@ -74,13 +79,17 @@ export function renderLogin(ctx) {
           }
         },
       },
-      el('h1', { className: 'auth-title' }, 'Anmelden'),
       field('Benutzername', username),
       field('Passwort', password),
       error,
       el('button', { className: 'button', type: 'submit' }, 'Anmelden')
     );
-    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
+    return el(
+      'div',
+      { className: 'auth-wrap', 'data-stagger': '' },
+      el('div', { className: 'auth-wordmark' }, 'moneten'),
+      form
+    );
   });
 }
 
@@ -114,6 +123,11 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
       error,
       el('button', { className: 'button', type: 'submit' }, 'Passwort ändern')
     );
-    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
+    return el(
+      'div',
+      { className: 'auth-wrap', 'data-stagger': '' },
+      el('div', { className: 'auth-wordmark' }, 'moneten'),
+      form
+    );
   });
 }
