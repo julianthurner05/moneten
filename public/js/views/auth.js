@@ -111,7 +111,7 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
               body: { currentPassword: current.value, newPassword: next.value },
             });
             ctx.state.user.mustChangePassword = false;
-            ctx.navigate(forced ? '#/gruppen' : '#/konto');
+            ctx.navigate(forced ? '#/gruppen' : '#/monat/einstellungen');
           } catch (err) {
             showError(error, err.message);
           }

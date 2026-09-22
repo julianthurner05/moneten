@@ -93,6 +93,7 @@ function build(ctx, data) {
   const logout = el(
     'div',
     { className: 'konto-link' },
+    el('a', { className: 'textlink', href: '#/konto/passwort' }, 'Passwort ändern'),
     el(
       'button',
       {

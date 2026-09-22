@@ -802,8 +802,10 @@ a.row:hover {
 }
 
 .konto-link {
-  margin-top: calc(var(--space-9) * 1.5);
-  text-align: center;
+  margin-top: calc(var(--space-9) * 3);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-6);
 }
 
 .deposit-note {
