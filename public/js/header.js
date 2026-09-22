@@ -125,9 +125,9 @@ export function renderHeader(state) {
 
   const tabContent = privat
     ? [
+        state.user.isAdmin ? el('a', { className: 'textlink', href: '#/konto' }, 'Adminbereich') : null,
         el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht'),
         el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung'),
-        state.user.isAdmin ? el('a', { className: 'textlink', href: '#/konto' }, 'Adminbereich') : null,
       ].filter(Boolean)
     : navItems.length > 0
       ? [nav]
