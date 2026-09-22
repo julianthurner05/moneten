@@ -21,10 +21,10 @@ export async function onRequestGet({ env, data }) {
        WHERE s.user_id = ? AND e.deleted_at IS NULL GROUP BY e.group_id`
     ).bind(userId),
     env.DB.prepare(
-      'SELECT group_id, SUM(amount_cents) AS c FROM settlements WHERE from_user = ? GROUP BY group_id'
+      'SELECT group_id, SUM(amount_cents) AS c FROM settlements WHERE from_user = ? AND confirmed_at IS NOT NULL GROUP BY group_id'
     ).bind(userId),
     env.DB.prepare(
-      'SELECT group_id, SUM(amount_cents) AS c FROM settlements WHERE to_user = ? GROUP BY group_id'
+      'SELECT group_id, SUM(amount_cents) AS c FROM settlements WHERE to_user = ? AND confirmed_at IS NOT NULL GROUP BY group_id'
     ).bind(userId),
   ]);
 

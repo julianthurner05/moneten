@@ -164,35 +164,55 @@ function openNewEntry(ctx, data, categoryId) {
 
 function openCategoryPanel(ctx, data, category) {
   const entries = data.entries.filter((entry) => entry.categoryId === category.id);
+  const mapped = (data.mappedShares ?? []).filter((share) => share.categoryId === category.id);
   openPanel((close) => {
+    const rows = [
+      ...entries.map((entry) => ({ date: entry.spentOn, entry })),
+      ...mapped.map((share) => ({ date: share.spentOn, share })),
+    ].sort((a, b) => (a.date < b.date ? 1 : -1));
+
     const list =
-      entries.length === 0
+      rows.length === 0
         ? el('p', { className: 'empty-note' }, 'Keine Einträge in diesem Monat.')
         : el(
             'div',
             { className: 'row-list' },
-            entries.map((entry) =>
-              el(
-                'button',
-                {
-                  className: 'row row-clickable',
-                  type: 'button',
-                  onClick: () => {
-                    close();
-                    openEntryForm(ctx, data.categories.filter((c) => !c.archived || c.id === entry.categoryId), entry, {
-                      month: data.month,
-                    });
+            rows.map(({ entry, share }) => {
+              if (entry) {
+                return el(
+                  'button',
+                  {
+                    className: 'row row-clickable',
+                    type: 'button',
+                    onClick: () => {
+                      close();
+                      openEntryForm(ctx, data.categories.filter((c) => !c.archived || c.id === entry.categoryId), entry, {
+                        month: data.month,
+                      });
+                    },
                   },
-                },
+                  el(
+                    'div',
+                    { className: 'row-main' },
+                    el('div', { className: 'row-label' }, formatDate(entry.spentOn)),
+                    el('div', { className: 'row-title' }, entry.description)
+                  ),
+                  el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(entry.amountCents)))
+                );
+              }
+              // Zugeordneter Gruppen-Anteil: bearbeiten geht in der Gruppe.
+              return el(
+                'a',
+                { className: 'row', href: `#/gruppen/${share.groupId}`, onClick: () => close() },
                 el(
                   'div',
                   { className: 'row-main' },
-                  el('div', { className: 'row-label' }, formatDate(entry.spentOn)),
-                  el('div', { className: 'row-title' }, entry.description)
+                  el('div', { className: 'row-label' }, `${formatDate(share.spentOn)} · Aus ${share.groupName}`),
+                  el('div', { className: 'row-title' }, share.description)
                 ),
-                el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(entry.amountCents)))
-              )
-            )
+                el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(share.shareCents)))
+              );
+            })
           );
 
     return el(

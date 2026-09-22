@@ -14,9 +14,10 @@ function unitsFromShares(shares) {
   return new Map(shares.map((s) => [s.userId, s.shareCents / divisor]));
 }
 
-export function openExpenseForm(ctx, group, members, expense) {
+export function openExpenseForm(ctx, group, members, expense, { myCategories = [], isEinzug = false } = {}) {
   openPanel((close) => {
     const isEdit = !!expense;
+    const einzug = expense ? expense.isEinzug : isEinzug;
     const shareMap = new Map((expense?.shares ?? []).map((s) => [s.userId, s.shareCents]));
     const unitMap = expense?.splitMode === 'shares' ? unitsFromShares(expense.shares) : new Map();
 
@@ -47,6 +48,14 @@ export function openExpenseForm(ctx, group, members, expense) {
       el('option', { value: 'equal', selected: (expense?.splitMode ?? 'equal') === 'equal' }, 'Gleich aufteilen'),
       el('option', { value: 'exact', selected: expense?.splitMode === 'exact' }, 'Exakte Beträge'),
       el('option', { value: 'shares', selected: expense?.splitMode === 'shares' }, 'Nach Anteilen')
+    );
+    const myCategory = el(
+      'select',
+      { id: 'exp-category' },
+      el('option', { value: '', selected: !expense?.myCategoryId }, 'Keine'),
+      myCategories.map((c) =>
+        el('option', { value: c.id, selected: c.id === expense?.myCategoryId }, c.name)
+      )
     );
     const error = el('p', { className: 'form-error', role: 'alert' });
 
@@ -153,6 +162,8 @@ export function openExpenseForm(ctx, group, members, expense) {
         paidBy: paidBy.value,
         splitMode: mode,
         participants,
+        isEinzug: einzug,
+        myCategoryId: !einzug && myCategory.value ? myCategory.value : null,
       };
       try {
         if (isEdit) {
@@ -185,7 +196,17 @@ export function openExpenseForm(ctx, group, members, expense) {
     return el(
       'form',
       { onSubmit: submit },
-      el('h2', { className: 'panel-title' }, isEdit ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'),
+      el(
+        'h2',
+        { className: 'panel-title' },
+        einzug
+          ? isEdit
+            ? 'Einzugs-Ausgabe bearbeiten'
+            : 'Neue Einzugs-Ausgabe'
+          : isEdit
+            ? 'Ausgabe bearbeiten'
+            : 'Neue Ausgabe'
+      ),
       wrap('Beschreibung', description, 'exp-desc'),
       wrap('Betrag', amount, 'exp-amount'),
       wrap('Datum', date, 'exp-date'),
@@ -200,6 +221,13 @@ export function openExpenseForm(ctx, group, members, expense) {
         'exp-split'
       ),
       el('div', { className: 'field' }, el('span', { className: 'field-label' }, 'Beteiligt'), participantRows.map((r) => r.row)),
+      !einzug && myCategories.length > 0
+        ? wrap(
+            'Deine Kategorie im Monat',
+            el('span', { className: 'select-wrap' }, myCategory, el('span', { className: 'select-arrow', 'aria-hidden': 'true' }, '▾')),
+            'exp-category'
+          )
+        : null,
       error,
       el(
         'div',

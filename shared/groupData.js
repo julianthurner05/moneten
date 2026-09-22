@@ -26,9 +26,10 @@ export async function loadBalances(env, groupId) {
        JOIN group_expenses e ON e.id = s.expense_id
        WHERE e.group_id = ? AND e.deleted_at IS NULL`
     ).bind(groupId),
-    env.DB.prepare('SELECT from_user, to_user, amount_cents FROM settlements WHERE group_id = ?').bind(
-      groupId
-    ),
+    // Nur bestätigte Ausgleichszahlungen zählen in die Salden.
+    env.DB.prepare(
+      'SELECT from_user, to_user, amount_cents FROM settlements WHERE group_id = ? AND confirmed_at IS NOT NULL'
+    ).bind(groupId),
   ]);
 
   const sharesByExpense = new Map();

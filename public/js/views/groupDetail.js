@@ -25,7 +25,7 @@ export async function renderGroupDetail(ctx, groupId) {
     filterState.groupId = groupId;
     filterState.month = 'all';
   }
-  ctx.show('gruppen', () => build(ctx, data));
+  ctx.show('gruppe', () => build(ctx, data));
 }
 
 function build(ctx, data) {
@@ -34,7 +34,8 @@ function build(ctx, data) {
   const name = (id) => names.get(id) ?? 'Unbekannt';
 
   const entries = [
-    ...expenses.map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
+    // Einzugs-Ausgaben laufen gesondert im Einzug-Bereich.
+    ...expenses.filter((e) => !e.isEinzug).map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
     ...settlements.map((s) => ({ type: 'settlement', date: s.settledOn, data: s })),
   ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
 
@@ -73,7 +74,7 @@ function build(ctx, data) {
             {
               className: 'button',
               type: 'button',
-              onClick: () => openExpenseForm(ctx, group, members, null),
+              onClick: () => openExpenseForm(ctx, group, members, null, { myCategories: data.myCategories }),
             },
             '+ Ausgabe'
           ),
@@ -98,9 +99,7 @@ function build(ctx, data) {
       el(
         'div',
         { className: 'detail-meta' },
-        el('a', { className: 'textlink', href: '#/gruppen' }, '← Gruppen'),
-        el('span', { className: 'detail-name' }, group.name),
-        group.kind === 'wg' ? el('span', {}, 'WG') : null,
+        el('span', {}, group.kind === 'wg' ? 'WG' : 'Standard'),
         el('span', {}, members.length === 1 ? '1 Mitglied' : `${members.length} Mitglieder`),
         group.archived ? el('span', {}, 'Archiviert') : null
       ),
@@ -205,7 +204,7 @@ function build(ctx, data) {
             group.archived ? { className: 'row' } : {
               className: 'row row-clickable',
               type: 'button',
-              onClick: () => openExpenseForm(ctx, group, members, expense),
+              onClick: () => openExpenseForm(ctx, group, members, expense, { myCategories: data.myCategories }),
             },
             el(
               'div',
@@ -218,16 +217,43 @@ function build(ctx, data) {
           return row;
         }
         const settlement = entry.data;
+        const canConfirm = !settlement.confirmed && settlement.toUser === ctx.state.user.id && !group.archived;
         return el(
           'div',
           { className: 'row' },
           el(
             'div',
             { className: 'row-main' },
-            el('div', { className: 'row-label' }, `${formatDate(settlement.settledOn)} · Ausgleich`),
+            el(
+              'div',
+              { className: 'row-label' },
+              `${formatDate(settlement.settledOn)} · Ausgleich${settlement.confirmed ? '' : ' · Wartet auf Bestätigung'}`
+            ),
             el('div', { className: 'row-title' }, `${name(settlement.fromUser)} an ${name(settlement.toUser)}`)
           ),
-          el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(settlement.amountCents)))
+          el(
+            'div',
+            { className: 'row-side' },
+            el('div', { className: 'row-amount' }, formatEuro(settlement.amountCents)),
+            canConfirm
+              ? el(
+                  'button',
+                  {
+                    className: 'button',
+                    type: 'button',
+                    onClick: async () => {
+                      try {
+                        await api(`/api/groups/${group.id}/settlements/${settlement.id}/confirm`, { method: 'POST' });
+                        ctx.refresh();
+                      } catch (err) {
+                        noticePanel(err.message);
+                      }
+                    },
+                  },
+                  'Erhalten'
+                )
+              : null
+          )
         );
       })
     );

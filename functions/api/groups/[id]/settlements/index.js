@@ -1,7 +1,8 @@
-// Ausgleichszahlung in einer Gruppe anlegen.
+// Ausgleichszahlung anlegen. Zählt erst, wenn die empfangende Person bestätigt hat –
+// trägt sie die Zahlung selbst ein, gilt das als Bestätigung.
 
-import { loadGroupForMember } from '../../../../shared/groupData.js';
-import { error, isDateString, json, nowIso, readJson } from '../../../../shared/http.js';
+import { loadGroupForMember } from '../../../../../shared/groupData.js';
+import { error, isDateString, json, nowIso, readJson } from '../../../../../shared/http.js';
 
 export async function onRequestPost({ request, env, data, params }) {
   const group = await loadGroupForMember(env, params.id, data.user.id);
@@ -27,12 +28,14 @@ export async function onRequestPost({ request, env, data, params }) {
   }
 
   const id = crypto.randomUUID();
+  const now = nowIso();
+  const confirmedAt = data.user.id === body.toUser ? now : null;
   await env.DB.prepare(
-    `INSERT INTO settlements (id, group_id, from_user, to_user, amount_cents, settled_on, created_by, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO settlements (id, group_id, from_user, to_user, amount_cents, settled_on, created_by, created_at, confirmed_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, nowIso())
+    .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, now, confirmedAt)
     .run();
 
-  return json({ id });
+  return json({ id, confirmed: !!confirmedAt });
 }

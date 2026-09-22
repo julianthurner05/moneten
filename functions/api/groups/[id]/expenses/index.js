@@ -22,10 +22,10 @@ export async function onRequestPost({ request, env, data, params }) {
 
   const expense = validated.expense;
   const id = crypto.randomUUID();
-  await env.DB.batch([
+  const statements = [
     env.DB.prepare(
-      `INSERT INTO group_expenses (id, group_id, paid_by, amount_cents, description, spent_on, split_mode, created_by, created_at, deleted_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`
+      `INSERT INTO group_expenses (id, group_id, paid_by, amount_cents, description, spent_on, split_mode, created_by, created_at, deleted_at, is_einzug)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)`
     ).bind(
       id,
       group.id,
@@ -35,14 +35,31 @@ export async function onRequestPost({ request, env, data, params }) {
       expense.spentOn,
       expense.splitMode,
       data.user.id,
-      nowIso()
+      nowIso(),
+      body.isEinzug ? 1 : 0
     ),
     ...expense.shares.map((s) =>
       env.DB.prepare(
         'INSERT INTO expense_shares (expense_id, user_id, share_cents) VALUES (?, ?, ?)'
       ).bind(id, s.userId, s.shareCents)
     ),
-  ]);
+  ];
 
+  // Eigene Kategorie für die Monatsübersicht (optional).
+  if (typeof body.myCategoryId === 'string' && body.myCategoryId) {
+    const category = await env.DB.prepare(
+      'SELECT id FROM personal_categories WHERE id = ? AND user_id = ?'
+    )
+      .bind(body.myCategoryId, data.user.id)
+      .first();
+    if (!category) return error('Kategorie nicht gefunden.');
+    statements.push(
+      env.DB.prepare(
+        'INSERT INTO personal_expense_categories (user_id, expense_id, category_id) VALUES (?, ?, ?)'
+      ).bind(data.user.id, id, category.id)
+    );
+  }
+
+  await env.DB.batch(statements);
   return json({ id });
 }

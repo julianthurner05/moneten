@@ -35,7 +35,7 @@ function metaLabel(group) {
 }
 
 export function renderGroups(ctx, data) {
-  ctx.show('gruppen', () => build(ctx, data));
+  ctx.show(null, () => build(ctx, data));
 }
 
 function build(ctx, data) {

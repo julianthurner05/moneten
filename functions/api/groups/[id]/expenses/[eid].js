@@ -32,9 +32,9 @@ export async function onRequestPut({ request, env, data, params }) {
   if (validated.error) return error(validated.error);
 
   const updated = validated.expense;
-  await env.DB.batch([
+  const statements = [
     env.DB.prepare(
-      `UPDATE group_expenses SET paid_by = ?, amount_cents = ?, description = ?, spent_on = ?, split_mode = ?
+      `UPDATE group_expenses SET paid_by = ?, amount_cents = ?, description = ?, spent_on = ?, split_mode = ?, is_einzug = ?
        WHERE id = ?`
     ).bind(
       updated.paidBy,
@@ -42,6 +42,7 @@ export async function onRequestPut({ request, env, data, params }) {
       updated.description,
       updated.spentOn,
       updated.splitMode,
+      body.isEinzug ? 1 : 0,
       expense.id
     ),
     env.DB.prepare('DELETE FROM expense_shares WHERE expense_id = ?').bind(expense.id),
@@ -50,8 +51,28 @@ export async function onRequestPut({ request, env, data, params }) {
         'INSERT INTO expense_shares (expense_id, user_id, share_cents) VALUES (?, ?, ?)'
       ).bind(expense.id, s.userId, s.shareCents)
     ),
-  ]);
+    // Eigene Kategorie-Zuordnung neu setzen (betrifft nur den bearbeitenden User).
+    env.DB.prepare('DELETE FROM personal_expense_categories WHERE user_id = ? AND expense_id = ?').bind(
+      data.user.id,
+      expense.id
+    ),
+  ];
 
+  if (typeof body.myCategoryId === 'string' && body.myCategoryId) {
+    const category = await env.DB.prepare(
+      'SELECT id FROM personal_categories WHERE id = ? AND user_id = ?'
+    )
+      .bind(body.myCategoryId, data.user.id)
+      .first();
+    if (!category) return error('Kategorie nicht gefunden.');
+    statements.push(
+      env.DB.prepare(
+        'INSERT INTO personal_expense_categories (user_id, expense_id, category_id) VALUES (?, ?, ?)'
+      ).bind(data.user.id, expense.id, category.id)
+    );
+  }
+
+  await env.DB.batch(statements);
   return json({ ok: true });
 }
 

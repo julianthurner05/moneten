@@ -120,26 +120,31 @@ Bewusst einfach, aber nicht fahrlässig:
 
 **Nach Phase 2 anhalten, Ergebnis zusammenfassen und auf Freigabe warten.**
 
-### Phase 3: WG-Funktionen
-Noch nicht bauen. Wird später spezifiziert.
+### Phase 3: WG-Funktionen (in Arbeit)
+1. Workspace-Prinzip: Die gewählte Gruppe bestimmt die ganze Seite, Wechsel über das Dropdown links oben. Startansicht nach dem Login ist die gewählte Gruppe (WG bevorzugt).
+2. Kategorien sind vorgegeben (Standard-Set wird für jeden User automatisch angelegt: Lebensmittel, Essen gehen, Freizeit, Mobilität, Haushalt, Kleidung & Pflege, Gesundheit, Abos & Handy, Sonstiges, Rücklagen ohne Budget-Zählung); verwalten (umbenennen, sortieren, archivieren, eigene ergänzen) bleibt möglich.
+3. Beim Erfassen einer Gruppenausgabe kann jede Person optional eine **eigene Kategorie** wählen; der eigene Anteil erscheint dann in dieser Kategorie der Monatsübersicht (Tabelle `personal_expense_categories`). Anteile ohne Zuordnung erscheinen wie bisher im Block „Aus Gruppen".
+4. **Einzug-Bereich** (Tab „Einzug", nur bei `kind = 'wg'`): gemeinsame Einzugs-Ausgaben (`group_expenses.is_einzug = 1`, z. B. Kaution, Gerätebestellungen) werden normal in der Gruppe aufgeteilt und zählen in die Salden, aber **nicht** ins persönliche Monatsbudget und nicht in der normalen Ausgabenliste. Dazu ein **privater Bereich** (`einzug_personal`): eigene Einzugskosten, nur für die Person selbst sicht- und editierbar.
+5. **Bestätigung von Ausgleichszahlungen:** Eine Zahlung zählt erst in die Salden, wenn die empfangende Person sie bestätigt hat (`settlements.confirmed_at`). Trägt die empfangende Person sie selbst ein, gilt sie sofort als bestätigt. Unbestätigte Zahlungen sind markiert („Wartet auf Bestätigung") mit „Erhalten"-Button für die empfangende Person. Keine Bank-Anbindung.
 
 ## 7. Design
 
 Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (viel Weißraum, große Zahlen, kleine fette Metazeilen, reduzierte Bedienelemente), aber nicht als 1:1-Kopie – Flächen, Radien und Bedienelemente orientieren sich eher am Cloudflare-Dashboard und an der Claude-App.
 
-**Farben** – helle Graustufen, kein Gelb, keine Buntfarben:
-- Seitenhintergrund `#F5F5F3` (helles, minimal warmes Grau)
+**Farben** – helle Graugrün-Töne, kein Gelb, ein einziger Akzent:
+- Seitenhintergrund `#EFF1EB` (helles Graugrün)
 - Flächen (Karten, Panels, Listen) `#FFFFFF`
-- Text `#1A1A18`
-- Linien `#E3E3E0`
-- Sekundärtext und inaktive Elemente `#6E6E66`
-- Dunkelmodus passend abgeleitet: Hintergrund `#131312`, Flächen `#1C1C1A`, Text `#ECECE8`, Linien `#2A2A27`, Sekundär `#8D8D84`. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis), Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
+- Text `#191C17`
+- Linien `#DFE3DA`
+- Sekundärtext und inaktive Elemente `#6C7266`
+- Akzent (aktive Tabs, primäre Buttons) `#2F3D2C` mit Text `#F3F6EF`
+- Dunkelmodus passend abgeleitet: Hintergrund `#141613`, Flächen `#1C1F1A`, Text `#ECEFE7`, Linien `#2A2E27`, Sekundär `#8B9183`, Akzent `#C7D9B8` mit Text `#1C2417`. Umschaltbar über zwei kleine Icons (Kreis und halb gefüllter Kreis), Wahl in `localStorage` merken, Standard folgt `prefers-color-scheme`.
 
-**Erlaubt sind:** dezente Rundungen (Karten/Panels/Buttons ~8px, kleine Elemente ~6px), ein leichter Schatten nur für schwebende Panels, ein halbtransparenter Scrim hinter Panels. **Weiterhin tabu:** Buntfarben, Farbakzente, Verläufe, dekorative Schatten auf Karten oder Listen.
+**Erlaubt sind:** Rundungen (Karten/Panels ~12px, Buttons/kleine Elemente ~8px), ein leichter Schatten für schwebende Panels und Dropdowns, ein halbtransparenter Scrim hinter Panels, der eine dunkelgrüne Akzent. Kleine Labels (Metazeilen, Feldbeschriftungen) in Versalien mit Buchstabenabstand. **Weiterhin tabu:** weitere Buntfarben, Verläufe, dekorative Schatten auf Karten oder Listen.
 
 **Aufbau-Prinzipien:**
-- Struktur durch Flächen auf grauem Grund plus 1px-Linien und Weißraum.
-- **Kopfzeile:** links die Wortmarke „moneten" groß und fett, auf dem Seitenhintergrund mit Haarlinie unten. Navigation als Tabs: **Monat**, **Gruppen**, **Konto** – der aktive Tab dunkel gefüllt mit invertiertem Text und Rundung, darunter klein eine Zahl (bei Gruppen die Anzahl aktiver Gruppen). Rechts in Sekundärfarbe der Gesamtsaldo über alle Gruppen, z. B. „Du bekommst 42,50 €" oder „Alles ausgeglichen".
+- Struktur durch Flächen auf graugrünem Grund plus 1px-Linien und Weißraum. Keine Wortmarke/Logo in der Kopfzeile.
+- **Kopfzeile:** links ein Workspace-Dropdown mit dem Namen der gewählten Gruppe (Wechsel zwischen Gruppen, Link „Alle Gruppen"). Daneben Tabs: **Gruppe**, **Einzug** (nur bei WG-Gruppen), **Monat**, **Konto** – der aktive Tab akzentfarben gefüllt. Rechts in Sekundärfarbe der Gesamtsaldo über alle Gruppen, z. B. „Du bekommst 42,50 €" oder „Alles ausgeglichen". Die ganze Seite gehört jeweils zur gewählten Gruppe (Workspace-Prinzip); der Fokus der App liegt vorerst auf der WG.
 - **Werkzeugleiste:** Text-Bedienelemente für Umschalter und Filter (inaktiv Sekundär-, aktiv Textfarbe), Dropdowns mit kleinem Dreieck. Primäre Aktionen („+ Ausgabe", „Speichern") als kompakte, dunkel gefüllte Buttons mit Rundung; sekundäre Aktionen als Textlinks.
 - **Große Zahl links** über Listen und Rastern, daneben Umschalter Liste/Raster und Sortierung als Textlinks.
 - **Karten-Raster:** weiße Karten mit 1px-Rahmen, Rundung und Abstand zueinander (kein zusammenhängendes Haarlinien-Raster). Oben eine Metazeile klein, fett, in Sekundärfarbe (Name links, Zusatzinfos rechts). Darunter der Betrag in sehr großer Schrift, unten eine kleine Fußzeile. Hover und Fokus: Rahmen wechselt auf Textfarbe, Metazeile ebenso.
