@@ -1,0 +1,51 @@
+// Beträge und Daten formatieren (de-AT, EUR, Cent als ganze Zahlen).
+
+const euroFormat = new Intl.NumberFormat('de-AT', { style: 'currency', currency: 'EUR' });
+const dateFormat = new Intl.DateTimeFormat('de-AT', { day: '2-digit', month: '2-digit', year: 'numeric' });
+const monthFormat = new Intl.DateTimeFormat('de-AT', { month: 'long', year: 'numeric' });
+
+export function formatEuro(cents) {
+  // de-AT stellt das €-Zeichen voran; laut Vorgabe steht es nach dem Betrag (1.234,56 €).
+  const parts = euroFormat.formatToParts(cents / 100);
+  const symbol = parts.find((p) => p.type === 'currency')?.value ?? '€';
+  const number = parts
+    .filter((p) => p.type !== 'currency' && p.type !== 'literal')
+    .map((p) => p.value)
+    .join('');
+  return `${number} ${symbol}`;
+}
+
+/** Eingabe wie "12,5", "1.234,56" oder "12.50" nach Cent. Gibt null bei Unlesbarem. */
+export function parseEuroInput(value) {
+  if (typeof value !== 'string') return null;
+  let s = value.trim().replace(/[€\s]/g, '');
+  if (!s) return null;
+  if (s.includes(',')) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  }
+  if (!/^-?\d+(\.\d{1,2})?$/.test(s)) return null;
+  return Math.round(parseFloat(s) * 100);
+}
+
+/** Cent als reine Zahl mit Komma für Eingabefelder, z. B. 1234 → "12,34". */
+export function centsToInput(cents) {
+  return (cents / 100).toFixed(2).replace('.', ',');
+}
+
+export function formatDate(isoDate) {
+  return dateFormat.format(new Date(isoDate + 'T12:00:00'));
+}
+
+/** "2026-09" → "September 2026" */
+export function formatMonth(month) {
+  return monthFormat.format(new Date(month + '-15T12:00:00'));
+}
+
+export function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export function monthOf(isoDate) {
+  return isoDate.slice(0, 7);
+}
