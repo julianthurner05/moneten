@@ -42,7 +42,7 @@ const ctx = {
   selectGroup,
   show(active, build) {
     // Das Thema hängt am Modus: Privat ist dunkel, alles andere hell.
-    const privat = active === 'monat' || active === 'konto';
+    const privat = active === 'monat' || active === 'konto' || active === 'passwort';
     document.documentElement.dataset.theme = state.user && privat ? 'dark' : 'light';
     renderHeader({
       user: state.user,

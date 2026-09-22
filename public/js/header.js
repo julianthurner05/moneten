@@ -74,7 +74,7 @@ function buildWorkspace(state) {
 export function renderHeader(state) {
   const header = document.getElementById('header');
 
-  if (!state.user) {
+  if (!state.user || state.active === 'passwort') {
     header.replaceChildren();
     return;
   }

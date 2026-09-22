@@ -1075,6 +1075,14 @@ input[type='checkbox']:disabled {
   gap: var(--space-6);
 }
 
+.auth-back {
+  position: absolute;
+  top: var(--space-5);
+  left: max(var(--space-5), env(safe-area-inset-left));
+  font-size: var(--text-lg);
+  text-decoration: none;
+}
+
 .auth-wordmark {
   font-size: var(--text-display);
   letter-spacing: -0.01em;

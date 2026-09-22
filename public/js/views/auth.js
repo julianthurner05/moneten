@@ -94,7 +94,7 @@ export function renderLogin(ctx) {
 }
 
 export function renderPasswordChange(ctx, { forced = false } = {}) {
-  ctx.show(forced ? null : 'konto', () => {
+  ctx.show(forced ? null : 'passwort', () => {
     const current = el('input', { id: 'pw-current', type: 'password', autocomplete: 'current-password', required: true });
     const next = el('input', { id: 'pw-next', type: 'password', autocomplete: 'new-password', required: true });
     const error = errorLine();
@@ -123,6 +123,9 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
       error,
       el('button', { className: 'button', type: 'submit' }, 'Passwort ändern')
     );
-    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, form);
+    const back = forced
+      ? null
+      : el('a', { className: 'auth-back textlink', href: '#/monat/einstellungen', 'aria-label': 'Zurück' }, '←');
+    return el('div', { className: 'auth-wrap', 'data-stagger': '' }, back, form);
   });
 }
