@@ -48,7 +48,7 @@ function monthBalances(members, expenses, settlements, month) {
 }
 
 function build(ctx, data) {
-  const { group, members, expenses, settlements, suggestions } = data;
+  const { group, members, expenses, settlements } = data;
   const me = ctx.state.user.id;
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
@@ -57,7 +57,6 @@ function build(ctx, data) {
   const balances = monthBalances(members, expenses, settlements, month);
   const myBalance = balances.get(me) ?? 0;
   const monthSuggestions = suggestFromBalances(balances).filter((s) => s.fromUser === me || s.toUser === me);
-  const mySuggestions = suggestions.filter((s) => s.fromUser === me || s.toUser === me);
 
   const entries = [
     ...expenses.filter((e) => !e.isEinzug).map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
@@ -213,7 +212,7 @@ function build(ctx, data) {
 
   // Zum Monatsende erinnert ein roter Zähler am Plus an offene Begleichungen.
   const monthEnd = Number(new Date().getDate()) >= 25;
-  const reminder = monthEnd && !group.archived ? mySuggestions.length : 0;
+  const reminder = monthEnd && !group.archived ? monthSuggestions.length : 0;
   const fab = group.archived
     ? null
     : buildFab(
@@ -225,7 +224,7 @@ function build(ctx, data) {
           {
             label: 'Begleichung',
             badge: reminder,
-            onClick: () => openSettlementForm(ctx, group, members, { suggestions: mySuggestions, me }),
+            onClick: () => openSettlementForm(ctx, group, members, { suggestions: monthSuggestions, me }),
           },
         ],
         { badge: reminder }

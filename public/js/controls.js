@@ -12,7 +12,7 @@ export function dateChip(isoDate) {
     'span',
     { className: 'date-chip' },
     el('span', { className: 'date-chip-month' }, monthShort.format(date)),
-    el('span', { className: 'date-chip-day' }, String(date.getDate()))
+    el('span', { className: 'date-chip-day' }, String(date.getDate()).padStart(2, '0'))
   );
 }
 
