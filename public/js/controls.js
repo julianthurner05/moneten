@@ -277,13 +277,15 @@ export function createMonthPicker({ id, value = '', allowEmpty = false, emptyLab
           );
         })
       ),
-      allowEmpty
-        ? el(
-            'div',
-            { className: 'cal-clear' },
-            el('button', { className: 'textlink', type: 'button', onClick: () => pick('') }, 'Leeren')
-          )
-        : null
+      ...(allowEmpty
+        ? [
+            el(
+              'div',
+              { className: 'cal-clear' },
+              el('button', { className: 'textlink', type: 'button', onClick: () => pick('') }, 'Leeren')
+            ),
+          ]
+        : [])
     );
   };
   renderPicker();
