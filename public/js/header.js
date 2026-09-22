@@ -124,7 +124,10 @@ export function renderHeader(state) {
     : el('a', { className: 'privat-toggle', href: '#/monat' }, 'Privat');
 
   const budget = privat
-    ? el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung')
+    ? [
+        el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht'),
+        el('a', { className: 'textlink', href: '#/monat/einstellungen' }, 'Budgetplanung'),
+      ]
     : null;
 
   header.replaceChildren(

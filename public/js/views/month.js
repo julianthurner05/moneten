@@ -67,8 +67,7 @@ function build(ctx, data) {
           formatEuro(data.uebrigCents)
         )
       )
-    ),
-    el('a', { className: 'textlink', href: '#/monat/uebersicht' }, 'Übersicht aller Monate')
+    )
   );
 
   // Eine Kategorie als Liste: oben Name und Gesamtsumme, darunter die Einträge.
