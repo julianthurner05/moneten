@@ -197,13 +197,29 @@ document.addEventListener(
   true
 );
 
-// Ladebildschirm: reine Spaßanimation – nach fester Dauer ausblenden,
-// unabhängig davon, wie weit die App wirklich ist.
+// Ladebildschirm: Wortmarke mit Ladebalken, füllt sich, wenn die App bereit ist.
 const loader = document.getElementById('loader');
-setTimeout(() => {
-  loader.classList.add('is-done');
-  setTimeout(() => loader.remove(), 450);
-}, 2500);
+const startLoader = () => {
+  const fill = loader.querySelector('.loader-fill');
+  let progress = 0;
+  let target = 88;
+  const tick = () => {
+    progress += (target - progress) * 0.035;
+    if (target === 100 && progress > 99.4) progress = 100;
+    fill.style.width = `${progress}%`;
+    if (progress < 100) {
+      requestAnimationFrame(tick);
+    } else {
+      loader.classList.add('is-done');
+      setTimeout(() => loader.remove(), 500);
+    }
+  };
+  requestAnimationFrame(tick);
+  return () => {
+    target = 100;
+  };
+};
+const finishLoader = startLoader();
 
 window.addEventListener('hashchange', handleRoute);
-handleRoute();
+handleRoute().finally(finishLoader);

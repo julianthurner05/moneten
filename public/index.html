@@ -13,42 +13,6 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <style>
-    /* Ladebildschirm-Bootstrap: muss stehen und laufen, bevor die Stylesheets
-       und app.js geladen sind – deshalb die einzige Stelle mit harten Werten
-       (identisch mit tokens.css) und einer reinen CSS-Animation. */
-    #loader {
-      position: fixed;
-      inset: 0;
-      height: 100svh;
-      z-index: 30;
-      background: #F3F3F1;
-      color: #1B1B19;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 1.25rem;
-      font-family: 'GT Standard', system-ui, sans-serif;
-      opacity: 1;
-      transition: opacity 400ms cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    #loader.is-done { opacity: 0; pointer-events: none; }
-    .loader-wordmark { font-size: 2rem; letter-spacing: -0.01em; line-height: 1.1; }
-    .loader-bar { width: 10rem; height: 4px; border-radius: 999px; background: #EAEAE7; overflow: hidden; }
-    .loader-fill {
-      height: 100%;
-      width: 100%;
-      border-radius: 999px;
-      background: #1B1B19;
-      transform-origin: left center;
-      transform: scaleX(0);
-      /* Reine Spaßanimation, kein echter Ladefortschritt.
-         scaleX statt width: läuft in Safari auf dem Compositor und friert nicht ein. */
-      animation: loader-run 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-    @keyframes loader-run { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-  </style>
 </head>
 <body>
   <div id="loader" aria-hidden="true">
