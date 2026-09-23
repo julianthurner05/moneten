@@ -197,21 +197,13 @@ document.addEventListener(
   true
 );
 
-// Ladebildschirm: die CSS-Animation läuft ohne JS an; hier nur das Fertigstellen –
-// Balken weich auf 100 %, dann ausblenden.
+// Ladebildschirm: reine Spaßanimation – nach fester Dauer ausblenden,
+// unabhängig davon, wie weit die App wirklich ist.
 const loader = document.getElementById('loader');
-const finishLoader = () => {
-  const fill = loader.querySelector('.loader-fill');
-  fill.style.transform = getComputedStyle(fill).transform;
-  fill.style.animation = 'none';
-  void fill.offsetWidth;
-  fill.style.transition = 'transform 400ms cubic-bezier(0.22, 1, 0.36, 1)';
-  fill.style.transform = 'scaleX(1)';
-  setTimeout(() => {
-    loader.classList.add('is-done');
-    setTimeout(() => loader.remove(), 450);
-  }, 420);
-};
+setTimeout(() => {
+  loader.classList.add('is-done');
+  setTimeout(() => loader.remove(), 450);
+}, 2500);
 
 window.addEventListener('hashchange', handleRoute);
-handleRoute().finally(finishLoader);
+handleRoute();

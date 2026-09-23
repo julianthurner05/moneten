@@ -43,14 +43,11 @@
       background: #1B1B19;
       transform-origin: left center;
       transform: scaleX(0);
-      /* Erst zügig, danach langsames Weiterkriechen, damit nie Stillstand wirkt.
+      /* Reine Spaßanimation, kein echter Ladefortschritt.
          scaleX statt width: läuft in Safari auf dem Compositor und friert nicht ein. */
-      animation:
-        loader-run 6s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-        loader-crawl 60s 6s linear forwards;
+      animation: loader-run 2.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
-    @keyframes loader-run { from { transform: scaleX(0); } to { transform: scaleX(0.76); } }
-    @keyframes loader-crawl { from { transform: scaleX(0.76); } to { transform: scaleX(0.97); } }
+    @keyframes loader-run { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   </style>
 </head>
 <body>
