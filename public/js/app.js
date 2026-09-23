@@ -197,29 +197,5 @@ document.addEventListener(
   true
 );
 
-// Ladebildschirm: Wortmarke mit Ladebalken, füllt sich, wenn die App bereit ist.
-const loader = document.getElementById('loader');
-const startLoader = () => {
-  const fill = loader.querySelector('.loader-fill');
-  let progress = 0;
-  let target = 88;
-  const tick = () => {
-    progress += (target - progress) * 0.035;
-    if (target === 100 && progress > 99.4) progress = 100;
-    fill.style.width = `${progress}%`;
-    if (progress < 100) {
-      requestAnimationFrame(tick);
-    } else {
-      loader.classList.add('is-done');
-      setTimeout(() => loader.remove(), 500);
-    }
-  };
-  requestAnimationFrame(tick);
-  return () => {
-    target = 100;
-  };
-};
-const finishLoader = startLoader();
-
 window.addEventListener('hashchange', handleRoute);
-handleRoute().finally(finishLoader);
+handleRoute();

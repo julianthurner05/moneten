@@ -79,7 +79,6 @@
   --stagger-step: 40ms;
 
   /* Ebenen */
-  --z-loader: 30;
   --z-header: 10;
   --z-fab: 15;
   --z-overlay: 20;

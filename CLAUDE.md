@@ -168,7 +168,6 @@ Eigenständige, ruhige Gestaltung. Das Grundgefühl von fontshare.com bleibt (vi
 - **Font-Smoothing** global: `-webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;`
 - **Nichts springt:** Alles, was erscheint oder verschwindet, bekommt eine weiche Transition, ebenso alles, was davon beeinflusst wird (z. B. Wrapper, deren Höhe sich ändert). Elemente erst nach Ende der Ausblend-Transition auf `display: none` setzen, beim Einblenden erst sichtbar machen, dann animieren.
 - **Aufklapper** (Saldodetails, „Erweitert" im Formular) nutzen die `.reveal`-Komponente (`grid-template-rows` 0fr→1fr): der Inhalt darunter verschiebt sich weich mit. Ein globales Easing-Token (`--ease`) gilt für alle Übergänge. Listen blenden mit kleinem Versatz (Stagger) ein.
-- **Ladebildschirm** beim App-Start: große Prozentzahl zählt von 0 auf 100 mit kurzer Ladeleiste, blendet weich aus.
 - **Login/Setup:** vertikal zentriert mit „moneten"-Wortmarke darüber, ohne Kopfzeile/Linie, ohne Autofokus.
 - **App-Icon/Favicon:** €-Glyphe auf Seitenhintergrund (generiert, geometrisch gezeichnet).
 - **Fokus verändert keine Rahmen:** Beim Klicken in Formularfelder oder bei Autofokus bleibt die Linie/Border unverändert. Tastatur-Fokus trotzdem sichtbar machen, aber über `outline` mit Abstand, nicht über die Border.
