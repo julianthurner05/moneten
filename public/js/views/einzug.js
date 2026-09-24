@@ -86,30 +86,8 @@ function build(ctx, data) {
     el(
       'div',
       { className: 'stat' },
-      el(
-        'div',
-        { className: 'stat-label' },
-        el('span', {}, 'Gemeinsam – dein Anteil'),
-        myBalance !== 0
-          ? el('span', { className: myBalance > 0 ? 'is-positive' : 'is-negative' }, formatEuro(myBalance))
-          : null
-      ),
-      el('div', { className: 'stat-value' }, formatEuro(mySharedSum)),
-      debts.length > 0
-        ? el(
-            'div',
-            { className: 'stat-foot' },
-            debts.map((s) =>
-              el(
-                'div',
-                {},
-                s.toUser === me
-                  ? `${name(s.fromUser)} schuldet dir ${formatEuro(s.amountCents)}`
-                  : `Du schuldest ${name(s.toUser)} ${formatEuro(s.amountCents)}`
-              )
-            )
-          )
-        : null
+      el('div', { className: 'stat-label' }, 'Gemeinsam – dein Anteil'),
+      el('div', { className: 'stat-value' }, formatEuro(mySharedSum))
     ),
     el(
       'div',
@@ -192,10 +170,31 @@ function build(ctx, data) {
         { label: 'Privater Eintrag', onClick: () => openPrivateForm(ctx, group, null) },
       ]);
 
+  // Kleines Saldo wie in Allgemein, nur ruhiger: mittig zwischen Statistik und Liste.
+  const saldo = el(
+    'div',
+    { className: 'einzug-saldo' },
+    el(
+      'div',
+      { className: `einzug-saldo-value${myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : ''}` },
+      formatEuro(myBalance)
+    ),
+    debts.map((s) =>
+      el(
+        'div',
+        { className: 'einzug-saldo-line' },
+        s.toUser === me
+          ? `${name(s.fromUser)} schuldet dir ${formatEuro(s.amountCents)}`
+          : `Du schuldest ${name(s.toUser)} ${formatEuro(s.amountCents)}`
+      )
+    )
+  );
+
   return el(
     'div',
     { className: 'view' },
     stats,
+    saldo,
     el('div', { className: 'section-label' }, 'Gemeinsam'),
     sharedList,
     el('div', { className: 'section-label' }, 'Privat'),
