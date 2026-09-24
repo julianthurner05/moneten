@@ -1,7 +1,7 @@
 // Einzug-Bereich einer WG-Gruppe: gemeinsame Einzugs-Ausgaben plus privater Bereich.
 
 import { api } from '../api.js';
-import { createDatePicker, dateChip } from '../controls.js';
+import { createDatePicker, dateChip, suggestFromBalances } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { centsToInput, formatDate, formatEuro, parseEuroInput, todayIso } from '../format.js';
@@ -61,6 +61,24 @@ function build(ctx, data) {
   );
   const privateSum = einzugPersonal.reduce((sum, item) => sum + item.amountCents, 0);
 
+  // Kleines Einzug-Saldo: nur gemeinsame Ausgaben (ohne Kaution);
+  // als überwiesen vermerkte Anteile gelten als beglichen.
+  const me = ctx.state.user.id;
+  const balances = new Map(members.map((m) => [m.id, 0]));
+  const addBalance = (id, cents) => balances.set(id, (balances.get(id) ?? 0) + cents);
+  for (const e of shared) {
+    addBalance(e.paidBy, e.amountCents);
+    for (const s of e.shares) {
+      addBalance(s.userId, -s.shareCents);
+      if (s.userId !== e.paidBy && transfers.has(`${e.id}|${s.userId}`)) {
+        addBalance(s.userId, s.shareCents);
+        addBalance(e.paidBy, -s.shareCents);
+      }
+    }
+  }
+  const myBalance = balances.get(me) ?? 0;
+  const debts = suggestFromBalances(balances).filter((s) => s.fromUser === me || s.toUser === me);
+
   // Gegenüberstellung als Erstes: gemeinsame und private Einzugskosten.
   const stats = el(
     'div',
@@ -68,8 +86,30 @@ function build(ctx, data) {
     el(
       'div',
       { className: 'stat' },
-      el('div', { className: 'stat-label' }, 'Gemeinsam – dein Anteil'),
-      el('div', { className: 'stat-value' }, formatEuro(mySharedSum))
+      el(
+        'div',
+        { className: 'stat-label' },
+        el('span', {}, 'Gemeinsam – dein Anteil'),
+        myBalance !== 0
+          ? el('span', { className: myBalance > 0 ? 'is-positive' : 'is-negative' }, formatEuro(myBalance))
+          : null
+      ),
+      el('div', { className: 'stat-value' }, formatEuro(mySharedSum)),
+      debts.length > 0
+        ? el(
+            'div',
+            { className: 'stat-foot' },
+            debts.map((s) =>
+              el(
+                'div',
+                {},
+                s.toUser === me
+                  ? `${name(s.fromUser)} schuldet dir ${formatEuro(s.amountCents)}`
+                  : `Du schuldest ${name(s.toUser)} ${formatEuro(s.amountCents)}`
+              )
+            )
+          )
+        : null
     ),
     el(
       'div',

@@ -887,9 +887,18 @@ a.row:hover {
 }
 
 .stat-foot {
+  margin-top: var(--space-3);
   font-size: var(--text-sm);
   letter-spacing: var(--tracking-small);
   color: var(--color-secondary);
+}
+
+.stat-label .is-positive {
+  color: var(--color-positive);
+}
+
+.stat-label .is-negative {
+  color: var(--color-negative);
 }
 
 /* ---------- Panels und Formulare ---------- */
