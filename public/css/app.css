@@ -892,26 +892,39 @@ a.row:hover {
   color: var(--color-secondary);
 }
 
-/* Kleines Einzug-Saldo zwischen Statistik und Liste */
-.einzug-saldo {
+/* Einzug: Saldo rechtsbündig in der Gemeinsam-Kopfzeile, Details dahinter */
+.einzug-head {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  margin-block: var(--space-4) var(--space-6);
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin: var(--space-9) 0 var(--space-4);
 }
 
-.einzug-saldo-value {
-  font-size: var(--text-lg);
-  font-variant-numeric: tabular-nums;
+.einzug-head .section-label {
+  margin: 0;
 }
 
-.einzug-saldo-value.is-positive {
+.einzug-saldo-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.category-sum.is-positive {
   color: var(--color-positive);
 }
 
-.einzug-saldo-value.is-negative {
+.category-sum.is-negative {
   color: var(--color-negative);
+}
+
+.einzug-details .reveal-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-1);
+  padding-bottom: var(--space-4);
 }
 
 .einzug-saldo-line {
@@ -1606,6 +1619,11 @@ input[type='month'] {
 
   .info-button {
     display: none;
+  }
+
+  /* Im Einzug bleibt das kleine i auch am Handy – dort gibt es keinen Details-Knopf. */
+  .einzug-saldo-side .info-button {
+    display: inline-block;
   }
 
   .details-button {

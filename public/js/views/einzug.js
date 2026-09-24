@@ -170,22 +170,52 @@ function build(ctx, data) {
         { label: 'Privater Eintrag', onClick: () => openPrivateForm(ctx, group, null) },
       ]);
 
-  // Kleines Saldo wie in Allgemein, nur ruhiger: mittig zwischen Statistik und Liste.
-  const saldo = el(
+  // Saldo rechtsbündig in der Gemeinsam-Kopfzeile; die Details klappen über ein kleines i auf.
+  const details = el(
     'div',
-    { className: 'einzug-saldo' },
+    { className: 'einzug-details reveal' },
     el(
       'div',
-      { className: `einzug-saldo-value${myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : ''}` },
-      formatEuro(myBalance)
-    ),
-    debts.map((s) =>
+      { className: 'reveal-inner' },
+      debts.map((s) =>
+        el(
+          'div',
+          { className: 'einzug-saldo-line' },
+          s.toUser === me
+            ? `${name(s.fromUser)} schuldet dir ${formatEuro(s.amountCents)}`
+            : `Du schuldest ${name(s.toUser)} ${formatEuro(s.amountCents)}`
+        )
+      )
+    )
+  );
+  const infoButton = el(
+    'button',
+    {
+      className: 'info-button',
+      type: 'button',
+      'aria-label': 'Wer schuldet wem?',
+      'aria-expanded': 'false',
+      onClick: () => {
+        const open = !details.classList.contains('is-open');
+        details.classList.toggle('is-open', open);
+        infoButton.setAttribute('aria-expanded', String(open));
+        infoButton.classList.toggle('is-active', open);
+      },
+    },
+    'i'
+  );
+  const sharedHead = el(
+    'div',
+    { className: 'einzug-head' },
+    el('div', { className: 'section-label' }, 'Gemeinsam'),
+    el(
+      'div',
+      { className: 'einzug-saldo-side' },
+      debts.length > 0 ? infoButton : null,
       el(
         'div',
-        { className: 'einzug-saldo-line' },
-        s.toUser === me
-          ? `${name(s.fromUser)} schuldet dir ${formatEuro(s.amountCents)}`
-          : `Du schuldest ${name(s.toUser)} ${formatEuro(s.amountCents)}`
+        { className: `category-sum${myBalance > 0 ? ' is-positive' : myBalance < 0 ? ' is-negative' : ''}` },
+        formatEuro(myBalance)
       )
     )
   );
@@ -194,8 +224,8 @@ function build(ctx, data) {
     'div',
     { className: 'view' },
     stats,
-    el('div', { className: 'section-label' }, 'Gemeinsam'),
-    saldo,
+    sharedHead,
+    details,
     sharedList,
     el('div', { className: 'section-label' }, 'Privat'),
     privateList,
