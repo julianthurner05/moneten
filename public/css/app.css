@@ -1366,6 +1366,45 @@ a.privat-toggle:hover {
   color: var(--color-bg);
 }
 
+/* ---------- Einkaufsliste ---------- */
+
+.einkauf-add {
+  max-width: var(--panel-max-width);
+  margin-bottom: var(--space-6);
+}
+
+.einkauf-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--space-6);
+  height: var(--space-6);
+  border-radius: var(--radius-full);
+  background: var(--color-field);
+  font-size: var(--text-sm);
+  flex-shrink: 0;
+  transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
+}
+
+.einkauf-check.is-done {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.einkauf-row.is-done .row-title {
+  color: var(--color-secondary);
+  text-decoration: line-through;
+}
+
+.einkauf-clear {
+  margin-top: var(--space-5);
+  text-align: center;
+}
+
+.push-row {
+  margin-top: var(--space-5);
+}
+
 /* ---------- Datums-Tag ---------- */
 
 .date-chip {
