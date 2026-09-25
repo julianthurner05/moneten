@@ -3,13 +3,20 @@
 import { api } from '../api.js';
 import { el, noticePanel } from '../dom.js';
 import { formatEuro } from '../format.js';
+import { openSettlementForm } from './settlementForm.js';
 
-export function settlementRow(ctx, group, settlement, name) {
+export function settlementRow(ctx, group, members, settlement, name) {
   const me = ctx.state.user.id;
   const canConfirm = !settlement.confirmed && settlement.toUser === me && !group.archived;
   return el(
     'div',
-    { className: 'row row-settle' },
+    group.archived
+      ? { className: 'row row-settle' }
+      : {
+          className: 'row row-settle row-clickable',
+          onClick: () =>
+            openSettlementForm(ctx, group, members, { settlement, me, isEinzug: settlement.isEinzug }),
+        },
     el('span', { className: 'date-chip date-chip-euro', 'aria-hidden': 'true' }, '€'),
     el(
       'div',
@@ -33,7 +40,8 @@ export function settlementRow(ctx, group, settlement, name) {
             {
               className: 'button',
               type: 'button',
-              onClick: async () => {
+              onClick: async (event) => {
+                event.stopPropagation();
                 try {
                   await api(`/api/groups/${group.id}/settlements/${settlement.id}/confirm`, { method: 'POST' });
                   ctx.refresh();

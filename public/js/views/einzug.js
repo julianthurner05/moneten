@@ -90,7 +90,7 @@ function build(ctx, data) {
           'div',
           { className: 'row-list', 'data-stagger': '' },
           sharedEntries.map((entry) => {
-            if (entry.type === 'settlement') return settlementRow(ctx, group, entry.data, name);
+            if (entry.type === 'settlement') return settlementRow(ctx, group, members, entry.data, name);
             const expense = entry.data;
             return el(
               group.archived ? 'div' : 'button',

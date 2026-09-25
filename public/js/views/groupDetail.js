@@ -167,7 +167,7 @@ function build(ctx, data) {
             el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
           );
         }
-        return settlementRow(ctx, group, entry.data, name);
+        return settlementRow(ctx, group, members, entry.data, name);
       })
     );
   }

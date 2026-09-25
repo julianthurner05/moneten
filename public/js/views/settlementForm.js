@@ -2,15 +2,16 @@
 
 import { api } from '../api.js';
 import { createDatePicker, createSelect } from '../controls.js';
-import { el, openPanel } from '../dom.js';
+import { confirmPanel, el, openPanel } from '../dom.js';
 import { centsToInput, parseEuroInput, todayIso } from '../format.js';
 
-export function openSettlementForm(ctx, group, members, { suggestions = [], me, isEinzug = false } = {}) {
+export function openSettlementForm(ctx, group, members, { suggestions = [], me, isEinzug = false, settlement = null } = {}) {
+  const isEdit = !!settlement;
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
 
   // Vorbelegung: zuerst was ich selbst schulde, sonst was ich bekomme.
-  const initial = suggestions.find((s) => s.fromUser === me) ?? suggestions[0] ?? null;
+  const initial = settlement ?? suggestions.find((s) => s.fromUser === me) ?? suggestions[0] ?? null;
 
   openPanel((close) => {
     const memberOptions = members.map((member) => ({ value: member.id, label: member.displayName }));
@@ -28,7 +29,7 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
       placeholder: '0,00',
       value: initial ? centsToInput(initial.amountCents) : '',
     });
-    const date = createDatePicker({ id: 'set-date', value: todayIso() });
+    const date = createDatePicker({ id: 'set-date', value: settlement?.settledOn ?? todayIso() });
     const error = el('p', { className: 'form-error', role: 'alert' });
 
     const applySuggestion = (s) => {
@@ -38,7 +39,7 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
     };
 
     const suggestionBlock =
-      suggestions.length === 0
+      isEdit || suggestions.length === 0
         ? null
         : el(
             'div',
@@ -72,10 +73,12 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
             return;
           }
           try {
-            await api(`/api/groups/${group.id}/settlements`, {
-              method: 'POST',
-              body: { fromUser: fromUser.value, toUser: toUser.value, amountCents, settledOn: date.value, isEinzug },
-            });
+            const body = { fromUser: fromUser.value, toUser: toUser.value, amountCents, settledOn: date.value, isEinzug };
+            if (isEdit) {
+              await api(`/api/groups/${group.id}/settlements/${settlement.id}`, { method: 'PUT', body });
+            } else {
+              await api(`/api/groups/${group.id}/settlements`, { method: 'POST', body });
+            }
             close();
             ctx.refresh();
           } catch (err) {
@@ -84,7 +87,7 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
           }
         },
       },
-      el('h2', { className: 'panel-title' }, 'Begleichung'),
+      el('h2', { className: 'panel-title' }, isEdit ? 'Begleichung bearbeiten' : 'Begleichung'),
       suggestionBlock,
       wrap('Von', fromUser.root, 'set-from'),
       wrap('An', toUser.root, 'set-to'),
@@ -94,8 +97,31 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
       el(
         'div',
         { className: 'panel-actions' },
+        isEdit
+          ? el(
+              'button',
+              {
+                className: 'textlink textlink-danger',
+                type: 'button',
+                onClick: async () => {
+                  const ok = await confirmPanel('Diese Begleichung wirklich löschen?', 'Löschen');
+                  if (!ok) return;
+                  try {
+                    await api(`/api/groups/${group.id}/settlements/${settlement.id}`, { method: 'DELETE' });
+                    close();
+                    ctx.refresh();
+                  } catch (err) {
+                    error.textContent = err.message;
+                    error.classList.add('is-visible');
+                  }
+                },
+              },
+              'Löschen'
+            )
+          : null,
+        el('div', { className: 'toolbar-spacer' }),
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
-        el('button', { className: 'button', type: 'submit' }, 'Eintragen')
+        el('button', { className: 'button', type: 'submit' }, isEdit ? 'Speichern' : 'Eintragen')
       )
     );
   });
