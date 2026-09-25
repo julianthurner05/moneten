@@ -238,7 +238,7 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
       el(
         'div',
         { className: 'panel-actions' },
-        isEdit ? el('button', { className: 'textlink', type: 'button', onClick: remove }, 'Löschen') : null,
+        isEdit ? el('button', { className: 'textlink textlink-danger', type: 'button', onClick: remove }, 'Löschen') : null,
         el('div', { className: 'toolbar-spacer' }),
         el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Abbrechen'),
         el('button', { className: 'button', type: 'submit' }, 'Speichern')

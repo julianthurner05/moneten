@@ -356,6 +356,11 @@ textarea:focus-visible {
   color: var(--color-text);
 }
 
+.textlink-danger,
+.textlink-danger:hover {
+  color: var(--color-negative);
+}
+
 /* Pillen und Buttons: Schrift exakt vertikal mittig (ein Schriftschnitt, line-height 1) */
 .button,
 .privat-toggle,
