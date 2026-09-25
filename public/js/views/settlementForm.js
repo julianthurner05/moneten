@@ -5,7 +5,7 @@ import { createDatePicker, createSelect } from '../controls.js';
 import { el, openPanel } from '../dom.js';
 import { centsToInput, parseEuroInput, todayIso } from '../format.js';
 
-export function openSettlementForm(ctx, group, members, { suggestions = [], me } = {}) {
+export function openSettlementForm(ctx, group, members, { suggestions = [], me, isEinzug = false } = {}) {
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
 
@@ -74,7 +74,7 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me }
           try {
             await api(`/api/groups/${group.id}/settlements`, {
               method: 'POST',
-              body: { fromUser: fromUser.value, toUser: toUser.value, amountCents, settledOn: date.value },
+              body: { fromUser: fromUser.value, toUser: toUser.value, amountCents, settledOn: date.value, isEinzug },
             });
             close();
             ctx.refresh();

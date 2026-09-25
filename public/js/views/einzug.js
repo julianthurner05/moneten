@@ -6,6 +6,8 @@ import { confirmPanel, el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { centsToInput, formatDate, formatEuro, parseEuroInput, todayIso } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
+import { openSettlementForm } from './settlementForm.js';
+import { settlementRow } from './settlementRow.js';
 
 export async function renderEinzug(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}`);
@@ -16,41 +18,6 @@ function build(ctx, data) {
   const { group, members, einzugPersonal } = data;
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
-  const transfers = new Set((data.einzugTransfers ?? []).map((t) => `${t.expenseId}|${t.userId}`));
-
-  // Pro Person festhalten, dass der Anteil überwiesen wurde (rein informativ).
-  const transferChips = (expense) =>
-    el(
-      'div',
-      { className: 'transfer-chips' },
-      expense.shares
-        .filter((s) => s.userId !== expense.paidBy)
-        .map((s) => {
-          const done = transfers.has(`${expense.id}|${s.userId}`);
-          return el(
-            'button',
-            {
-              className: `transfer-chip${done ? ' is-done' : ''}`,
-              type: 'button',
-              title: done ? 'Überwiesen – Klick entfernt den Vermerk' : 'Als überwiesen vermerken',
-              onClick: async (event) => {
-                event.stopPropagation();
-                try {
-                  await api(`/api/groups/${group.id}/einzug-transfers`, {
-                    method: 'POST',
-                    body: { expenseId: expense.id, userId: s.userId, transferred: !done },
-                  });
-                  ctx.refresh();
-                } catch {
-                  // Fehler still ignorieren – nächster Refresh zeigt den Stand
-                }
-              },
-            },
-            `${name(s.userId)}${done ? ' ✓' : ''}`
-          );
-        })
-    );
-
   // Kaution läuft gesondert: fest vermerkt, zählt nicht zu den Einzugskosten.
   const deposits = data.expenses.filter((e) => e.isEinzug && e.isDeposit);
   const shared = data.expenses.filter((e) => e.isEinzug && !e.isDeposit);
@@ -61,20 +28,19 @@ function build(ctx, data) {
   );
   const privateSum = einzugPersonal.reduce((sum, item) => sum + item.amountCents, 0);
 
-  // Kleines Einzug-Saldo: nur gemeinsame Ausgaben (ohne Kaution);
-  // als überwiesen vermerkte Anteile gelten als beglichen.
+  // Kleines Einzug-Saldo: gemeinsame Ausgaben (ohne Kaution) plus bestätigte Begleichungen.
   const me = ctx.state.user.id;
+  const einzugSettlements = data.settlements.filter((s) => s.isEinzug);
   const balances = new Map(members.map((m) => [m.id, 0]));
   const addBalance = (id, cents) => balances.set(id, (balances.get(id) ?? 0) + cents);
   for (const e of shared) {
     addBalance(e.paidBy, e.amountCents);
-    for (const s of e.shares) {
-      addBalance(s.userId, -s.shareCents);
-      if (s.userId !== e.paidBy && transfers.has(`${e.id}|${s.userId}`)) {
-        addBalance(s.userId, s.shareCents);
-        addBalance(e.paidBy, -s.shareCents);
-      }
-    }
+    for (const s of e.shares) addBalance(s.userId, -s.shareCents);
+  }
+  for (const s of einzugSettlements) {
+    if (!s.confirmed) continue;
+    addBalance(s.fromUser, s.amountCents);
+    addBalance(s.toUser, -s.amountCents);
   }
   const myBalance = balances.get(me) ?? 0;
   const debts = suggestFromBalances(balances).filter((s) => s.fromUser === me || s.toUser === me);
@@ -112,14 +78,21 @@ function build(ctx, data) {
     );
   });
 
+  const sharedEntries = [
+    ...shared.map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
+    ...einzugSettlements.map((s) => ({ type: 'settlement', date: s.settledOn, data: s })),
+  ].sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
   const sharedList =
-    shared.length === 0 && depositRows.length === 0
+    sharedEntries.length === 0 && depositRows.length === 0
       ? el('p', { className: 'empty-note' }, 'Noch keine gemeinsamen Einzugs-Ausgaben – z. B. Kaution oder Gerätebestellungen.')
       : el(
           'div',
           { className: 'row-list', 'data-stagger': '' },
-          shared.map((expense) =>
-            el(
+          sharedEntries.map((entry) => {
+            if (entry.type === 'settlement') return settlementRow(ctx, group, entry.data, name);
+            const expense = entry.data;
+            return el(
               group.archived ? 'div' : 'button',
               group.archived
                 ? { className: 'row' }
@@ -133,12 +106,11 @@ function build(ctx, data) {
                 'div',
                 { className: 'row-main' },
                 el('div', { className: 'row-title' }, expense.description),
-                el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`),
-                group.archived ? null : transferChips(expense)
+                el('div', { className: 'row-label' }, `Bezahlt von ${name(expense.paidBy)}`)
               ),
               el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
-            )
-          ),
+            );
+          }),
           depositRows
         );
 
@@ -167,6 +139,10 @@ function build(ctx, data) {
     ? null
     : buildFab([
         { label: 'Gemeinsame Ausgabe', onClick: () => openExpenseForm(ctx, group, members, null, { isEinzug: true }) },
+        {
+          label: 'Begleichung',
+          onClick: () => openSettlementForm(ctx, group, members, { suggestions: debts, me, isEinzug: true }),
+        },
         { label: 'Privater Eintrag', onClick: () => openPrivateForm(ctx, group, null) },
       ]);
 

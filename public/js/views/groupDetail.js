@@ -2,24 +2,14 @@
 
 import { api } from '../api.js';
 import { dateChip, monthSwitch, suggestFromBalances } from '../controls.js';
-import { el, openPanel } from '../dom.js';
+import { el, noticePanel, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
-import { currentMonth, formatEuro, formatEuroParts, monthOf } from '../format.js';
+import { currentMonth, formatEuro, formatEuroParts, monthAdd, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
 import { openSettlementForm } from './settlementForm.js';
+import { settlementRow } from './settlementRow.js';
 
 const filterState = { groupId: null, month: null };
-
-function noticePanel(message) {
-  openPanel((close) =>
-    el(
-      'div',
-      {},
-      el('p', { className: 'panel-message' }, message),
-      el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'button', onClick: () => close() }, 'OK'))
-    )
-  );
-}
 
 export async function renderGroupDetail(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}`);
@@ -40,7 +30,7 @@ function monthBalances(members, expenses, settlements, month) {
     for (const s of e.shares) add(s.userId, -s.shareCents);
   }
   for (const s of settlements) {
-    if (!s.confirmed || monthOf(s.settledOn) !== month) continue;
+    if (s.isEinzug || !s.confirmed || monthOf(s.settledOn) !== month) continue;
     add(s.fromUser, s.amountCents);
     add(s.toUser, -s.amountCents);
   }
@@ -60,10 +50,17 @@ function build(ctx, data) {
 
   const entries = [
     ...expenses.filter((e) => !e.isEinzug).map((e) => ({ type: 'expense', date: e.spentOn, data: e })),
-    ...settlements.map((s) => ({ type: 'settlement', date: s.settledOn, data: s })),
+    ...settlements.filter((s) => !s.isEinzug).map((s) => ({ type: 'settlement', date: s.settledOn, data: s })),
   ]
     .filter((entry) => monthOf(entry.date) === month)
     .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+
+  // Erinnerung erst nach Monatsende: offene Schulden aus dem Vormonat,
+  // und nur bei der Person, die zu begleichen hat.
+  const prevDebts = suggestFromBalances(
+    monthBalances(members, expenses, settlements, monthAdd(currentMonth(), -1))
+  ).filter((s) => s.fromUser === me);
+  const reminder = !group.archived ? prevDebts.length : 0;
 
   // Monatsumschalter und Saldo mittig; die Details klappen darunter auf.
   // Ist der Monat ausgeglichen, gibt es nichts aufzuklappen.
@@ -117,10 +114,14 @@ function build(ctx, data) {
   const hero = el(
     'div',
     { className: 'hero hero-centered' },
-    monthSwitch(month, (m) => {
-      filterState.month = m;
-      ctx.refresh();
-    }),
+    monthSwitch(
+      month,
+      (m) => {
+        filterState.month = m;
+        ctx.refresh();
+      },
+      { markPrev: month === currentMonth() && reminder > 0 }
+    ),
     el(
       'div',
       { className: 'hero-row' },
@@ -166,55 +167,11 @@ function build(ctx, data) {
             el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(expense.amountCents)))
           );
         }
-        const settlement = entry.data;
-        const canConfirm = !settlement.confirmed && settlement.toUser === me && !group.archived;
-        return el(
-          'div',
-          { className: 'row row-settle' },
-          el('span', { className: 'date-chip date-chip-euro', 'aria-hidden': 'true' }, '€'),
-          el(
-            'div',
-            { className: 'row-main settle-main' },
-            el(
-              'div',
-              { className: 'settle-flow' },
-              el('span', {}, name(settlement.fromUser)),
-              el('span', { className: 'settle-arrow', 'aria-hidden': 'true' }),
-              el('span', {}, name(settlement.toUser))
-            ),
-            settlement.confirmed ? null : el('div', { className: 'row-label' }, 'Wartet auf Bestätigung')
-          ),
-          el(
-            'div',
-            { className: 'row-side' },
-            el('div', { className: 'row-amount' }, formatEuro(settlement.amountCents)),
-            canConfirm
-              ? el(
-                  'button',
-                  {
-                    className: 'button',
-                    type: 'button',
-                    onClick: async () => {
-                      try {
-                        await api(`/api/groups/${group.id}/settlements/${settlement.id}/confirm`, { method: 'POST' });
-                        ctx.refresh();
-                      } catch (err) {
-                        noticePanel(err.message);
-                      }
-                    },
-                  },
-                  'Erhalten'
-                )
-              : null
-          )
-        );
+        return settlementRow(ctx, group, entry.data, name);
       })
     );
   }
 
-  // Zum Monatsende erinnert ein roter Zähler am Plus an offene Begleichungen.
-  const monthEnd = Number(new Date().getDate()) >= 25;
-  const reminder = monthEnd && !group.archived ? monthSuggestions.length : 0;
   const fab = group.archived
     ? null
     : buildFab(
@@ -226,7 +183,11 @@ function build(ctx, data) {
           {
             label: 'Begleichung',
             badge: reminder,
-            onClick: () => openSettlementForm(ctx, group, members, { suggestions: monthSuggestions, me }),
+            onClick: () =>
+              openSettlementForm(ctx, group, members, {
+                suggestions: monthSuggestions.length > 0 ? monthSuggestions : prevDebts,
+                me,
+              }),
           },
         ],
         { badge: reminder }

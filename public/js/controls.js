@@ -43,7 +43,7 @@ export function suggestFromBalances(balances) {
 }
 
 /** Monatsumschalter: Pfeile links und rechts vom Monat. */
-export function monthSwitch(month, onChange, { big = false } = {}) {
+export function monthSwitch(month, onChange, { big = false, markPrev = false } = {}) {
   return el(
     'div',
     { className: `month-switch${big ? ' month-switch-big' : ''}` },
@@ -56,7 +56,8 @@ export function monthSwitch(month, onChange, { big = false } = {}) {
         disabled: month <= MIN_MONTH,
         onClick: () => onChange(monthAdd(month, -1)),
       },
-      '←'
+      '←',
+      markPrev ? el('span', { className: 'month-arrow-dot', 'aria-hidden': 'true' }) : null
     ),
     el('span', { className: big ? 'month-title' : 'month-switch-label' }, formatMonth(month)),
     el(

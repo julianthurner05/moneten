@@ -31,10 +31,10 @@ export async function onRequestPost({ request, env, data, params }) {
   const now = nowIso();
   const confirmedAt = data.user.id === body.toUser ? now : null;
   await env.DB.prepare(
-    `INSERT INTO settlements (id, group_id, from_user, to_user, amount_cents, settled_on, created_by, created_at, confirmed_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO settlements (id, group_id, from_user, to_user, amount_cents, settled_on, created_by, created_at, confirmed_at, is_einzug)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, now, confirmedAt)
+    .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, now, confirmedAt, body.isEinzug ? 1 : 0)
     .run();
 
   return json({ id, confirmed: !!confirmedAt });

@@ -141,3 +141,15 @@ export function confirmPanel(message, confirmLabel) {
     );
   });
 }
+
+/** Kleine Hinweis-Lightbox mit OK-Button. */
+export function noticePanel(message) {
+  openPanel((close) =>
+    el(
+      'div',
+      {},
+      el('p', { className: 'panel-message' }, message),
+      el('div', { className: 'panel-actions' }, el('button', { className: 'button', type: 'button', onClick: () => close() }, 'OK'))
+    )
+  );
+}

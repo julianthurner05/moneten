@@ -29,7 +29,7 @@ export async function onRequestGet({ env, data, params }) {
          WHERE e.group_id = ? AND e.deleted_at IS NULL`
       ).bind(group.id),
       env.DB.prepare(
-        `SELECT id, from_user, to_user, amount_cents, settled_on, created_by, confirmed_at
+        `SELECT id, from_user, to_user, amount_cents, settled_on, created_by, confirmed_at, is_einzug
          FROM settlements WHERE group_id = ? ORDER BY settled_on DESC, created_at DESC`
       ).bind(group.id),
       env.DB.prepare(
@@ -105,6 +105,7 @@ export async function onRequestGet({ env, data, params }) {
       settledOn: s.settled_on,
       createdBy: s.created_by,
       confirmed: !!s.confirmed_at,
+      isEinzug: !!s.is_einzug,
     })),
     suggestions: suggestSettlements(balances),
     myCategories: myCategories.results.map((c) => ({ id: c.id, name: c.name })),
