@@ -109,7 +109,24 @@ function build(ctx, data) {
         optionsError.classList.add('is-visible');
       }
     });
-    pushRow = el('div', { className: 'push-row' }, pushButton);
+    // Testmitteilung: prüft den Server-Versand über /api/push/test.
+    const testButton = el(
+      'button',
+      {
+        className: 'textlink',
+        type: 'button',
+        onClick: async () => {
+          try {
+            await api('/api/push/test', { method: 'POST' });
+          } catch (err) {
+            optionsError.textContent = err.message;
+            optionsError.classList.add('is-visible');
+          }
+        },
+      },
+      'Testmitteilung'
+    );
+    pushRow = el('div', { className: 'push-row' }, pushButton, testButton);
   }
 
   const options = el(
