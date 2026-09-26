@@ -121,16 +121,29 @@ textarea:focus-visible {
   transition: background-color var(--duration) var(--ease);
 }
 
-.workspace-button:hover,
 .workspace.is-open .workspace-button {
   background: var(--color-field);
 }
 
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .workspace-button:hover {
+    background: var(--color-field);
+  }
+}
+
 /* Ohne Dropdown (nur eine Gruppe) ist der Name reine Anzeige. */
-.workspace-static,
-.workspace-static:hover {
+.workspace-static {
   background: none;
   cursor: default;
+}
+
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .workspace-static:hover {
+    background: none;
+    cursor: default;
+  }
 }
 
 .workspace-menu {
@@ -168,8 +181,11 @@ textarea:focus-visible {
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.workspace-item:hover {
-  background: var(--color-field);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .workspace-item:hover {
+    background: var(--color-field);
+  }
 }
 
 .workspace-item.is-active {
@@ -214,8 +230,11 @@ textarea:focus-visible {
   transition: background-color var(--duration) var(--ease), color var(--duration) var(--ease);
 }
 
-.nav-cell:hover {
-  color: var(--color-text);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .nav-cell:hover {
+    color: var(--color-text);
+  }
 }
 
 .nav-cell.is-active {
@@ -247,9 +266,15 @@ textarea:focus-visible {
   transition: color var(--duration) var(--ease);
 }
 
-.theme-button.is-active,
-.theme-button:hover {
+.theme-button.is-active {
   color: var(--color-text);
+}
+
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .theme-button:hover {
+    color: var(--color-text);
+  }
 }
 
 /* ---------- Hauptbereich ---------- */
@@ -350,15 +375,27 @@ textarea:focus-visible {
   transition: color var(--duration) var(--ease);
 }
 
-.textlink:hover,
 .textlink.is-active,
 .textlink.strong {
   color: var(--color-text);
 }
 
-.textlink-danger,
-.textlink-danger:hover {
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .textlink:hover {
+    color: var(--color-text);
+  }
+}
+
+.textlink-danger {
   color: var(--color-negative);
+}
+
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .textlink-danger:hover {
+    color: var(--color-negative);
+  }
 }
 
 /* Pillen und Buttons: Schrift exakt vertikal mittig (ein Schriftschnitt, line-height 1) */
@@ -393,8 +430,11 @@ textarea:focus-visible {
     color var(--duration) var(--ease);
 }
 
-.button:hover {
-  opacity: 0.8;
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .button:hover {
+    opacity: 0.8;
+  }
 }
 
 /* ---------- Dropdowns ---------- */
@@ -503,8 +543,11 @@ select {
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.pop-menu-item:hover {
-  background: var(--color-field);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .pop-menu-item:hover {
+    background: var(--color-field);
+  }
 }
 
 .pop-menu-item.is-active {
@@ -569,8 +612,11 @@ select {
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.cal-day:hover {
-  background: var(--color-field);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .cal-day:hover {
+    background: var(--color-field);
+  }
 }
 
 .cal-day.is-active {
@@ -643,9 +689,15 @@ button.card {
   width: 100%;
 }
 
-.card:not(.card-static):hover,
 .card:not(.card-static):focus-visible {
   background: var(--color-surface);
+}
+
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .card:not(.card-static):hover {
+    background: var(--color-surface);
+  }
 }
 
 /* ---------- Balken (Dashboard) ---------- */
@@ -694,9 +746,12 @@ a.row {
   cursor: pointer;
 }
 
-.row-clickable:hover,
-a.row:hover {
-  background-color: var(--color-row-hover);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .row-clickable:hover,
+  a.row:hover {
+    background-color: var(--color-row-hover);
+  }
 }
 
 .row-muted .row-title,
@@ -1240,9 +1295,12 @@ input[type='checkbox']:disabled {
     opacity var(--duration) var(--ease);
 }
 
-a.privat-toggle:hover {
-  background: var(--color-text);
-  color: var(--color-bg);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  a.privat-toggle:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
 }
 
 .privat-toggle.is-embedded {
@@ -1341,9 +1399,12 @@ a.privat-toggle:hover {
   transition: background-color var(--duration-fast) var(--ease), color var(--duration-fast) var(--ease);
 }
 
-.info-button:hover {
-  background: var(--color-text);
-  color: var(--color-bg);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .info-button:hover {
+    background: var(--color-text);
+    color: var(--color-bg);
+  }
 }
 
 .details-button {
@@ -1494,8 +1555,11 @@ a.privat-toggle:hover {
   transition: color var(--duration-fast) var(--ease);
 }
 
-.month-arrow:hover {
-  color: var(--color-text);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .month-arrow:hover {
+    color: var(--color-text);
+  }
 }
 
 .month-arrow:disabled {
@@ -1546,8 +1610,11 @@ a.privat-toggle:hover {
     color var(--duration) var(--ease);
 }
 
-.fab:hover {
-  opacity: 0.85;
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .fab:hover {
+    opacity: 0.85;
+  }
 }
 
 .fab-plus {
@@ -1605,8 +1672,11 @@ a.privat-toggle:hover {
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.fab-menu-item:hover {
-  background: var(--color-field);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .fab-menu-item:hover {
+    background: var(--color-field);
+  }
 }
 
 .fab-menu-item .fab-badge {
@@ -1638,8 +1708,11 @@ a.privat-toggle:hover {
   transition: background-color var(--duration-fast) var(--ease);
 }
 
-.suggestion-chip:hover {
-  background: var(--color-line);
+/* Hover nur mit echtem Zeiger – am Handy bleibt nichts hängen. */
+@media (hover: hover) {
+  .suggestion-chip:hover {
+    background: var(--color-line);
+  }
 }
 
 /* Datumsfelder nicht über die volle Breite */
