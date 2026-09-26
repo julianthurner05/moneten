@@ -2,8 +2,10 @@
 
 import { loadGroupForMember } from '../../../../../../shared/groupData.js';
 import { error, json, nowIso } from '../../../../../../shared/http.js';
+import { displayName, euro, notifyUsers } from '../../../../../../shared/notify.js';
 
-export async function onRequestPost({ env, data, params }) {
+export async function onRequestPost(context) {
+  const { env, data, params, waitUntil } = context;
   const group = await loadGroupForMember(env, params.id, data.user.id);
   if (!group) return error('Gruppe nicht gefunden.', 404);
 
@@ -21,6 +23,17 @@ export async function onRequestPost({ env, data, params }) {
   await env.DB.prepare('UPDATE settlements SET confirmed_at = ? WHERE id = ?')
     .bind(nowIso(), settlement.id)
     .run();
+
+  waitUntil(
+    (async () => {
+      const to = await displayName(env, settlement.to_user);
+      await notifyUsers(env, [settlement.from_user], {
+        title: 'Begleichung bestätigt',
+        body: `${to} hat deine Zahlung über ${euro(settlement.amount_cents)} erhalten.`,
+        url: settlement.is_einzug ? '/#/einzug' : '/',
+      });
+    })()
+  );
 
   return json({ ok: true });
 }

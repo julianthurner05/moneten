@@ -3,8 +3,10 @@
 import { validateExpenseInput } from '../../../../../shared/expenseInput.js';
 import { loadGroupForMember } from '../../../../../shared/groupData.js';
 import { error, json, nowIso, readJson } from '../../../../../shared/http.js';
+import { displayName, euro, notifyUsers } from '../../../../../shared/notify.js';
 
-export async function onRequestPost({ request, env, data, params }) {
+export async function onRequestPost(context) {
+  const { request, env, data, params, waitUntil } = context;
   const group = await loadGroupForMember(env, params.id, data.user.id);
   if (!group) return error('Gruppe nicht gefunden.', 404);
   if (group.archived) return error('Die Gruppe ist archiviert.', 400);
@@ -61,5 +63,20 @@ export async function onRequestPost({ request, env, data, params }) {
   }
 
   await env.DB.batch(statements);
+  // Mitteilung an alle Beteiligten außer der eintragenden Person.
+  waitUntil(
+    (async () => {
+      const creator = await displayName(env, data.user.id);
+      for (const share of expense.shares) {
+        if (share.userId === data.user.id) continue;
+        await notifyUsers(env, [share.userId], {
+          title: body.isEinzug ? 'Neue Einzug-Ausgabe' : 'Neue Ausgabe',
+          body: `${creator} hat „${expense.description}" eingetragen – dein Anteil ${euro(share.shareCents)}.`,
+          url: body.isEinzug ? '/#/einzug' : '/',
+        });
+      }
+    })()
+  );
+
   return json({ id });
 }

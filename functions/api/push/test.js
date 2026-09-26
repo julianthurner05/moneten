@@ -2,8 +2,7 @@
 
 import { sendPush } from '../../../shared/webpush.js';
 import { error, json } from '../../../shared/http.js';
-
-const VAPID_PUBLIC_KEY = 'BOYw561Iiw6XrvQDPlYrrNwNe9fY35j0n5DT7Ime-6uu4AcTqrm4zRklnSy9mY-_ozUgJqiiGp7MPrDkb1_OtZo';
+import { VAPID_PUBLIC_KEY } from '../../../shared/notify.js';
 
 export async function onRequestPost({ env, data }) {
   if (!env.VAPID_PRIVATE_KEY) return error('VAPID_PRIVATE_KEY ist nicht gesetzt.', 500);

@@ -3,8 +3,10 @@
 
 import { loadGroupForMember } from '../../../../../shared/groupData.js';
 import { error, isDateString, json, nowIso, readJson } from '../../../../../shared/http.js';
+import { displayName, euro, notifyUsers } from '../../../../../shared/notify.js';
 
-export async function onRequestPost({ request, env, data, params }) {
+export async function onRequestPost(context) {
+  const { request, env, data, params, waitUntil } = context;
   const group = await loadGroupForMember(env, params.id, data.user.id);
   if (!group) return error('Gruppe nicht gefunden.', 404);
   if (group.archived) return error('Die Gruppe ist archiviert.', 400);
@@ -36,6 +38,19 @@ export async function onRequestPost({ request, env, data, params }) {
   )
     .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, now, confirmedAt, body.isEinzug ? 1 : 0)
     .run();
+
+  if (!confirmedAt) {
+    waitUntil(
+      (async () => {
+        const from = await displayName(env, body.fromUser);
+        await notifyUsers(env, [body.toUser], {
+          title: 'Wartet auf Bestätigung',
+          body: `${from} hat dir ${euro(body.amountCents)} überwiesen – bitte bestätigen.`,
+          url: body.isEinzug ? '/#/einzug' : '/',
+        });
+      })()
+    );
+  }
 
   return json({ id, confirmed: !!confirmedAt });
 }
