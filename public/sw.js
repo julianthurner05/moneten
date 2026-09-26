@@ -7,14 +7,19 @@ self.addEventListener('push', (event) => {
   } catch {
     data = { body: event.data ? event.data.text() : '' };
   }
-  event.waitUntil(
+  const jobs = [
     self.registration.showNotification(data.title ?? 'moneten', {
       body: data.body ?? '',
       icon: '/icon-192.png',
       badge: '/icon-192.png',
       data: { url: data.url ?? '/' },
-    })
-  );
+    }),
+  ];
+  // Roter Zähler am App-Icon (iOS zeigt ihn nur bei installierter Web-App).
+  if (data.badge && 'setAppBadge' in self.navigator) {
+    jobs.push(self.navigator.setAppBadge(data.badge).catch(() => {}));
+  }
+  event.waitUntil(Promise.all(jobs));
 });
 
 self.addEventListener('notificationclick', (event) => {

@@ -205,5 +205,11 @@ document.addEventListener(
   true
 );
 
+// Beim Öffnen der App den roten Zähler am Icon zurücksetzen.
+navigator.clearAppBadge?.().catch(() => {});
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') navigator.clearAppBadge?.().catch(() => {});
+});
+
 window.addEventListener('hashchange', handleRoute);
 handleRoute();
