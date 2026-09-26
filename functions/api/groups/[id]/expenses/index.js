@@ -63,15 +63,19 @@ export async function onRequestPost(context) {
   }
 
   await env.DB.batch(statements);
-  // Mitteilung an alle Beteiligten außer der eintragenden Person.
+  // Mitteilung an alle Gruppenmitglieder außer der eintragenden Person.
   waitUntil(
     (async () => {
       const creator = await displayName(env, data.user.id);
-      for (const share of expense.shares) {
-        if (share.userId === data.user.id) continue;
-        await notifyUsers(env, [share.userId], {
+      const shareByUser = new Map(expense.shares.map((s) => [s.userId, s.shareCents]));
+      for (const member of members) {
+        if (member.user_id === data.user.id) continue;
+        const share = shareByUser.get(member.user_id);
+        await notifyUsers(env, [member.user_id], {
           title: body.isEinzug ? 'Neue Einzug-Ausgabe' : 'Neue Ausgabe',
-          body: `${creator} hat „${expense.description}" eingetragen – dein Anteil ${euro(share.shareCents)}.`,
+          body: share
+            ? `${creator} hat „${expense.description}" eingetragen – dein Anteil ${euro(share)}.`
+            : `${creator} hat „${expense.description}" eingetragen (${euro(expense.amountCents)}).`,
           url: body.isEinzug ? '/#/einzug' : '/',
         });
       }

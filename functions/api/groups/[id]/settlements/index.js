@@ -39,18 +39,28 @@ export async function onRequestPost(context) {
     .bind(id, group.id, body.fromUser, body.toUser, body.amountCents, body.settledOn, data.user.id, now, confirmedAt, body.isEinzug ? 1 : 0)
     .run();
 
-  if (!confirmedAt) {
-    waitUntil(
-      (async () => {
-        const from = await displayName(env, body.fromUser);
+  // Mitteilung an alle außer der eintragenden Person: die empfangende Person
+  // zum Bestätigen, alle übrigen zur Info.
+  waitUntil(
+    (async () => {
+      const from = await displayName(env, body.fromUser);
+      const to = await displayName(env, body.toUser);
+      const url = body.isEinzug ? '/#/einzug' : '/';
+      if (!confirmedAt) {
         await notifyUsers(env, [body.toUser], {
           title: 'Wartet auf Bestätigung',
           body: `${from} hat dir ${euro(body.amountCents)} überwiesen – bitte bestätigen.`,
-          url: body.isEinzug ? '/#/einzug' : '/',
+          url,
         });
-      })()
-    );
-  }
+      }
+      const others = [...memberSet].filter((id) => id !== data.user.id && id !== body.toUser);
+      await notifyUsers(env, others, {
+        title: 'Begleichung',
+        body: `${from} hat ${to} ${euro(body.amountCents)} überwiesen.`,
+        url,
+      });
+    })()
+  );
 
   return json({ id, confirmed: !!confirmedAt });
 }
