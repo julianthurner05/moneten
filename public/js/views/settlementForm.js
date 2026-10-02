@@ -10,8 +10,8 @@ export function openSettlementForm(ctx, group, members, { suggestions = [], me, 
   const names = new Map(members.map((m) => [m.id, m.displayName]));
   const name = (id) => names.get(id) ?? 'Unbekannt';
 
-  // Vorbelegung: zuerst was ich selbst schulde, sonst was ich bekomme.
-  const initial = settlement ?? suggestions.find((s) => s.fromUser === me) ?? suggestions[0] ?? null;
+  // Keine Vorbelegung – Betrag bleibt leer, die Chips oben füllen auf Wunsch.
+  const initial = settlement ?? null;
 
   openPanel((close) => {
     const memberOptions = members.map((member) => ({ value: member.id, label: member.displayName }));

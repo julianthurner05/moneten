@@ -57,7 +57,7 @@ export function monthOf(isoDate) {
 }
 
 /** Vor diesem Monat gibt es in der App nichts – gleicher Wert wie im Server (shared/month.js). */
-export const MIN_MONTH = '2026-09';
+export const MIN_MONTH = '2026-10';
 
 export function currentMonth() {
   return todayIso().slice(0, 7);

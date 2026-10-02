@@ -39,7 +39,7 @@ export function recurringSum(items, kind, month) {
 const MAX_MONTHS = 1200;
 
 /** Vor diesem Monat gibt es kein Budget und keinen Übertrag. */
-export const DEFAULT_START_MONTH = '2026-09';
+export const DEFAULT_START_MONTH = '2026-10';
 
 /**
  * Kennzahlen eines Monats.
