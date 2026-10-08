@@ -18,9 +18,18 @@ export async function onRequestPut({ request, env, data, params }) {
   const loaded = await loadItem(env, data, params);
   if (loaded.error) return loaded.error;
   const body = await readJson(request);
-  await env.DB.prepare('UPDATE shopping_items SET done = ? WHERE id = ?')
-    .bind(body?.done ? 1 : 0, params.iid)
-    .run();
+  if (!body) return error('Ungültige Anfrage.');
+
+  if (body.name !== undefined) {
+    const name = String(body.name).trim();
+    if (!name) return error('Bitte einen Artikel eingeben.');
+    await env.DB.prepare('UPDATE shopping_items SET name = ? WHERE id = ?').bind(name, params.iid).run();
+  }
+  if (body.done !== undefined) {
+    await env.DB.prepare('UPDATE shopping_items SET done = ? WHERE id = ?')
+      .bind(body.done ? 1 : 0, params.iid)
+      .run();
+  }
   return json({ ok: true });
 }
 
