@@ -3,9 +3,30 @@
 import { loadGroupForMember } from '../../../../../shared/groupData.js';
 import { error, json, nowIso, readJson } from '../../../../../shared/http.js';
 
+// Standard-Aufgaben, die eine WG typischerweise braucht – werden beim ersten
+// Öffnen des Putzplans automatisch angelegt (wie die fixen Kategorien).
+const DEFAULT_TASKS = ['Küche putzen', 'Bad & WC putzen', 'Staubsaugen & wischen', 'Müll & Altpapier rausbringen'];
+
+async function ensureDefaultTasks(env, group, userId) {
+  const existing = await env.DB.prepare('SELECT COUNT(*) AS n FROM cleaning_tasks WHERE group_id = ?')
+    .bind(group.id)
+    .first();
+  if (existing.n > 0 || group.archived) return;
+  const now = nowIso();
+  await env.DB.batch(
+    DEFAULT_TASKS.map((name, i) =>
+      env.DB.prepare(
+        'INSERT INTO cleaning_tasks (id, group_id, name, sort_order, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+      ).bind(crypto.randomUUID(), group.id, name, i + 1, userId, now)
+    )
+  );
+}
+
 export async function onRequestGet({ env, data, params }) {
   const group = await loadGroupForMember(env, params.id, data.user.id);
   if (!group) return error('Gruppe nicht gefunden.', 404);
+
+  await ensureDefaultTasks(env, group, data.user.id);
 
   const [tasks, done, members] = await env.DB.batch([
     env.DB.prepare('SELECT id, name, sort_order FROM cleaning_tasks WHERE group_id = ? ORDER BY sort_order, name').bind(
