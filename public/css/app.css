@@ -1476,6 +1476,57 @@ input[type='checkbox']:disabled {
   gap: var(--space-6);
 }
 
+/* ---------- Glücksrad ---------- */
+
+.wheel-wrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-block: var(--space-4) var(--space-5);
+}
+
+.wheel-disc {
+  width: 16rem;
+  height: 16rem;
+  transition: transform var(--duration-wheel) var(--ease);
+}
+
+.wheel-segment {
+  fill: var(--color-surface);
+  stroke: var(--color-line);
+  stroke-width: var(--hairline);
+}
+
+.wheel-segment.is-alt {
+  fill: var(--color-field);
+}
+
+.wheel-label {
+  fill: var(--color-text);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-small);
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: var(--space-2);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: var(--space-2) solid transparent;
+  border-right: var(--space-2) solid transparent;
+  border-top: var(--space-3) solid var(--color-text);
+  z-index: 1;
+}
+
+.wheel-result {
+  text-align: center;
+  min-height: var(--space-6);
+}
+
 /* ---------- Datums-Tag ---------- */
 
 .date-chip {
