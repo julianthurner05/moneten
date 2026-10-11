@@ -76,3 +76,32 @@ export function isMonthString(value) {
   const m = Number(value.slice(5, 7));
   return m >= 1 && m <= 12;
 }
+
+/** Montag der Woche eines Datums als YYYY-MM-DD. */
+export function weekStartOf(date = new Date()) {
+  const d = new Date(date);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Wochenstart um n Wochen verschieben. */
+export function weekAdd(weekStart, delta) {
+  const d = new Date(weekStart + 'T12:00:00');
+  d.setDate(d.getDate() + delta * 7);
+  return weekStartOf(d);
+}
+
+/** Fortlaufender Wochenindex (deterministisch für die Rotation). */
+export function weekIndexOf(weekStart) {
+  return Math.floor((Date.parse(weekStart + 'T00:00:00Z') / 86400000 + 3) / 7);
+}
+
+const dayMonth = new Intl.DateTimeFormat('de-AT', { day: '2-digit', month: '2-digit' });
+
+/** "06.10. – 12.10." für die Wochenüberschrift. */
+export function formatWeekRange(weekStart) {
+  const start = new Date(weekStart + 'T12:00:00');
+  const end = new Date(start);
+  end.setDate(end.getDate() + 6);
+  return `${dayMonth.format(start)} – ${dayMonth.format(end)}`;
+}

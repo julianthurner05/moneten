@@ -2,6 +2,7 @@
 // eigene Kategorien und private Einzugsposten.
 
 import { ensureDefaultCategories } from '../../../../shared/categories.js';
+import { materializeRecurring } from '../../../../shared/recurring.js';
 import { loadGroupForMember } from '../../../../shared/groupData.js';
 import { computeBalances, suggestSettlements } from '../../../../shared/split.js';
 import { error, json } from '../../../../shared/http.js';
@@ -9,6 +10,9 @@ import { error, json } from '../../../../shared/http.js';
 export async function onRequestGet({ env, data, params }) {
   const group = await loadGroupForMember(env, params.id, data.user.id);
   if (!group) return error('Gruppe nicht gefunden.', 404);
+
+  // Fällige wiederkehrende Ausgaben (Miete usw.) nachziehen.
+  await materializeRecurring(env, group.id);
 
   await ensureDefaultCategories(env, data.user.id);
 

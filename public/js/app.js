@@ -8,6 +8,7 @@ import { renderGroups } from './views/groups.js';
 import { renderGroupDetail } from './views/groupDetail.js';
 import { renderEinzug } from './views/einzug.js';
 import { renderEinkauf } from './views/einkauf.js';
+import { renderPutzplan } from './views/putzplan.js';
 import { renderMonth } from './views/month.js';
 import { renderMonthOverview } from './views/monthOverview.js';
 import { renderMonthSettings } from './views/monthSettings.js';
@@ -145,6 +146,13 @@ async function handleRoute() {
       await ensureGroups();
       if (state.selectedGroupId) {
         await renderEinkauf(ctx, state.selectedGroupId);
+      } else {
+        ctx.navigate('#/gruppen');
+      }
+    } else if (parts[0] === 'putzplan') {
+      await ensureGroups();
+      if (state.selectedGroupId) {
+        await renderPutzplan(ctx, state.selectedGroupId);
       } else {
         ctx.navigate('#/gruppen');
       }

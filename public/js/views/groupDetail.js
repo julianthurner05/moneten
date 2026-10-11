@@ -6,6 +6,7 @@ import { el, noticePanel, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { currentMonth, formatEuro, formatEuroParts, monthAdd, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
+import { openRecurringPanel } from './recurringForm.js';
 import { openSettlementForm } from './settlementForm.js';
 import { settlementRow } from './settlementRow.js';
 
@@ -179,6 +180,10 @@ function build(ctx, data) {
           {
             label: 'Ausgabe',
             onClick: () => openExpenseForm(ctx, group, members, null, { myCategories: data.myCategories }),
+          },
+          {
+            label: 'Wiederkehrend',
+            onClick: () => openRecurringPanel(ctx, group, members),
           },
           {
             label: 'Begleichung',

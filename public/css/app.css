@@ -77,6 +77,7 @@ textarea:focus-visible {
   display: flex;
   align-items: center;
   gap: var(--space-5);
+  overflow-x: auto;
   max-width: var(--content-max-width);
   margin-inline: auto;
   padding-left: max(var(--space-5), env(safe-area-inset-left));
@@ -1455,6 +1456,13 @@ input[type='checkbox']:disabled {
 .einkauf-row.is-done .row-title {
   color: var(--color-secondary);
   text-decoration: line-through;
+}
+
+.putzplan-person {
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-small);
+  color: var(--color-secondary);
+  white-space: nowrap;
 }
 
 .einkauf-clear {

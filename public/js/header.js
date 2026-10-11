@@ -88,6 +88,7 @@ export function renderHeader(state) {
         state.selectedGroup ? { key: 'gruppe', label: 'Allgemein', href: '#/' } : null,
         hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
         hasEinzug ? { key: 'einkauf', label: 'Einkaufsliste', href: '#/einkaufsliste' } : null,
+        hasEinzug ? { key: 'putzplan', label: 'Putzplan', href: '#/putzplan' } : null,
       ].filter(Boolean);
 
   const nav = el(
