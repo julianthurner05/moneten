@@ -52,7 +52,7 @@ export function openExpenseForm(ctx, group, members, expense, { myCategories = [
     });
     const myCategory = createSelect({
       id: 'exp-category',
-      options: [{ value: '', label: 'Keine' }, ...myCategories.map((c) => ({ value: c.id, label: c.name }))],
+      options: [{ value: '', label: 'Automatisch' }, ...myCategories.map((c) => ({ value: c.id, label: c.name }))],
       value: expense?.myCategoryId ?? '',
     });
     const error = el('p', { className: 'form-error', role: 'alert' });

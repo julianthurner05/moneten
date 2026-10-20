@@ -1,8 +1,8 @@
 // Persönliche Monatsübersicht: Kennzahlen, Kategorien, Einträge, Gruppen-Anteile.
-// Einzugs-Ausgaben zählen nicht ins Monatsbudget. Gruppen-Anteile mit eigener
-// Kategorie-Zuordnung erscheinen in der jeweiligen Kategorie.
+// Einzugs-Ausgaben zählen nicht ins Monatsbudget. Gruppen-Anteile erscheinen in
+// einer Kategorie: händisch zugeordnet, sonst per Stichwortliste, sonst Sonstiges.
 
-import { ensureDefaultCategories } from '../../../shared/categories.js';
+import { ensureDefaultCategories, shareCategoryResolver } from '../../../shared/categories.js';
 import { DEFAULT_START_MONTH, computeOverview, isMonthString, monthCount, recurringSum } from '../../../shared/month.js';
 import { error, json } from '../../../shared/http.js';
 
@@ -24,8 +24,7 @@ export async function onRequestGet({ env, data, params }) {
     entryRows,
     entrySumsRows,
     shareSumsRows,
-    mappedSumsRows,
-    shareItemRows,
+    shareRows,
   ] = await env.DB.batch([
     env.DB.prepare('SELECT budget_start_month, carryover_enabled FROM user_settings WHERE user_id = ?').bind(
       userId
@@ -56,16 +55,8 @@ export async function onRequestGet({ env, data, params }) {
        WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0
        GROUP BY month`
     ).bind(userId),
-    // Anteile mit eigener Kategorie-Zuordnung pro Monat und Kategorie.
-    env.DB.prepare(
-      `SELECT substr(e.spent_on, 1, 7) AS month, m.category_id, SUM(s.share_cents) AS cents
-       FROM expense_shares s
-       JOIN group_expenses e ON e.id = s.expense_id
-       JOIN personal_expense_categories m ON m.expense_id = e.id AND m.user_id = s.user_id
-       WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0
-       GROUP BY month, m.category_id`
-    ).bind(userId),
-    // Einzelne Anteile im angefragten Monat, mit Gruppe und ggf. Kategorie.
+    // Alle einzelnen Anteile mit Gruppe und ggf. händischer Kategorie – die
+    // Stichwort-Zuordnung passiert unten, damit Listen-Updates rückwirkend gelten.
     env.DB.prepare(
       `SELECT g.id AS group_id, g.name AS group_name, e.id AS expense_id, e.description, e.spent_on,
               s.share_cents, m.category_id
@@ -73,9 +64,9 @@ export async function onRequestGet({ env, data, params }) {
        JOIN group_expenses e ON e.id = s.expense_id
        JOIN groups g ON g.id = e.group_id
        LEFT JOIN personal_expense_categories m ON m.expense_id = e.id AND m.user_id = s.user_id
-       WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0 AND substr(e.spent_on, 1, 7) = ?
-       ORDER BY g.name, e.spent_on DESC`
-    ).bind(userId, month),
+       WHERE s.user_id = ? AND e.deleted_at IS NULL AND e.is_einzug = 0
+       ORDER BY e.spent_on DESC`
+    ).bind(userId),
   ]);
 
   const settings = {
@@ -111,8 +102,27 @@ export async function onRequestGet({ env, data, params }) {
   for (const row of shareSumsRows.results) {
     variableByMonth.set(row.month, (variableByMonth.get(row.month) ?? 0) + (row.cents ?? 0));
   }
-  for (const row of mappedSumsRows.results) {
-    addCategorySum(row.month, row.category_id, row.cents ?? 0);
+  const shareCategory = shareCategoryResolver(categoryRows.results);
+  const shareSums = []; // { month, category_id, cents } wie bei den Einträgen
+  const mappedShares = [];
+  for (const row of shareRows.results) {
+    const shareMonth = row.spent_on.slice(0, 7);
+    const categoryId = shareCategory(row.category_id, row.description);
+    if (!categoryId) continue;
+    addCategorySum(shareMonth, categoryId, row.share_cents);
+    shareSums.push({ month: shareMonth, category_id: categoryId, cents: row.share_cents });
+    if (shareMonth === month) {
+      mappedShares.push({
+        expenseId: row.expense_id,
+        categoryId,
+        assignedCategoryId: row.category_id ?? null,
+        groupId: row.group_id,
+        groupName: row.group_name,
+        description: row.description,
+        spentOn: row.spent_on,
+        shareCents: row.share_cents,
+      });
+    }
   }
 
   const overview = computeOverview(month, settings, {
@@ -122,7 +132,7 @@ export async function onRequestGet({ env, data, params }) {
   });
 
   // Durchschnitt pro Kategorie seit Startmonat bis zum aktuellen Monat
-  // (persönliche Einträge plus zugeordnete Gruppen-Anteile).
+  // (persönliche Einträge plus Gruppen-Anteile).
   const now = currentMonth();
   const avgStart = settings.startMonth && settings.startMonth <= now ? settings.startMonth : now;
   const avgMonths = monthCount(avgStart, now);
@@ -133,7 +143,7 @@ export async function onRequestGet({ env, data, params }) {
     }
   };
   entrySumsRows.results.forEach(addAvg);
-  mappedSumsRows.results.forEach(addAvg);
+  shareSums.forEach(addAvg);
 
   const categories = categoryRows.results.map((c) => ({
     id: c.id,
@@ -144,35 +154,6 @@ export async function onRequestGet({ env, data, params }) {
     monthSumCents: categorySumsByMonth.get(`${month}|${c.id}`) ?? 0,
     avgCents: Math.round((avgSums.get(c.id) ?? 0) / avgMonths),
   }));
-
-  const groupShares = [];
-  const mappedShares = [];
-  for (const row of shareItemRows.results) {
-    if (row.category_id) {
-      mappedShares.push({
-        expenseId: row.expense_id,
-        categoryId: row.category_id,
-        groupId: row.group_id,
-        groupName: row.group_name,
-        description: row.description,
-        spentOn: row.spent_on,
-        shareCents: row.share_cents,
-      });
-      continue;
-    }
-    let group = groupShares.find((g) => g.groupId === row.group_id);
-    if (!group) {
-      group = { groupId: row.group_id, groupName: row.group_name, sumCents: 0, items: [] };
-      groupShares.push(group);
-    }
-    group.sumCents += row.share_cents;
-    group.items.push({
-      expenseId: row.expense_id,
-      description: row.description,
-      spentOn: row.spent_on,
-      shareCents: row.share_cents,
-    });
-  }
 
   return json({
     month,
@@ -186,7 +167,6 @@ export async function onRequestGet({ env, data, params }) {
       description: e.description,
       amountCents: e.amount_cents,
     })),
-    groupShares,
     mappedShares,
     recurring,
   });

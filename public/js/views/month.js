@@ -6,6 +6,7 @@ import { el, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { MIN_MONTH, currentMonth, formatDate, formatEuro } from '../format.js';
 import { openEntryForm } from './entryForm.js';
+import { openShareCategoryForm } from './shareCategoryForm.js';
 
 export async function renderMonth(ctx, month) {
   const m = (month ?? currentMonth()) < MIN_MONTH ? MIN_MONTH : month ?? currentMonth();
@@ -118,8 +119,12 @@ function build(ctx, data) {
                 );
               }
               return el(
-                'div',
-                { className: 'row' },
+                'button',
+                {
+                  className: 'row row-clickable',
+                  type: 'button',
+                  onClick: () => openShareCategoryForm(ctx, data.categories, share),
+                },
                 dateChip(share.spentOn),
                 el(
                   'div',
@@ -137,35 +142,6 @@ function build(ctx, data) {
   const sections = [...counting.map(categorySection)];
 
   if (nonCounting.length > 0) sections.push(...nonCounting.map(categorySection));
-
-  const sharesSections = data.groupShares.map((group) =>
-    el(
-      'section',
-      { className: 'category-section' },
-      el(
-        'div',
-        { className: 'category-head' },
-        el('div', { className: 'category-name' }, group.groupName),
-        el('div', { className: 'category-sum' }, formatEuro(group.sumCents))
-      ),
-      el(
-        'div',
-        { className: 'row-list', 'data-stagger': '' },
-        group.items.map((item) =>
-          el(
-            'div',
-            { className: 'row' },
-            dateChip(item.spentOn),
-            el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, item.description)),
-            el('div', { className: 'row-side' }, el('div', { className: 'row-amount' }, formatEuro(item.shareCents)))
-          )
-        )
-      )
-    )
-  );
-
-  sections.push(...sharesSections);
-
 
   const listArea =
     sections.length === 0
