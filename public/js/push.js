@@ -5,6 +5,26 @@ import { api } from './api.js';
 
 const VAPID_PUBLIC_KEY = 'BOYw561Iiw6XrvQDPlYrrNwNe9fY35j0n5DT7Ime-6uu4AcTqrm4zRklnSy9mY-_ozUgJqiiGp7MPrDkb1_OtZo';
 
+// Merkt sich pro Gerät, ob Mitteilungen gewollt sind ('on'/'off'), damit ein
+// vom Browser verworfenes Abo still wiederhergestellt werden kann.
+const PREF_KEY = 'moneten_push';
+
+function readPref() {
+  try {
+    return localStorage.getItem(PREF_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writePref(value) {
+  try {
+    localStorage.setItem(PREF_KEY, value);
+  } catch {
+    // localStorage nicht verfügbar
+  }
+}
+
 function applicationServerKey() {
   const base64 = (VAPID_PUBLIC_KEY + '='.repeat((4 - (VAPID_PUBLIC_KEY.length % 4)) % 4))
     .replace(/-/g, '+')
@@ -34,9 +54,35 @@ export async function enablePush() {
     applicationServerKey: applicationServerKey(),
   });
   await api('/api/push/subscribe', { method: 'POST', body: sub.toJSON() });
+  writePref('on');
+}
+
+/**
+ * Beim App-Start: Abo beim Server auffrischen und, falls der Browser es nach
+ * einem Update verworfen hat, ohne Rückfrage neu anlegen (Erlaubnis besteht ja).
+ */
+export async function restorePush() {
+  if (!pushSupported() || Notification.permission !== 'granted') return;
+  const pref = readPref();
+  if (pref === 'off') return;
+  try {
+    const reg = await navigator.serviceWorker.register('/sw.js');
+    let sub = await reg.pushManager.getSubscription();
+    // Ohne gemerkten Wunsch (Geräte von vor dieser Logik) nur Bestehendes auffrischen.
+    if (!sub && pref !== 'on') return;
+    sub ??= await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey(),
+    });
+    await api('/api/push/subscribe', { method: 'POST', body: sub.toJSON() });
+    writePref('on');
+  } catch {
+    // Mitteilungen dürfen den Start nie stören
+  }
 }
 
 export async function disablePush() {
+  writePref('off');
   const sub = await pushSubscription();
   if (!sub) return;
   await api('/api/push/subscribe', { method: 'DELETE', body: { endpoint: sub.endpoint } });

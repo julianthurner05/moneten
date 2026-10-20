@@ -14,6 +14,7 @@ import { renderMonthOverview } from './views/monthOverview.js';
 import { renderMonthSettings } from './views/monthSettings.js';
 import { renderAccount } from './views/account.js';
 import { isMonthString } from './format.js';
+import { restorePush } from './push.js';
 
 const main = document.getElementById('app');
 const GROUP_KEY = 'moneten_group';
@@ -97,6 +98,8 @@ async function loadGroupsData() {
   return data;
 }
 
+let pushRestored = false;
+
 async function handleRoute() {
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
 
@@ -118,6 +121,11 @@ async function handleRoute() {
   if (state.user.mustChangePassword) {
     renderPasswordChange(ctx, { forced: true });
     return;
+  }
+
+  if (!pushRestored) {
+    pushRestored = true;
+    restorePush();
   }
 
   // Gruppenliste nur laden, wenn sie fehlt oder die Route sie frisch braucht –

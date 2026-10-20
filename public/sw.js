@@ -36,3 +36,21 @@ self.addEventListener('notificationclick', (event) => {
     })
   );
 });
+
+// Tauscht der Browser das Abo aus, gleich das neue beim Server hinterlegen.
+self.addEventListener('pushsubscriptionchange', (event) => {
+  event.waitUntil(
+    (async () => {
+      const options = event.oldSubscription?.options;
+      const sub =
+        event.newSubscription ??
+        (options?.applicationServerKey ? await self.registration.pushManager.subscribe(options) : null);
+      if (!sub) return;
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub.toJSON()),
+      });
+    })().catch(() => {})
+  );
+});
