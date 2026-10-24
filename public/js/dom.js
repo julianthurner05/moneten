@@ -49,8 +49,16 @@ export function staggerIn(container) {
   });
 }
 
-/** Ansicht wechseln: alte ausblenden, dann neue einblenden. */
-export function swapView(container, build) {
+/**
+ * Ansicht wechseln: alte ausblenden, dann neue einblenden.
+ * Mit `soft` wird ohne Übergang in einem Zug ersetzt – für Aktualisierungen
+ * derselben Ansicht (nach Aktionen oder im Hintergrund), damit nichts flackert.
+ */
+export function swapView(container, build, soft = false) {
+  if (soft && container.childElementCount > 0) {
+    container.replaceChildren(build());
+    return;
+  }
   const finish = () => {
     container.replaceChildren(build());
     container.classList.remove('view-hidden');

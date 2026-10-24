@@ -1,6 +1,8 @@
-// Putzplan: Aufgaben lesen/anlegen, Erledigt-Markierungen pro Woche.
+// Putzplan: persönliche Sicht (eigene fällige Aufgaben, nächste eigene Runden)
+// plus Aufgaben lesen/anlegen. Rotation siehe shared/cleaning.js.
 
 import { loadGroupForMember } from '../../../../../shared/groupData.js';
+import { nextTurnWeek, viennaToday, weekAssignments, weekStartOf } from '../../../../../shared/cleaning.js';
 import { error, json, nowIso, readJson } from '../../../../../shared/http.js';
 
 // Standard-Aufgaben, die eine WG typischerweise braucht – werden beim ersten
@@ -27,26 +29,47 @@ export async function onRequestGet({ env, data, params }) {
   if (!group) return error('Gruppe nicht gefunden.', 404);
 
   await ensureDefaultTasks(env, group, data.user.id);
+  const weekStart = weekStartOf(viennaToday());
 
-  const [tasks, done, members] = await env.DB.batch([
-    env.DB.prepare('SELECT id, name, sort_order FROM cleaning_tasks WHERE group_id = ? ORDER BY sort_order, name').bind(
-      group.id
-    ),
+  const [taskRows, doneRows, memberRows] = await env.DB.batch([
     env.DB.prepare(
-      `SELECT d.task_id, d.week_start, d.done_by FROM cleaning_done d
-       JOIN cleaning_tasks t ON t.id = d.task_id WHERE t.group_id = ?`
+      'SELECT id, name, interval_weeks FROM cleaning_tasks WHERE group_id = ? ORDER BY sort_order, name'
     ).bind(group.id),
     env.DB.prepare(
-      `SELECT u.id, u.display_name FROM group_members m JOIN users u ON u.id = m.user_id
-       WHERE m.group_id = ? ORDER BY u.id`
-    ).bind(group.id),
+      `SELECT d.task_id FROM cleaning_done d
+       JOIN cleaning_tasks t ON t.id = d.task_id WHERE t.group_id = ? AND d.week_start = ?`
+    ).bind(group.id, weekStart),
+    env.DB.prepare('SELECT user_id FROM group_members WHERE group_id = ? ORDER BY user_id').bind(group.id),
   ]);
+
+  const tasks = taskRows.results;
+  const memberIds = memberRows.results.map((m) => m.user_id);
+  const myIndex = memberIds.indexOf(data.user.id);
+  const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}`));
+  const names = new Map(tasks.map((t) => [t.id, t.name]));
+
+  const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
+  const mine = assignments
+    .filter((a) => a.assigneeId === data.user.id)
+    .map((a) => ({ taskId: a.taskId, name: names.get(a.taskId), done: a.done }));
+
+  // Nächste eigene Runde pro Aufgabe (nach dieser Woche).
+  const upcoming = tasks
+    .map((task, index) => ({
+      taskId: task.id,
+      name: task.name,
+      weekStart: nextTurnWeek(weekStart, task.interval_weeks, index, memberIds.length, myIndex),
+    }))
+    .filter((u) => u.weekStart)
+    .sort((a, b) => (a.weekStart === b.weekStart ? (a.name < b.name ? -1 : 1) : a.weekStart < b.weekStart ? -1 : 1));
 
   return json({
     archived: !!group.archived,
-    tasks: tasks.results.map((t) => ({ id: t.id, name: t.name })),
-    done: done.results.map((d) => ({ taskId: d.task_id, weekStart: d.week_start, doneBy: d.done_by })),
-    members: members.results.map((m) => ({ id: m.id, displayName: m.display_name })),
+    weekStart,
+    mine,
+    upcoming,
+    tasks: tasks.map((t) => ({ id: t.id, name: t.name, intervalWeeks: t.interval_weeks ?? 1 })),
+    myOpenCount: mine.filter((m) => !m.done).length,
   });
 }
 

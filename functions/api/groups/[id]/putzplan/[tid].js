@@ -25,6 +25,13 @@ export async function onRequestPut({ request, env, data, params }) {
     if (!name) return error('Bitte eine Aufgabe eingeben.');
     await env.DB.prepare('UPDATE cleaning_tasks SET name = ? WHERE id = ?').bind(name, params.tid).run();
   }
+  if (body.intervalWeeks !== undefined) {
+    const interval = body.intervalWeeks;
+    if (!Number.isInteger(interval) || interval < 1 || interval > 8) return error('Ungültiger Rhythmus.');
+    await env.DB.prepare('UPDATE cleaning_tasks SET interval_weeks = ? WHERE id = ?')
+      .bind(interval, params.tid)
+      .run();
+  }
   if (body.weekStart !== undefined) {
     if (!isDateString(body.weekStart)) return error('Ungültige Woche.');
     if (body.done) {
@@ -47,6 +54,7 @@ export async function onRequestDelete({ env, data, params }) {
   const loaded = await loadTask(env, data, params);
   if (loaded.error) return loaded.error;
   await env.DB.prepare('DELETE FROM cleaning_done WHERE task_id = ?').bind(params.tid).run();
+  await env.DB.prepare('DELETE FROM cleaning_notified WHERE task_id = ?').bind(params.tid).run();
   await env.DB.prepare('DELETE FROM cleaning_tasks WHERE id = ?').bind(params.tid).run();
   return json({ ok: true });
 }

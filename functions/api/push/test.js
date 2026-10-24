@@ -18,7 +18,7 @@ export async function onRequestPost({ env, data }) {
   for (const sub of results) {
     const res = await sendPush(
       sub,
-      { title: 'moneten', body: 'Testmitteilung – Push funktioniert.', url: '/' },
+      { title: 'moneten', body: 'Testmitteilung – Push funktioniert.', url: '/', badge: 1 },
       { publicKey: VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: 'https://moneten.julianthurner.com' }
     );
     if (res.status === 404 || res.status === 410) {

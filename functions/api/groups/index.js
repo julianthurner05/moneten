@@ -1,8 +1,11 @@
-// Gruppenliste mit eigenem Saldo pro Gruppe sowie Gruppe anlegen.
+// Gruppenliste mit eigenem Saldo pro Gruppe sowie Gruppe anlegen. Nebenbei:
+// Putzplan-Zähler pro WG und „Du bist dran"-Mitteilungen für fällige Wochen.
 
 import { error, isNonEmptyString, json, nowIso, readJson } from '../../../shared/http.js';
+import { viennaToday, weekAssignments, weekStartOf } from '../../../shared/cleaning.js';
+import { notifyUsers } from '../../../shared/notify.js';
 
-export async function onRequestGet({ env, data }) {
+export async function onRequestGet({ env, data, waitUntil }) {
   const userId = data.user.id;
   const [groups, paid, shares, given, received] = await env.DB.batch([
     env.DB.prepare(
@@ -53,7 +56,75 @@ export async function onRequestGet({ env, data }) {
     };
   });
 
+  await addCleaningStatus(env, result, userId, waitUntil);
+
   return json({ groups: result, totalBalanceCents });
+}
+
+/**
+ * Putzplan-Stand der Woche: zählt die eigenen offenen Aufgaben pro WG-Gruppe
+ * (myCleaningCount) und schickt – einmal pro Aufgabe und Woche – die
+ * „Du bist dran"-Mitteilung an die Person, die an der Reihe ist. Läuft beim
+ * Laden der Gruppenliste, weil Pages im Gratis-Tarif keinen Zeitplan hat.
+ */
+async function addCleaningStatus(env, groups, userId, waitUntil) {
+  const wgGroups = groups.filter((g) => g.kind === 'wg' && !g.archived);
+  if (wgGroups.length === 0) return;
+
+  const weekStart = weekStartOf(viennaToday());
+  const ids = wgGroups.map((g) => g.id);
+  const placeholders = ids.map(() => '?').join(', ');
+  const [taskRows, memberRows, doneRows, notifiedRows] = await env.DB.batch([
+    env.DB.prepare(
+      `SELECT id, group_id, name, interval_weeks FROM cleaning_tasks
+       WHERE group_id IN (${placeholders}) ORDER BY sort_order, name`
+    ).bind(...ids),
+    env.DB.prepare(
+      `SELECT group_id, user_id FROM group_members WHERE group_id IN (${placeholders}) ORDER BY user_id`
+    ).bind(...ids),
+    env.DB.prepare('SELECT task_id FROM cleaning_done WHERE week_start = ?').bind(weekStart),
+    env.DB.prepare('SELECT task_id FROM cleaning_notified WHERE week_start = ?').bind(weekStart),
+  ]);
+
+  const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}`));
+  const notified = new Set(notifiedRows.results.map((n) => n.task_id));
+  const taskNames = new Map(taskRows.results.map((t) => [t.id, t.name]));
+  const toNotify = [];
+
+  for (const group of wgGroups) {
+    const tasks = taskRows.results.filter((t) => t.group_id === group.id);
+    const memberIds = memberRows.results.filter((m) => m.group_id === group.id).map((m) => m.user_id);
+    const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
+    group.myCleaningCount = assignments.filter((a) => a.assigneeId === userId && !a.done).length;
+    for (const a of assignments) {
+      if (!a.done && !notified.has(a.taskId)) toNotify.push({ ...a, groupName: group.name });
+    }
+  }
+
+  if (toNotify.length === 0) return;
+  waitUntil(
+    (async () => {
+      for (const turn of toNotify) {
+        try {
+          // Sperre zuerst: Nur wer die Zeile anlegt, schickt – so gibt es die
+          // Mitteilung auch bei gleichzeitigen Aufrufen nur einmal.
+          const res = await env.DB.prepare(
+            'INSERT INTO cleaning_notified (task_id, week_start) VALUES (?, ?) ON CONFLICT DO NOTHING'
+          )
+            .bind(turn.taskId, weekStart)
+            .run();
+          if (!res.meta || res.meta.changes === 0) continue;
+          await notifyUsers(env, [turn.assigneeId], {
+            title: `Putzplan · ${turn.groupName}`,
+            body: `Du bist diese Woche mit „${taskNames.get(turn.taskId)}" dran.`,
+            url: '/#/putzplan',
+          });
+        } catch {
+          // Mitteilungen dürfen die Gruppenliste nie stören
+        }
+      }
+    })()
+  );
 }
 
 export async function onRequestPost({ request, env, data }) {

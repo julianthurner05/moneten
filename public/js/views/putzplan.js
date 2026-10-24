@@ -1,27 +1,79 @@
-// Putzplan der WG: Aufgaben rotieren wochenweise durch die Mitglieder.
+// Putzplan der WG: zeigt nur die eigenen Aufgaben. Die fällige Aufgabe steht
+// groß als Karte und wird durch Antippen erledigt; darunter die nächsten
+// eigenen Runden und die Verwaltung aller Aufgaben.
 
 import { api } from '../api.js';
+import { createSelect } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
-import { formatWeekRange, weekAdd, weekIndexOf, weekStartOf } from '../format.js';
+import { formatWeekRange } from '../format.js';
 
-const SVG_NS = 'http://www.w3.org/2000/svg';
+const RHYTHM_OPTIONS = [
+  { value: '1', label: 'Jede Woche' },
+  { value: '2', label: 'Alle 2 Wochen' },
+  { value: '3', label: 'Alle 3 Wochen' },
+  { value: '4', label: 'Alle 4 Wochen' },
+];
+
+function rhythmLabel(intervalWeeks) {
+  return RHYTHM_OPTIONS.find((o) => o.value === String(intervalWeeks))?.label ?? `Alle ${intervalWeeks} Wochen`;
+}
 
 export async function renderPutzplan(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}/putzplan`);
+  ctx.setCleaningCount(groupId, data.myOpenCount);
   ctx.show('putzplan', () => build(ctx, groupId, data));
 }
 
 function build(ctx, groupId, data) {
-  const { tasks, members, archived } = data;
-  const names = new Map(members.map((m) => [m.id, m.displayName]));
-  const thisWeek = weekStartOf();
-  const nextWeek = weekAdd(thisWeek, 1);
-  const doneSet = new Set(data.done.map((d) => `${d.taskId}|${d.weekStart}`));
+  const { archived, weekStart } = data;
 
-  // Rotation: pro Woche rückt jede Aufgabe eine Person weiter.
-  const assignee = (taskIndex, weekStart) =>
-    members[(weekIndexOf(weekStart) + taskIndex) % members.length]?.id;
+  const toggleDone = async (taskId, done) => {
+    await api(`/api/groups/${groupId}/putzplan/${taskId}`, { method: 'PUT', body: { weekStart, done } });
+    ctx.refresh();
+  };
 
+  // Eigene fällige Aufgabe als große, antippbare Karte.
+  const mineCard = (item) =>
+    el(
+      'button',
+      {
+        className: `card putzplan-card${item.done ? ' is-done' : ''}`,
+        type: 'button',
+        disabled: archived,
+        onClick: () => toggleDone(item.taskId, !item.done),
+      },
+      el(
+        'div',
+        { className: 'card-meta' },
+        el('span', {}, 'Diese Woche'),
+        el('span', {}, formatWeekRange(weekStart))
+      ),
+      el('div', { className: 'card-amount card-amount-small' }, item.name),
+      el(
+        'div',
+        { className: 'card-foot putzplan-card-foot' },
+        item.done
+          ? [el('span', { className: 'einkauf-check is-done', 'aria-hidden': 'true' }, '✓'), 'Erledigt – tippen macht es rückgängig']
+          : el('span', { className: 'button putzplan-done-button' }, 'Erledigt')
+      )
+    );
+
+  const mineArea =
+    data.mine.length === 0
+      ? el('p', { className: 'empty-note' }, 'Diese Woche bist du mit nichts dran.')
+      : el('div', { className: 'putzplan-mine', 'data-stagger': '' }, data.mine.map(mineCard));
+
+  // Nächste eigene Runden, ausgegraut.
+  const upcomingRows = data.upcoming.map((item) =>
+    el(
+      'div',
+      { className: 'row row-muted' },
+      el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, item.name)),
+      el('div', { className: 'row-side' }, el('div', { className: 'putzplan-person' }, formatWeekRange(item.weekStart)))
+    )
+  );
+
+  // Verwaltung: Aufgabe ergänzen, Rhythmus und Name bearbeiten.
   const input = el('input', {
     id: 'putzplan-input',
     type: 'text',
@@ -43,150 +95,52 @@ function build(ctx, groupId, data) {
     el('div', { className: 'field' }, input)
   );
 
-  const row = (task, taskIndex, weekStart, current) => {
-    const done = doneSet.has(`${task.id}|${weekStart}`);
-    const person = names.get(assignee(taskIndex, weekStart)) ?? '–';
-    return el(
-      'div',
-      current && !archived
-        ? {
-            className: `row row-clickable einkauf-row${done ? ' is-done' : ''}`,
-            onClick: async () => {
-              await api(`/api/groups/${groupId}/putzplan/${task.id}`, {
-                method: 'PUT',
-                body: { weekStart, done: !done },
-              });
-              ctx.refresh();
-            },
-          }
-        : { className: `row row-muted${done ? ' einkauf-row is-done' : ''}` },
-      current ? el('span', { className: `einkauf-check${done ? ' is-done' : ''}`, 'aria-hidden': 'true' }, done ? '✓' : '') : null,
-      el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, task.name)),
+  const taskRows = data.tasks.map((task) =>
+    el(
+      'button',
+      {
+        className: 'row row-clickable',
+        type: 'button',
+        disabled: archived,
+        onClick: () => openTaskForm(ctx, groupId, task),
+      },
       el(
         'div',
-        { className: 'row-side' },
-        el('div', { className: 'putzplan-person' }, person),
-        current && !archived
-          ? el(
-              'button',
-              {
-                className: 'textlink',
-                type: 'button',
-                'aria-label': `${task.name} bearbeiten`,
-                onClick: (event) => {
-                  event.stopPropagation();
-                  openTaskForm(ctx, groupId, task);
-                },
-              },
-              'Bearbeiten'
-            )
-          : null
-      )
-    );
-  };
-
-  const wheelLink = el(
-    'div',
-    { className: 'einkauf-clear' },
-    el('button', { className: 'textlink', type: 'button', onClick: () => openWheel(members) }, 'Glücksrad')
+        { className: 'row-main' },
+        el('div', { className: 'row-label' }, rhythmLabel(task.intervalWeeks)),
+        el('div', { className: 'row-title' }, task.name)
+      ),
+      el('div', { className: 'row-side' }, el('span', { className: 'textlink' }, 'Bearbeiten'))
+    )
   );
 
   return el(
     'div',
     { className: 'view view-top' },
+    el('div', { className: 'section-label' }, `Diese Woche · ${formatWeekRange(weekStart)}`),
+    mineArea,
+    upcomingRows.length > 0
+      ? [
+          el('div', { className: 'section-label' }, 'Demnächst'),
+          el('div', { className: 'row-list', 'data-stagger': '' }, upcomingRows),
+        ]
+      : null,
+    el('div', { className: 'section-label' }, 'Aufgaben'),
     archived ? null : addForm,
-    tasks.length === 0
+    data.tasks.length === 0
       ? el('p', { className: 'empty-note' }, 'Noch keine Aufgaben im Putzplan.')
-      : [
-          el('div', { className: 'section-label' }, `Diese Woche · ${formatWeekRange(thisWeek)}`),
-          el('div', { className: 'row-list', 'data-stagger': '' }, tasks.map((t, i) => row(t, i, thisWeek, true))),
-          el('div', { className: 'section-label' }, `Nächste Woche · ${formatWeekRange(nextWeek)}`),
-          el('div', { className: 'row-list', 'data-stagger': '' }, tasks.map((t, i) => row(t, i, nextWeek, false))),
-        ],
-    wheelLink
+      : el('div', { className: 'row-list', 'data-stagger': '' }, taskRows)
   );
-}
-
-/** Glücksrad: dreht und bleibt zufällig auf einer Person stehen. */
-function openWheel(members) {
-  openPanel((close) => {
-    const size = 260;
-    const center = size / 2;
-    const radius = center - 4;
-    const segment = 360 / members.length;
-    const rad = (deg) => ((deg - 90) * Math.PI) / 180;
-
-    const svg = document.createElementNS(SVG_NS, 'svg');
-    svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
-    svg.classList.add('wheel-disc');
-
-    members.forEach((member, i) => {
-      const from = i * segment;
-      const to = from + segment;
-      const x1 = center + radius * Math.cos(rad(from));
-      const y1 = center + radius * Math.sin(rad(from));
-      const x2 = center + radius * Math.cos(rad(to));
-      const y2 = center + radius * Math.sin(rad(to));
-      const path = document.createElementNS(SVG_NS, 'path');
-      path.setAttribute('d', `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${segment > 180 ? 1 : 0} 1 ${x2} ${y2} Z`);
-      path.classList.add('wheel-segment');
-      if (i % 2 === 1) path.classList.add('is-alt');
-      svg.append(path);
-
-      const mid = from + segment / 2;
-      const tx = center + radius * 0.62 * Math.cos(rad(mid));
-      const ty = center + radius * 0.62 * Math.sin(rad(mid));
-      const label = document.createElementNS(SVG_NS, 'text');
-      label.setAttribute('x', tx);
-      label.setAttribute('y', ty);
-      label.setAttribute('transform', `rotate(${mid} ${tx} ${ty})`);
-      label.classList.add('wheel-label');
-      label.textContent = member.displayName;
-      svg.append(label);
-    });
-
-    const result = el('div', { className: 'wheel-result' }, ' ');
-    const spinButton = el('button', { className: 'button', type: 'button' }, 'Drehen');
-    let rotation = 0;
-    let spinning = false;
-
-    svg.addEventListener('transitionend', () => {
-      spinning = false;
-      spinButton.disabled = false;
-      const pointer = (360 - (rotation % 360)) % 360;
-      const winner = members[Math.floor(pointer / segment) % members.length];
-      result.textContent = `${winner.displayName} ist dran.`;
-    });
-
-    spinButton.addEventListener('click', () => {
-      if (spinning) return;
-      spinning = true;
-      spinButton.disabled = true;
-      result.textContent = ' ';
-      rotation += 5 * 360 + Math.floor(Math.random() * 360);
-      svg.style.transform = `rotate(${rotation}deg)`;
-    });
-
-    return el(
-      'div',
-      {},
-      el('h2', { className: 'panel-title' }, 'Glücksrad'),
-      el('div', { className: 'wheel-wrap' }, el('span', { className: 'wheel-pointer', 'aria-hidden': 'true' }), svg),
-      result,
-      el(
-        'div',
-        { className: 'panel-actions' },
-        el('button', { className: 'textlink', type: 'button', onClick: () => close() }, 'Schließen'),
-        el('div', { className: 'toolbar-spacer' }),
-        spinButton
-      )
-    );
-  });
 }
 
 function openTaskForm(ctx, groupId, task) {
   openPanel((close) => {
     const name = el('input', { id: 'putzplan-edit-name', type: 'text', required: true, value: task.name });
+    const rhythm = createSelect({
+      id: 'putzplan-edit-rhythm',
+      options: RHYTHM_OPTIONS,
+      value: String(task.intervalWeeks ?? 1),
+    });
     const error = el('p', { className: 'form-error', role: 'alert' });
     const showError = (message) => {
       error.textContent = message;
@@ -205,13 +159,19 @@ function openTaskForm(ctx, groupId, task) {
       }
     };
 
+    const wrap = (label, field, forId) =>
+      el('div', { className: 'field' }, el('label', { className: 'field-label', for: forId }, label), field);
+
     return el(
       'form',
       {
         onSubmit: async (event) => {
           event.preventDefault();
           try {
-            await api(`/api/groups/${groupId}/putzplan/${task.id}`, { method: 'PUT', body: { name: name.value } });
+            await api(`/api/groups/${groupId}/putzplan/${task.id}`, {
+              method: 'PUT',
+              body: { name: name.value, intervalWeeks: Number(rhythm.value) },
+            });
             close();
             ctx.refresh();
           } catch (err) {
@@ -220,7 +180,8 @@ function openTaskForm(ctx, groupId, task) {
         },
       },
       el('h2', { className: 'panel-title' }, 'Aufgabe bearbeiten'),
-      el('div', { className: 'field' }, el('label', { className: 'field-label', for: 'putzplan-edit-name' }, 'Aufgabe'), name),
+      wrap('Aufgabe', name, 'putzplan-edit-name'),
+      wrap('Rhythmus', rhythm.root, 'putzplan-edit-rhythm'),
       error,
       el(
         'div',

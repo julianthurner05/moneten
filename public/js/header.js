@@ -86,9 +86,11 @@ export function renderHeader(state) {
     ? []
     : [
         state.selectedGroup ? { key: 'gruppe', label: 'Allgemein', href: '#/' } : null,
-        hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
         hasEinzug ? { key: 'einkauf', label: 'Einkaufsliste', href: '#/einkaufsliste' } : null,
-        hasEinzug ? { key: 'putzplan', label: 'Putzplan', href: '#/putzplan' } : null,
+        hasEinzug
+          ? { key: 'putzplan', label: 'Putzplan', href: '#/putzplan', badge: state.selectedGroup?.myCleaningCount }
+          : null,
+        hasEinzug ? { key: 'einzug', label: 'Einzug', href: '#/einzug' } : null,
       ].filter(Boolean);
 
   const nav = el(
@@ -98,7 +100,8 @@ export function renderHeader(state) {
       el(
         'a',
         { className: `nav-cell${state.active === item.key ? ' is-active' : ''}`, href: item.href },
-        item.label
+        item.label,
+        item.badge > 0 ? el('span', { className: 'nav-badge' }, String(item.badge)) : null
       )
     )
   );

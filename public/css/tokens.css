@@ -75,7 +75,6 @@
   --duration-fast: 150ms;
   --duration: 250ms;
   --duration-slow: 400ms;
-  --duration-wheel: 4000ms;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --stagger-step: 40ms;
 

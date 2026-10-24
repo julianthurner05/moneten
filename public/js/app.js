@@ -53,7 +53,12 @@ const ctx = {
       groups: state.groups,
       selectedGroup: selectedGroup(),
     });
-    swapView(main, build);
+    // Dieselbe Ansicht nach einer Aktion oder Auto-Aktualisierung: in einem
+    // Zug ersetzen statt sichtbar aus- und einzublenden.
+    const soft = softNext && active === lastActive;
+    lastActive = active;
+    softNext = false;
+    swapView(main, build, soft);
   },
   navigate(hash) {
     if (location.hash === hash) {
@@ -62,7 +67,14 @@ const ctx = {
       location.hash = hash;
     }
   },
-  refresh: () => handleRoute(),
+  refresh: () => {
+    softNext = true;
+    return handleRoute();
+  },
+  setCleaningCount(groupId, count) {
+    const group = state.groups.find((g) => g.id === groupId);
+    if (group) group.myCleaningCount = count;
+  },
   onLogin(user) {
     state.user = user;
     ctx.navigate('#/');
@@ -99,6 +111,8 @@ async function loadGroupsData() {
 }
 
 let pushRestored = false;
+let lastActive = null;
+let softNext = false;
 
 async function handleRoute() {
   const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -223,9 +237,25 @@ document.addEventListener(
 
 // Beim Öffnen der App den roten Zähler am Icon zurücksetzen.
 navigator.clearAppBadge?.().catch(() => {});
+
+// Auto-Aktualisierung: Wenn die App wieder sichtbar wird und in ruhigem
+// Abstand auch zwischendurch wird die aktuelle Ansicht neu geladen – sanft,
+// ohne sichtbares Neuzeichnen. Nicht, während getippt wird oder ein Panel
+// offen ist.
+function autoRefresh() {
+  if (!state.user || document.visibilityState !== 'visible') return;
+  const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+  if (typing || document.querySelector('.panel-overlay')) return;
+  softNext = true;
+  handleRoute();
+}
+
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') navigator.clearAppBadge?.().catch(() => {});
+  if (document.visibilityState !== 'visible') return;
+  navigator.clearAppBadge?.().catch(() => {});
+  autoRefresh();
 });
+setInterval(autoRefresh, 30000);
 
 window.addEventListener('hashchange', handleRoute);
 handleRoute();
