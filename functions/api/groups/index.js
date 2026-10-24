@@ -74,22 +74,41 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
   const weekStart = weekStartOf(viennaToday());
   const ids = wgGroups.map((g) => g.id);
   const placeholders = ids.map(() => '?').join(', ');
-  const [taskRows, memberRows, doneRows, notifiedRows] = await env.DB.batch([
-    env.DB.prepare(
-      `SELECT id, group_id, name, interval_weeks FROM cleaning_tasks
+  const [taskRows, memberRows, doneRows, notifiedRows, seenRows, expenseRows, settlementRows, shoppingRows] =
+    await env.DB.batch([
+      env.DB.prepare(
+        `SELECT id, group_id, name, interval_weeks, times_per_week FROM cleaning_tasks
        WHERE group_id IN (${placeholders}) ORDER BY sort_order, name`
-    ).bind(...ids),
-    env.DB.prepare(
-      `SELECT group_id, user_id FROM group_members WHERE group_id IN (${placeholders}) ORDER BY user_id`
-    ).bind(...ids),
-    env.DB.prepare('SELECT task_id FROM cleaning_done WHERE week_start = ?').bind(weekStart),
-    env.DB.prepare('SELECT task_id FROM cleaning_notified WHERE week_start = ?').bind(weekStart),
-  ]);
+      ).bind(...ids),
+      env.DB.prepare(
+        `SELECT group_id, user_id FROM group_members WHERE group_id IN (${placeholders}) ORDER BY user_id`
+      ).bind(...ids),
+      env.DB.prepare('SELECT task_id, slot FROM cleaning_done WHERE week_start = ?').bind(weekStart),
+      env.DB.prepare('SELECT task_id FROM cleaning_notified WHERE week_start = ?').bind(weekStart),
+      // Für die roten Tab-Zähler: Was haben andere seit dem letzten Ansehen ergänzt?
+      env.DB.prepare(
+        `SELECT group_id, tab, seen_at FROM tab_seen WHERE user_id = ? AND group_id IN (${placeholders})`
+      ).bind(userId, ...ids),
+      env.DB.prepare(
+        `SELECT group_id, is_einzug, created_by, created_at FROM group_expenses
+       WHERE group_id IN (${placeholders}) AND deleted_at IS NULL AND created_by != ?`
+      ).bind(...ids, userId),
+      env.DB.prepare(
+        `SELECT group_id, is_einzug, created_by, created_at FROM settlements
+       WHERE group_id IN (${placeholders}) AND created_by != ?`
+      ).bind(...ids, userId),
+      env.DB.prepare(
+        `SELECT group_id, created_by, created_at FROM shopping_items
+       WHERE group_id IN (${placeholders}) AND created_by != ?`
+      ).bind(...ids, userId),
+    ]);
 
-  const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}`));
+  const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}|${d.slot}`));
   const notified = new Set(notifiedRows.results.map((n) => n.task_id));
   const taskNames = new Map(taskRows.results.map((t) => [t.id, t.name]));
   const toNotify = [];
+
+  const seen = new Map(seenRows.results.map((r) => [`${r.group_id}|${r.tab}`, r.seen_at]));
 
   for (const group of wgGroups) {
     const tasks = taskRows.results.filter((t) => t.group_id === group.id);
@@ -97,8 +116,26 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
     const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
     group.myCleaningCount = assignments.filter((a) => a.assigneeId === userId && !a.done).length;
     for (const a of assignments) {
-      if (!a.done && !notified.has(a.taskId)) toNotify.push({ ...a, groupName: group.name });
+      // Eine Mitteilung pro Aufgabe und Woche – auch bei mehreren Durchgängen.
+      if (a.slot === 0 && !a.done && !notified.has(a.taskId)) toNotify.push({ ...a, groupName: group.name });
     }
+
+    // Neues von anderen seit dem letzten Ansehen des Tabs. Ohne gemerkten
+    // Zeitpunkt (Tab nie geöffnet) bleibt der Zähler leer.
+    const countNew = (tab, rows, match) => {
+      const since = seen.get(`${group.id}|${tab}`);
+      if (!since) return 0;
+      return rows.filter((r) => r.group_id === group.id && r.created_at > since && match(r)).length;
+    };
+    group.tabNew = {
+      gruppe:
+        countNew('gruppe', expenseRows.results, (r) => r.is_einzug === 0) +
+        countNew('gruppe', settlementRows.results, (r) => r.is_einzug === 0),
+      einzug:
+        countNew('einzug', expenseRows.results, (r) => r.is_einzug === 1) +
+        countNew('einzug', settlementRows.results, (r) => r.is_einzug === 1),
+      einkauf: countNew('einkauf', shoppingRows.results, () => true),
+    };
   }
 
   if (toNotify.length === 0) return;
@@ -114,9 +151,11 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
             .bind(turn.taskId, weekStart)
             .run();
           if (!res.meta || res.meta.changes === 0) continue;
+          const task = taskRows.results.find((t) => t.id === turn.taskId);
+          const times = Math.max(1, task?.times_per_week ?? 1);
           await notifyUsers(env, [turn.assigneeId], {
             title: `Putzplan · ${turn.groupName}`,
-            body: `Du bist diese Woche mit „${taskNames.get(turn.taskId)}" dran.`,
+            body: `Du bist diese Woche mit „${taskNames.get(turn.taskId)}" dran${times > 1 ? ` (${times}×)` : ''}.`,
             url: '/#/putzplan',
           });
         } catch {

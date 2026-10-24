@@ -1,7 +1,6 @@
 // Einstellungen der Monatsübersicht: Kategorien, wiederkehrende Posten, Optionen.
 
 import { api } from '../api.js';
-import { disablePush, enablePush, pushSubscription, pushSupported } from '../push.js';
 import { createMonthPicker } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
 import { centsToInput, currentMonth, formatEuro, formatMonth, parseEuroInput } from '../format.js';
@@ -84,75 +83,11 @@ function build(ctx, data) {
       optionsError.classList.add('is-visible');
     }
   });
-  // Mitteilungen: Abo pro Gerät, Erlaubnis holt sich der Browser beim Aktivieren.
-  let pushRow = null;
-  if (pushSupported()) {
-    const pushButton = el('button', { className: 'textlink', type: 'button' }, 'Mitteilungen aktivieren');
-    const setState = (on) => {
-      pushButton.textContent = on ? 'Mitteilungen deaktivieren' : 'Mitteilungen aktivieren';
-      pushButton.dataset.on = on ? '1' : '';
-    };
-    pushSubscription()
-      .then((sub) => setState(!!sub))
-      .catch(() => {});
-    pushButton.addEventListener('click', async () => {
-      try {
-        if (pushButton.dataset.on) {
-          await disablePush();
-          setState(false);
-        } else {
-          await enablePush();
-          setState(true);
-        }
-      } catch (err) {
-        optionsError.textContent = err.message;
-        optionsError.classList.add('is-visible');
-      }
-    });
-    // Testmitteilung: prüft den Server-Versand über /api/push/test.
-    const testButton = el(
-      'button',
-      {
-        className: 'textlink',
-        type: 'button',
-        onClick: async () => {
-          try {
-            await api('/api/push/test', { method: 'POST' });
-          } catch (err) {
-            optionsError.textContent = err.message;
-            optionsError.classList.add('is-visible');
-          }
-        },
-      },
-      'Testmitteilung'
-    );
-    pushRow = el('div', { className: 'push-row' }, pushButton, testButton);
-  }
-
   const options = el(
     'div',
     { className: 'settings-options' },
     el('div', { className: 'check-row' }, carryover, el('label', { for: 'settings-carryover' }, 'Übrig des Vormonats übertragen')),
-    pushRow,
     optionsError
-  );
-
-  const logout = el(
-    'div',
-    { className: 'konto-link' },
-    el('a', { className: 'textlink', href: '#/konto/passwort' }, 'Passwort ändern'),
-    el(
-      'button',
-      {
-        className: 'textlink',
-        type: 'button',
-        onClick: async () => {
-          await api('/api/logout', { method: 'POST' });
-          ctx.onLogout();
-        },
-      },
-      'Abmelden'
-    )
   );
 
   return el(
@@ -162,8 +97,7 @@ function build(ctx, data) {
     recurringBlock('income', 'Wiederkehrende Einnahmen', '+ Einnahme'),
     recurringBlock('fixed', 'Fixkosten', '+ Fixkosten'),
     el('div', { className: 'section-label' }, 'Optionen'),
-    options,
-    logout
+    options
   );
 }
 

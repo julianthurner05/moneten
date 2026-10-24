@@ -60,20 +60,23 @@ export function nextTurnWeek(afterWeek, intervalWeeks, taskIndex, memberCount, m
 }
 
 /**
- * Putzplan-Stand einer Gruppe für eine Woche.
- * @param {{id: string, interval_weeks?: number}[]} tasks – sortiert (sort_order, name)
+ * Putzplan-Stand einer Gruppe für eine Woche: ein Eintrag pro Durchgang
+ * (times_per_week > 1 ergibt mehrere Slots derselben Person in der Woche).
+ * @param {{id: string, interval_weeks?: number, times_per_week?: number}[]} tasks – sortiert (sort_order, name)
  * @param {string[]} memberIds – sortiert (user_id)
- * @param {Set<string>} doneSet – `${taskId}|${weekStart}` der erledigten Runden
- * @returns {{taskId: string, assigneeId: string, done: boolean}[]} fällige Aufgaben der Woche
+ * @param {Set<string>} doneSet – `${taskId}|${weekStart}|${slot}` der erledigten Durchgänge
+ * @returns {{taskId: string, slot: number, assigneeId: string, done: boolean}[]}
  */
 export function weekAssignments(tasks, memberIds, weekStart, doneSet) {
   if (memberIds.length === 0) return [];
-  return tasks
-    .map((task, index) => ({ task, index }))
-    .filter(({ task }) => isDueWeek(weekStart, task.interval_weeks))
-    .map(({ task, index }) => ({
-      taskId: task.id,
-      assigneeId: memberIds[assigneeIndex(weekStart, task.interval_weeks, index, memberIds.length)],
-      done: doneSet.has(`${task.id}|${weekStart}`),
-    }));
+  const result = [];
+  tasks.forEach((task, index) => {
+    if (!isDueWeek(weekStart, task.interval_weeks)) return;
+    const assigneeId = memberIds[assigneeIndex(weekStart, task.interval_weeks, index, memberIds.length)];
+    const times = Math.max(1, task.times_per_week ?? 1);
+    for (let slot = 0; slot < times; slot++) {
+      result.push({ taskId: task.id, slot, assigneeId, done: doneSet.has(`${task.id}|${weekStart}|${slot}`) });
+    }
+  });
+  return result;
 }

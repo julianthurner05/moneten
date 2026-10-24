@@ -6,7 +6,6 @@ import { el, noticePanel, openPanel } from '../dom.js';
 import { buildFab } from '../fab.js';
 import { currentMonth, formatEuro, formatEuroParts, monthAdd, monthOf } from '../format.js';
 import { openExpenseForm } from './expenseForm.js';
-import { openRecurringPanel } from './recurringForm.js';
 import { openSettlementForm } from './settlementForm.js';
 import { settlementRow } from './settlementRow.js';
 
@@ -14,6 +13,7 @@ const filterState = { groupId: null, month: null };
 
 export async function renderGroupDetail(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}`);
+  api(`/api/groups/${groupId}/seen`, { method: 'POST', body: { tab: 'gruppe' } }).catch(() => {});
   if (filterState.groupId !== groupId) {
     filterState.groupId = groupId;
     filterState.month = currentMonth();
@@ -180,10 +180,6 @@ function build(ctx, data) {
           {
             label: 'Ausgabe',
             onClick: () => openExpenseForm(ctx, group, members, null, { myCategories: data.myCategories }),
-          },
-          {
-            label: 'Wiederkehrend',
-            onClick: () => openRecurringPanel(ctx, group, members),
           },
           {
             label: 'Begleichung',

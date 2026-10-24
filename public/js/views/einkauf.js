@@ -5,6 +5,7 @@ import { confirmPanel, el, openPanel } from '../dom.js';
 
 export async function renderEinkauf(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}/einkauf`);
+  api(`/api/groups/${groupId}/seen`, { method: 'POST', body: { tab: 'einkauf' } }).catch(() => {});
   ctx.show('einkauf', () => build(ctx, groupId, data.items));
 }
 

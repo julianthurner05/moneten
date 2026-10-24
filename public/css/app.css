@@ -220,8 +220,12 @@ textarea:focus-visible {
 
 .header-nav {
   display: flex;
-  gap: var(--space-2);
-  flex: 1;
+  gap: var(--space-1);
+  background: var(--color-field);
+  border-radius: var(--radius-full);
+  padding: var(--space-1);
+  width: max-content;
+  flex-shrink: 0;
 }
 
 .nav-cell {
@@ -246,6 +250,61 @@ textarea:focus-visible {
 .nav-cell.is-active {
   background: var(--color-text);
   color: var(--color-bg);
+  view-transition-name: nav-pill;
+}
+
+/* Tab-Wechsel: Pill gleitet im Feld, Inhalt blendet weich über (View Transitions). */
+::view-transition-group(nav-pill) {
+  animation-duration: var(--duration);
+  animation-timing-function: var(--ease);
+}
+
+main {
+  view-transition-name: view;
+}
+
+::view-transition-old(view) {
+  animation: vt-out var(--duration-fast) var(--ease) both;
+}
+
+::view-transition-new(view) {
+  animation: vt-in var(--duration) var(--ease) both;
+}
+
+@keyframes vt-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-3));
+  }
+}
+
+/* Einstellungen-Zahnrad neben der Privat-Pille. */
+.gear-link {
+  display: flex;
+  align-items: center;
+  color: var(--color-secondary);
+  transition: color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .gear-link:hover {
+    color: var(--color-text);
+  }
+}
+
+.gear-icon {
+  width: var(--space-5);
+  height: var(--space-5);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
 }
 
 .header-status {

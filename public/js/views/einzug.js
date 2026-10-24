@@ -11,6 +11,7 @@ import { settlementRow } from './settlementRow.js';
 
 export async function renderEinzug(ctx, groupId) {
   const data = await api(`/api/groups/${groupId}`);
+  api(`/api/groups/${groupId}/seen`, { method: 'POST', body: { tab: 'einzug' } }).catch(() => {});
   ctx.show('einzug', () => build(ctx, data));
 }
 

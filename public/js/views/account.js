@@ -1,9 +1,11 @@
-// Konto: eigene Seite, erreichbar über den Button ganz unten im Privat-Bereich.
-// Eigene Daten, Passwort ändern, Abmelden – für Admins die User-Verwaltung.
+// Einstellungen: eigene Seite, erreichbar über das Zahnrad im Privat-Modus.
+// Benutzername, Mitteilungen, Passwort ändern, Abmelden – für Admins die
+// User-Verwaltung.
 
 import { api } from '../api.js';
 import { createSelect } from '../controls.js';
 import { confirmPanel, el, openPanel } from '../dom.js';
+import { disablePush, enablePush, pushSubscription, pushSupported } from '../push.js';
 
 export async function renderAccount(ctx) {
   const users = ctx.state.user.isAdmin ? (await api('/api/users')).users : null;
@@ -14,7 +16,7 @@ export async function renderAccount(ctx) {
       el(
         'div',
         { className: 'hero hero-centered' },
-        el('div', { className: 'month-title' }, ctx.state.user.isAdmin ? 'Adminbereich' : 'Konto'),
+        el('div', { className: 'month-title' }, 'Einstellungen'),
         el('a', { className: 'textlink', href: '#/monat' }, '← Privat')
       ),
       buildAccountSection(ctx, users)
@@ -24,19 +26,91 @@ export async function renderAccount(ctx) {
 
 function buildAccountSection(ctx, users) {
   const user = ctx.state.user;
+  const settingsError = el('p', { className: 'form-error', role: 'alert' });
+  const showError = (message) => {
+    settingsError.textContent = message;
+    settingsError.classList.add('is-visible');
+  };
 
-  const ownRow = el(
+  const usernameRow = el(
     'div',
     { className: 'row' },
     el(
       'div',
       { className: 'row-main' },
-      el('div', { className: 'row-title' }, user.displayName)
+      el('div', { className: 'row-label' }, 'Benutzername'),
+      el('div', { className: 'row-title' }, user.username)
     ),
+    el('div', { className: 'row-side' }, el('div', { className: 'putzplan-person' }, user.displayName))
+  );
+
+  const passwordRow = el(
+    'div',
+    { className: 'row' },
+    el(
+      'div',
+      { className: 'row-main' },
+      el('div', { className: 'row-label' }, 'Passwort'),
+      el('div', { className: 'row-title' }, '••••••••')
+    ),
+    el('div', { className: 'row-side' }, el('a', { className: 'textlink', href: '#/konto/passwort' }, 'Ändern'))
+  );
+
+  // Mitteilungen: Abo pro Gerät, Erlaubnis holt sich der Browser beim Aktivieren.
+  let pushRow = null;
+  if (pushSupported()) {
+    const pushButton = el('button', { className: 'textlink', type: 'button' }, 'Aktivieren');
+    const setState = (on) => {
+      pushButton.textContent = on ? 'Deaktivieren' : 'Aktivieren';
+      pushButton.dataset.on = on ? '1' : '';
+    };
+    pushSubscription()
+      .then((sub) => setState(!!sub))
+      .catch(() => {});
+    pushButton.addEventListener('click', async () => {
+      try {
+        if (pushButton.dataset.on) {
+          await disablePush();
+          setState(false);
+        } else {
+          await enablePush();
+          setState(true);
+        }
+      } catch (err) {
+        showError(err.message);
+      }
+    });
+    // Testmitteilung: prüft den Server-Versand über /api/push/test.
+    const testButton = el(
+      'button',
+      {
+        className: 'textlink',
+        type: 'button',
+        onClick: async () => {
+          try {
+            await api('/api/push/test', { method: 'POST' });
+          } catch (err) {
+            showError(err.message);
+          }
+        },
+      },
+      'Testmitteilung'
+    );
+    pushRow = el(
+      'div',
+      { className: 'row' },
+      el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, 'Mitteilungen')),
+      el('div', { className: 'row-side' }, pushButton, testButton)
+    );
+  }
+
+  const ownRow = el(
+    'div',
+    { className: 'row' },
+    el('div', { className: 'row-main' }, el('div', { className: 'row-title' }, 'Abmelden')),
     el(
       'div',
       { className: 'row-side' },
-      el('a', { className: 'textlink', href: '#/konto/passwort' }, 'Passwort ändern'),
       el(
         'button',
         {
@@ -108,6 +182,8 @@ function buildAccountSection(ctx, users) {
       : null;
 
   return [
+    el('div', { className: 'row-list', 'data-stagger': '' }, usernameRow, passwordRow, pushRow, ownRow),
+    settingsError,
     users
       ? el(
           'div',
@@ -116,7 +192,7 @@ function buildAccountSection(ctx, users) {
           el('button', { className: 'textlink', type: 'button', onClick: () => openUserForm(ctx) }, '+ User')
         )
       : null,
-    el('div', { className: 'row-list', 'data-stagger': '' }, ownRow, adminRows),
+    adminRows ? el('div', { className: 'row-list', 'data-stagger': '' }, adminRows) : null,
     adminTools,
   ];
 }

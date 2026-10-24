@@ -44,21 +44,36 @@ const ctx = {
   selectedGroup,
   selectGroup,
   show(active, build) {
-    // Das Thema hängt am Modus: Privat ist dunkel, alles andere hell.
-    const privat = active === 'monat' || active === 'konto' || active === 'passwort';
-    document.documentElement.dataset.theme = state.user && privat ? 'dark' : 'light';
-    renderHeader({
-      user: state.user,
-      active,
-      groups: state.groups,
-      selectedGroup: selectedGroup(),
-    });
+    // Der eigene Tab gilt beim Anzeigen als gesehen – Zähler sofort weg.
+    const group = selectedGroup();
+    if (group?.tabNew && active in group.tabNew) group.tabNew[active] = 0;
+
     // Dieselbe Ansicht nach einer Aktion oder Auto-Aktualisierung: in einem
     // Zug ersetzen statt sichtbar aus- und einzublenden.
     const soft = softNext && active === lastActive;
+    const changed = lastActive !== null && active !== lastActive;
     lastActive = active;
     softNext = false;
-    swapView(main, build, soft);
+
+    const apply = () => {
+      // Das Thema hängt am Modus: Privat ist dunkel, alles andere hell.
+      const privat = active === 'monat' || active === 'konto' || active === 'passwort';
+      document.documentElement.dataset.theme = state.user && privat ? 'dark' : 'light';
+      renderHeader({
+        user: state.user,
+        active,
+        groups: state.groups,
+        selectedGroup: selectedGroup(),
+      });
+      swapView(main, build, soft || useTransition);
+    };
+
+    // Tab-Wechsel: Browser-View-Transition – die Pill gleitet, der Inhalt
+    // blendet weich über (Browser ohne Unterstützung wechseln wie bisher).
+    const useTransition =
+      changed && !soft && main.childElementCount > 0 && typeof document.startViewTransition === 'function';
+    if (useTransition) document.startViewTransition(apply);
+    else apply();
   },
   navigate(hash) {
     if (location.hash === hash) {
@@ -158,21 +173,21 @@ async function handleRoute() {
       await ensureGroups(true);
       renderGroups(ctx, { groups: state.groups, totalBalanceCents: state.totalBalanceCents });
     } else if (parts[0] === 'einzug') {
-      await ensureGroups();
+      await ensureGroups(true);
       if (state.selectedGroupId) {
         await renderEinzug(ctx, state.selectedGroupId);
       } else {
         ctx.navigate('#/gruppen');
       }
     } else if (parts[0] === 'einkaufsliste') {
-      await ensureGroups();
+      await ensureGroups(true);
       if (state.selectedGroupId) {
         await renderEinkauf(ctx, state.selectedGroupId);
       } else {
         ctx.navigate('#/gruppen');
       }
     } else if (parts[0] === 'putzplan') {
-      await ensureGroups();
+      await ensureGroups(true);
       if (state.selectedGroupId) {
         await renderPutzplan(ctx, state.selectedGroupId);
       } else {
@@ -185,12 +200,7 @@ async function handleRoute() {
       if (parts[0] === 'konto' && parts[1] === 'passwort') {
         renderPasswordChange(ctx, { forced: false });
       } else if (parts[0] === 'konto') {
-        // Konto/Adminbereich gibt es vorerst nur für Admins.
-        if (state.user.isAdmin) {
-          await renderAccount(ctx);
-        } else {
-          await renderMonth(ctx, null);
-        }
+        await renderAccount(ctx);
       } else if (parts[1] === 'uebersicht') {
         await renderMonthOverview(ctx);
       } else if (parts[1] === 'einstellungen') {

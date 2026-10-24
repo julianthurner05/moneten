@@ -20,30 +20,39 @@ export async function onRequestPut({ request, env, data, params }) {
   const body = await readJson(request);
   if (!body) return error('Ungültige Anfrage.');
 
+  if (body.name !== undefined || body.intervalWeeks !== undefined || body.timesPerWeek !== undefined) {
+    if (!data.user.isAdmin) return error('Nur der Admin kann Aufgaben verwalten.', 403);
+  }
   if (body.name !== undefined) {
     const name = String(body.name).trim();
     if (!name) return error('Bitte eine Aufgabe eingeben.');
     await env.DB.prepare('UPDATE cleaning_tasks SET name = ? WHERE id = ?').bind(name, params.tid).run();
   }
-  if (body.intervalWeeks !== undefined) {
-    const interval = body.intervalWeeks;
+  if (body.intervalWeeks !== undefined || body.timesPerWeek !== undefined) {
+    const interval = body.intervalWeeks ?? 1;
+    const times = body.timesPerWeek ?? 1;
     if (!Number.isInteger(interval) || interval < 1 || interval > 8) return error('Ungültiger Rhythmus.');
-    await env.DB.prepare('UPDATE cleaning_tasks SET interval_weeks = ? WHERE id = ?')
-      .bind(interval, params.tid)
+    if (!Number.isInteger(times) || times < 1 || times > 7 || (times > 1 && interval !== 1)) {
+      return error('Ungültiger Rhythmus.');
+    }
+    await env.DB.prepare('UPDATE cleaning_tasks SET interval_weeks = ?, times_per_week = ? WHERE id = ?')
+      .bind(interval, times, params.tid)
       .run();
   }
   if (body.weekStart !== undefined) {
     if (!isDateString(body.weekStart)) return error('Ungültige Woche.');
+    const slot = body.slot ?? 0;
+    if (!Number.isInteger(slot) || slot < 0 || slot > 6) return error('Ungültiger Durchgang.');
     if (body.done) {
       await env.DB.prepare(
-        `INSERT INTO cleaning_done (task_id, week_start, done_by, done_at) VALUES (?, ?, ?, ?)
-         ON CONFLICT (task_id, week_start) DO NOTHING`
+        `INSERT INTO cleaning_done (task_id, week_start, slot, done_by, done_at) VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT (task_id, week_start, slot) DO NOTHING`
       )
-        .bind(params.tid, body.weekStart, data.user.id, nowIso())
+        .bind(params.tid, body.weekStart, slot, data.user.id, nowIso())
         .run();
     } else {
-      await env.DB.prepare('DELETE FROM cleaning_done WHERE task_id = ? AND week_start = ?')
-        .bind(params.tid, body.weekStart)
+      await env.DB.prepare('DELETE FROM cleaning_done WHERE task_id = ? AND week_start = ? AND slot = ?')
+        .bind(params.tid, body.weekStart, slot)
         .run();
     }
   }
@@ -51,6 +60,7 @@ export async function onRequestPut({ request, env, data, params }) {
 }
 
 export async function onRequestDelete({ env, data, params }) {
+  if (!data.user.isAdmin) return error('Nur der Admin kann Aufgaben verwalten.', 403);
   const loaded = await loadTask(env, data, params);
   if (loaded.error) return loaded.error;
   await env.DB.prepare('DELETE FROM cleaning_done WHERE task_id = ?').bind(params.tid).run();

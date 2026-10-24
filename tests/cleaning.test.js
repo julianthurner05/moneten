@@ -59,7 +59,7 @@ test('weekAssignments: nur fällige Aufgaben, mit Person und Erledigt-Stand', ()
     { id: 't1', interval_weeks: 1 },
     { id: 't2', interval_weeks: 2 },
   ];
-  const assignments = weekAssignments(tasks, ['a', 'b', 'c'], even, new Set([`t1|${even}`]));
+  const assignments = weekAssignments(tasks, ['a', 'b', 'c'], even, new Set([`t1|${even}|0`]));
   assert.equal(assignments.length, 2);
   assert.equal(assignments[0].taskId, 't1');
   assert.equal(assignments[0].done, true);
@@ -69,4 +69,14 @@ test('weekAssignments: nur fällige Aufgaben, mit Person und Erledigt-Stand', ()
     weekAssignments(tasks, ['a', 'b', 'c'], oddWeek, new Set()).map((a) => a.taskId),
     ['t1']
   );
+});
+
+test('weekAssignments: 2x die Woche ergibt zwei Durchgänge derselben Person', () => {
+  const monday = '2026-10-19';
+  const tasks = [{ id: 't1', interval_weeks: 1, times_per_week: 2 }];
+  const assignments = weekAssignments(tasks, ['a', 'b', 'c'], monday, new Set([`t1|${monday}|1`]));
+  assert.equal(assignments.length, 2);
+  assert.equal(assignments[0].assigneeId, assignments[1].assigneeId);
+  assert.deepEqual(assignments.map((a) => a.slot), [0, 1]);
+  assert.deepEqual(assignments.map((a) => a.done), [false, true]);
 });
