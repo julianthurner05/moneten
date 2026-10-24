@@ -107,12 +107,12 @@ export function renderHeader(state) {
   const navItems = privat
     ? [
         {
-          label: 'Übersicht',
+          label: 'Monat',
           href: '#/monat',
           active:
             state.active === 'monat' && !hash.startsWith('#/monat/uebersicht') && !hash.startsWith('#/monat/einstellungen'),
         },
-        { label: 'Alle Monate', href: '#/monat/uebersicht', active: hash.startsWith('#/monat/uebersicht') },
+        { label: 'Übersicht', href: '#/monat/uebersicht', active: hash.startsWith('#/monat/uebersicht') },
         { label: 'Budgetplanung', href: '#/monat/einstellungen', active: hash.startsWith('#/monat/einstellungen') },
       ]
     : [
@@ -170,7 +170,11 @@ export function renderHeader(state) {
 
   // Einstellungen (Zahnrad) links neben der Privat-Pille, nur im Privat-Modus.
   const gear = privat
-    ? el('a', { className: 'gear-link', href: '#/konto', 'aria-label': 'Einstellungen' }, gearIcon())
+    ? el(
+        'a',
+        { className: `gear-link${state.active === 'konto' ? ' is-active' : ''}`, href: '#/konto', 'aria-label': 'Einstellungen' },
+        gearIcon()
+      )
     : null;
 
   const tabContent = navItems.length > 0 ? [nav] : [];

@@ -13,7 +13,7 @@ function build(ctx, data) {
   const head = el(
     'div',
     { className: 'section-head' },
-    el('div', {}, el('div', { className: 'month-title' }, 'Alle Monate'))
+    el('div', {}, el('div', { className: 'month-title' }, 'Übersicht'))
   );
 
   const stats =

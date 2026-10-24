@@ -71,7 +71,11 @@ const ctx = {
     // Tab-Wechsel: Browser-View-Transition – die Pill gleitet, der Inhalt
     // blendet weich über (Browser ohne Unterstützung wechseln wie bisher).
     const useTransition =
-      changed && !soft && main.childElementCount > 0 && typeof document.startViewTransition === 'function';
+      changed &&
+      !soft &&
+      main.childElementCount > 0 &&
+      document.visibilityState === 'visible' &&
+      typeof document.startViewTransition === 'function';
     if (useTransition) document.startViewTransition(apply);
     else apply();
   },
@@ -257,7 +261,9 @@ function autoRefresh() {
   const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
   if (typing || document.querySelector('.panel-overlay')) return;
   softNext = true;
-  handleRoute();
+  handleRoute().catch(() => {
+    // Offline oder Server kurz weg: nächster Versuch kommt von selbst.
+  });
 }
 
 document.addEventListener('visibilitychange', () => {
