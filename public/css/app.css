@@ -250,15 +250,9 @@ textarea:focus-visible {
 .nav-cell.is-active {
   background: var(--color-text);
   color: var(--color-bg);
-  view-transition-name: nav-pill;
 }
 
-/* Tab-Wechsel: Pill gleitet im Feld, Inhalt blendet weich über (View Transitions). */
-::view-transition-group(nav-pill) {
-  animation-duration: var(--duration);
-  animation-timing-function: var(--ease);
-}
-
+/* Tab-Wechsel: Inhalt blendet weich über (View Transitions). */
 main {
   view-transition-name: view;
 }
