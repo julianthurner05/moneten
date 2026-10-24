@@ -45,38 +45,44 @@ export function assigneeIndex(weekStart, intervalWeeks, taskIndex, memberCount) 
 }
 
 /**
- * Nächste Woche nach `afterWeek`, in der die Aufgabe fällig ist und die Person
- * dran ist (null, wenn die Person nie drankommt – kommt bei Rotation nicht vor).
- */
-export function nextTurnWeek(afterWeek, intervalWeeks, taskIndex, memberCount, memberIndex) {
-  const interval = Math.max(1, intervalWeeks ?? 1);
-  let occurrence = Math.floor(weekIndexOf(afterWeek) / interval) + 1;
-  for (let i = 0; i < memberCount; i++, occurrence++) {
-    if ((occurrence + taskIndex) % memberCount === memberIndex) {
-      return weekStartFromIndex(occurrence * interval);
-    }
-  }
-  return null;
-}
-
-/**
  * Putzplan-Stand einer Gruppe für eine Woche: ein Eintrag pro Durchgang
  * (times_per_week > 1 ergibt mehrere Slots derselben Person in der Woche).
+ *
+ * Niemand bekommt mehr als eine Aufgabe pro Woche: Kollidieren zwei fällige
+ * Aufgaben bei derselben Person, rückt die zweite auf die nächste freie
+ * Person weiter. Sind mehr Aufgaben fällig als Personen da sind, pausiert
+ * der Überhang – rotierend, jede Woche eine andere Aufgabe.
  * @param {{id: string, interval_weeks?: number, times_per_week?: number}[]} tasks – sortiert (sort_order, name)
  * @param {string[]} memberIds – sortiert (user_id)
  * @param {Set<string>} doneSet – `${taskId}|${weekStart}|${slot}` der erledigten Durchgänge
  * @returns {{taskId: string, slot: number, assigneeId: string, done: boolean}[]}
  */
 export function weekAssignments(tasks, memberIds, weekStart, doneSet) {
-  if (memberIds.length === 0) return [];
+  const n = memberIds.length;
+  if (n === 0) return [];
+  const weekIdx = weekIndexOf(weekStart);
+
+  const due = tasks
+    .map((task, index) => ({ task, index }))
+    .filter(({ task }) => isDueWeek(weekStart, task.interval_weeks));
+
+  // Überhang pausiert rotierend: Auswahl-Reihenfolge verschiebt sich pro Woche.
+  const selected = due
+    .map((entry, rank) => ({ ...entry, key: (rank + weekIdx) % due.length }))
+    .sort((a, b) => a.key - b.key)
+    .slice(0, n)
+    .sort((a, b) => a.index - b.index);
+
+  const used = new Set();
   const result = [];
-  tasks.forEach((task, index) => {
-    if (!isDueWeek(weekStart, task.interval_weeks)) return;
-    const assigneeId = memberIds[assigneeIndex(weekStart, task.interval_weeks, index, memberIds.length)];
+  for (const { task, index } of selected) {
+    let member = assigneeIndex(weekStart, task.interval_weeks, index, n);
+    while (used.has(member)) member = (member + 1) % n;
+    used.add(member);
     const times = Math.max(1, task.times_per_week ?? 1);
     for (let slot = 0; slot < times; slot++) {
-      result.push({ taskId: task.id, slot, assigneeId, done: doneSet.has(`${task.id}|${weekStart}|${slot}`) });
+      result.push({ taskId: task.id, slot, assigneeId: memberIds[member], done: doneSet.has(`${task.id}|${weekStart}|${slot}`) });
     }
-  });
+  }
   return result;
 }

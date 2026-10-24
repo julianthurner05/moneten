@@ -41,30 +41,59 @@ function build(ctx, groupId, data) {
     ctx.refresh();
   };
 
-  // Eigene fällige Aufgabe als große, antippbare Karte.
-  const mineCard = (item) =>
+  // Durchgänge derselben Aufgabe (2x/3x die Woche) gehören auf eine Karte.
+  const myTasks = [];
+  for (const item of data.mine) {
+    let task = myTasks.find((t) => t.taskId === item.taskId);
+    if (!task) {
+      task = { taskId: item.taskId, name: item.name, slots: [] };
+      myTasks.push(task);
+    }
+    task.slots.push(item);
+  }
+
+  // Ein abhakbarer Kreis pro Durchgang.
+  const slotCheck = (item) =>
     el(
       'button',
       {
-        className: `card putzplan-card${item.done ? ' is-done' : ''}`,
+        className: `einkauf-check putzplan-slot${item.done ? ' is-done' : ''}`,
         type: 'button',
         disabled: archived,
+        'aria-label': item.done ? 'Durchgang rückgängig machen' : 'Durchgang erledigt',
         onClick: () => toggleDone(item),
       },
-      el('div', { className: 'card-amount card-amount-small' }, item.name),
-      el(
-        'div',
-        { className: 'card-foot putzplan-card-foot' },
-        item.done
-          ? [el('span', { className: 'einkauf-check is-done', 'aria-hidden': 'true' }, '✓'), 'Erledigt – tippen macht es rückgängig']
-          : el('span', { className: 'button putzplan-done-button' }, 'Erledigt')
-      )
+      item.done ? '✓' : ''
     );
 
+  // Die eigene Aufgabe füllt die Fläche; bei einem Durchgang ist die ganze
+  // Karte der Erledigt-Button, bei mehreren hakt man die Kreise einzeln ab.
+  const mineCard = (task) => {
+    const single = task.slots.length === 1;
+    const allDone = task.slots.every((slot) => slot.done);
+    return el(
+      single ? 'button' : 'div',
+      {
+        className: `card putzplan-card${allDone ? ' is-done' : ''}`,
+        ...(single ? { type: 'button', disabled: archived, onClick: () => toggleDone(task.slots[0]) } : {}),
+      },
+      el('div', { className: 'card-amount' }, task.name),
+      single
+        ? el(
+            'div',
+            { className: 'card-foot putzplan-card-foot' },
+            task.slots[0].done
+              ? [el('span', { className: 'einkauf-check is-done', 'aria-hidden': 'true' }, '✓'), 'Erledigt – tippen macht es rückgängig']
+              : el('span', { className: 'button putzplan-done-button' }, 'Erledigt')
+          )
+        : el('div', { className: 'putzplan-slots' }, task.slots.map(slotCheck))
+    );
+  };
+
   const mineArea =
-    data.mine.length === 0
-      ? el('p', { className: 'empty-note' }, 'Diese Woche bist du mit nichts dran.')
-      : el('div', { className: 'putzplan-mine', 'data-stagger': '' }, data.mine.map(mineCard));
+    myTasks.length === 0
+      ? el('p', { className: 'empty-note putzplan-empty' }, 'Diese Woche bist du mit nichts dran.')
+      : el('div', { className: 'putzplan-mine', 'data-stagger': '' }, myTasks.map(mineCard));
 
   // Verwaltung nur für den Admin: Aufgaben samt Rhythmus anlegen und bearbeiten.
   const taskRows = data.tasks.map((task) =>

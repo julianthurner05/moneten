@@ -1,6 +1,7 @@
 // Setup, Login und Passwort ändern.
 
 import { api } from '../api.js';
+import { withPasswordToggle } from '../controls.js';
 import { el } from '../dom.js';
 
 function field(label, input) {
@@ -43,7 +44,7 @@ export function renderSetup(ctx) {
       el('h1', { className: 'auth-title' }, 'Einrichtung'),
       field('Benutzername', username),
       field('Anzeigename', displayName),
-      field('Passwort', password),
+      field('Passwort', withPasswordToggle(password)),
       error,
       el('button', { className: 'button', type: 'submit' }, 'Admin-Account anlegen')
     );
@@ -80,7 +81,7 @@ export function renderLogin(ctx) {
         },
       },
       field('Benutzername', username),
-      field('Passwort', password),
+      field('Passwort', withPasswordToggle(password)),
       error,
       el('button', { className: 'button', type: 'submit' }, 'Anmelden')
     );
@@ -118,8 +119,8 @@ export function renderPasswordChange(ctx, { forced = false } = {}) {
         },
       },
       el('h1', { className: 'auth-title' }, 'Passwort ändern'),
-      field('Aktuelles Passwort', current),
-      field('Neues Passwort', next),
+      field('Aktuelles Passwort', withPasswordToggle(current)),
+      field('Neues Passwort', withPasswordToggle(next)),
       error,
       el('button', { className: 'button', type: 'submit' }, 'Passwort ändern')
     );

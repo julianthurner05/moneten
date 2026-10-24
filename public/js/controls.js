@@ -5,6 +5,49 @@ import { MIN_MONTH, formatMonth, monthAdd } from './format.js';
 
 const monthShort = new Intl.DateTimeFormat('de-AT', { month: 'short' });
 
+const SVG_NS = 'http://www.w3.org/2000/svg';
+
+/** Auge bzw. durchgestrichenes Auge („eye"/„eye-off" von lucide.dev, ISC-Lizenz). */
+function eyeIcon(open) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.classList.add('eye-icon');
+  const path = document.createElementNS(SVG_NS, 'path');
+  if (open) {
+    path.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z');
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('cx', '12');
+    circle.setAttribute('cy', '12');
+    circle.setAttribute('r', '3');
+    svg.append(path, circle);
+  } else {
+    path.setAttribute(
+      'd',
+      'M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24'
+    );
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', '1');
+    line.setAttribute('y1', '1');
+    line.setAttribute('x2', '23');
+    line.setAttribute('y2', '23');
+    svg.append(path, line);
+  }
+  return svg;
+}
+
+/** Passwortfeld mit Auge-Umschalter: zeigt die Eingabe auf Wunsch im Klartext. */
+export function withPasswordToggle(input) {
+  const button = el('button', { className: 'pw-toggle', type: 'button', 'aria-label': 'Passwort anzeigen' }, eyeIcon(true));
+  button.addEventListener('click', () => {
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    button.setAttribute('aria-label', show ? 'Passwort verbergen' : 'Passwort anzeigen');
+    button.replaceChildren(eyeIcon(!show));
+  });
+  return el('div', { className: 'pw-field' }, input, button);
+}
+
 /** Quadratisches Datums-Tag: Tageszahl groß, Monat abgekürzt darüber. */
 export function dateChip(isoDate) {
   const date = new Date(isoDate + 'T12:00:00');

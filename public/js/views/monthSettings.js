@@ -14,12 +14,7 @@ function build(ctx, data) {
   const head = el(
     'div',
     { className: 'section-head' },
-    el(
-      'div',
-      {},
-      el('div', { className: 'detail-meta' }, el('a', { className: 'textlink', href: '#/monat' }, '← Monat')),
-      el('div', { className: 'month-title' }, 'Budgetplanung')
-    )
+    el('div', {}, el('div', { className: 'month-title' }, 'Budgetplanung'))
   );
 
   // --- Wiederkehrende Posten ---

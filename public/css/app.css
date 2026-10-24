@@ -292,6 +292,46 @@ main {
   }
 }
 
+/* Passwortfeld mit Auge-Umschalter. */
+.pw-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pw-field input {
+  width: 100%;
+  padding-right: calc(var(--space-6) + var(--space-4));
+}
+
+.pw-toggle {
+  position: absolute;
+  right: var(--space-3);
+  display: flex;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease);
+}
+
+@media (hover: hover) {
+  .pw-toggle:hover {
+    color: var(--color-text);
+  }
+}
+
+.eye-icon {
+  width: var(--space-5);
+  height: var(--space-5);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .gear-icon {
   width: var(--space-5);
   height: var(--space-5);
@@ -299,6 +339,7 @@ main {
   stroke: currentColor;
   stroke-width: 2;
   stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .header-status {
@@ -1523,19 +1564,50 @@ input[type='checkbox']:disabled {
   white-space: nowrap;
 }
 
-/* Eigene fällige Aufgabe: große, antippbare Karte. */
+/* Eigene fällige Aufgabe: vollflächige, antippbare Karte. */
 .putzplan-mine {
   display: grid;
   gap: var(--space-4);
 }
 
 .putzplan-card {
-  min-height: 0;
+  min-height: var(--putzplan-card-min);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: var(--space-6);
+}
+
+button.putzplan-card {
   cursor: pointer;
 }
 
 .putzplan-card .card-amount {
-  margin-block: var(--space-4);
+  margin-block: 0;
+  flex: 0 0 auto;
+}
+
+/* Vollflächige Leermeldung, damit die Seite nicht kahl wirkt. */
+.putzplan-empty {
+  min-height: var(--putzplan-card-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Durchgänge (2x/3x die Woche) als einzeln abhakbare Kreise. */
+.putzplan-slots {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.putzplan-slot {
+  width: calc(var(--space-6) * 1.75);
+  height: calc(var(--space-6) * 1.75);
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 
 .putzplan-card.is-done .card-amount {

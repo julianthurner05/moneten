@@ -60,6 +60,7 @@
 
   /* Linien und Radien */
   --hairline: 1px;
+  --putzplan-card-min: calc(100svh - 14rem);
   --radius: 1rem;
   --radius-sm: 0.625rem;
   --radius-full: 999px;

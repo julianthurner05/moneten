@@ -6,7 +6,6 @@ import assert from 'node:assert/strict';
 import {
   assigneeIndex,
   isDueWeek,
-  nextTurnWeek,
   weekAssignments,
   weekIndexOf,
   weekStartFromIndex,
@@ -41,17 +40,6 @@ test('Rhythmus 2: nur jede zweite Woche fällig, rückt pro Runde weiter', () =>
   assert.equal((assigneeIndex(even, 2, 0, 3) + 1) % 3, assigneeIndex(next, 2, 0, 3));
 });
 
-test('nextTurnWeek findet die nächste eigene fällige Woche', () => {
-  const monday = '2026-10-19';
-  const members = 3;
-  for (let me = 0; me < members; me++) {
-    const next = nextTurnWeek(monday, 2, 0, members, me);
-    assert.ok(next > monday);
-    assert.equal(isDueWeek(next, 2), true);
-    assert.equal(assigneeIndex(next, 2, 0, members), me);
-  }
-});
-
 test('weekAssignments: nur fällige Aufgaben, mit Person und Erledigt-Stand', () => {
   const idx = weekIndexOf('2026-10-19');
   const even = weekStartFromIndex(idx % 2 === 0 ? idx : idx + 1);
@@ -79,4 +67,41 @@ test('weekAssignments: 2x die Woche ergibt zwei Durchgänge derselben Person', (
   assert.equal(assignments[0].assigneeId, assignments[1].assigneeId);
   assert.deepEqual(assignments.map((a) => a.slot), [0, 1]);
   assert.deepEqual(assignments.map((a) => a.done), [false, true]);
+});
+
+test('weekAssignments: niemand hat mehr als eine Aufgabe pro Woche', () => {
+  const tasks = [
+    { id: 't1', interval_weeks: 1 },
+    { id: 't2', interval_weeks: 2 },
+    { id: 't3', interval_weeks: 1 },
+  ];
+  const members = ['a', 'b', 'c'];
+  for (let i = 0; i < 8; i++) {
+    const week = weekStartFromIndex(weekIndexOf('2026-10-19') + i);
+    const byPerson = new Map();
+    for (const a of weekAssignments(tasks, members, week, new Set())) {
+      const seen = byPerson.get(a.assigneeId);
+      assert.ok(!seen || seen === a.taskId, `${week}: ${a.assigneeId} hätte zwei Aufgaben`);
+      byPerson.set(a.assigneeId, a.taskId);
+    }
+  }
+});
+
+test('weekAssignments: Überhang pausiert rotierend, jede Aufgabe kommt dran', () => {
+  const tasks = [
+    { id: 't1', interval_weeks: 1 },
+    { id: 't2', interval_weeks: 1 },
+    { id: 't3', interval_weeks: 1 },
+    { id: 't4', interval_weeks: 1 },
+  ];
+  const members = ['a', 'b', 'c'];
+  const skipped = new Set();
+  for (let i = 0; i < 4; i++) {
+    const week = weekStartFromIndex(weekIndexOf('2026-10-19') + i);
+    const assignments = weekAssignments(tasks, members, week, new Set());
+    assert.equal(assignments.length, 3); // nie mehr Aufgaben als Personen
+    const running = new Set(assignments.map((a) => a.taskId));
+    for (const t of tasks) if (!running.has(t.id)) skipped.add(t.id);
+  }
+  assert.equal(skipped.size, 4); // über 4 Wochen pausiert jede Aufgabe genau einmal
 });
