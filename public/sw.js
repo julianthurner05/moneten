@@ -1,4 +1,4 @@
-// Service Worker: empfängt Push-Mitteilungen und zeigt sie an.
+// Service Worker: empfängt Push-Mitteilungen und zeigt sie an. (Version 2026-10-24)
 
 self.addEventListener('push', (event) => {
   let data = {};
