@@ -2,7 +2,14 @@
 // Putzplan-Zähler pro WG und „Du bist dran"-Mitteilungen für fällige Wochen.
 
 import { error, isNonEmptyString, json, nowIso, readJson } from '../../../shared/http.js';
-import { viennaToday, weekAssignments, weekStartOf } from '../../../shared/cleaning.js';
+import {
+  reminderStage,
+  viennaHour,
+  viennaToday,
+  viennaWeekdayIndex,
+  weekAssignments,
+  weekStartOf,
+} from '../../../shared/cleaning.js';
 import { notifyUsers } from '../../../shared/notify.js';
 
 export async function onRequestGet({ env, data, waitUntil }) {
@@ -84,7 +91,7 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
         `SELECT group_id, user_id FROM group_members WHERE group_id IN (${placeholders}) ORDER BY user_id`
       ).bind(...ids),
       env.DB.prepare('SELECT task_id, slot FROM cleaning_done WHERE week_start = ?').bind(weekStart),
-      env.DB.prepare('SELECT task_id FROM cleaning_notified WHERE week_start = ?').bind(weekStart),
+      env.DB.prepare('SELECT task_id, stage FROM cleaning_notified WHERE week_start = ?').bind(weekStart),
       // Für die roten Tab-Zähler: Was haben andere seit dem letzten Ansehen ergänzt?
       env.DB.prepare(
         `SELECT group_id, tab, seen_at FROM tab_seen WHERE user_id = ? AND group_id IN (${placeholders})`
@@ -104,8 +111,10 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
     ]);
 
   const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}|${d.slot}`));
-  const notified = new Set(notifiedRows.results.map((n) => n.task_id));
+  const notified = new Set(notifiedRows.results.map((n) => `${n.task_id}|${n.stage}`));
   const taskNames = new Map(taskRows.results.map((t) => [t.id, t.name]));
+  const today = viennaWeekdayIndex();
+  const hour = viennaHour();
   const toNotify = [];
 
   const seen = new Map(seenRows.results.map((r) => [`${r.group_id}|${r.tab}`, r.seen_at]));
@@ -115,9 +124,19 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
     const memberIds = memberRows.results.filter((m) => m.group_id === group.id).map((m) => m.user_id);
     const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
     group.myCleaningCount = assignments.filter((a) => a.assigneeId === userId && !a.done).length;
+    // Erinnerung pro Aufgabe: am Stichtag einmal, danach pro Folgetag zweimal,
+    // solange noch ein fälliger Durchgang offen ist. Stichtag = frühester
+    // offener Durchgang.
+    const openByTask = new Map();
     for (const a of assignments) {
-      // Eine Mitteilung pro Aufgabe und Woche – auch bei mehreren Durchgängen.
-      if (a.slot === 0 && !a.done && !notified.has(a.taskId)) toNotify.push({ ...a, groupName: group.name });
+      if (a.done) continue;
+      const open = openByTask.get(a.taskId);
+      if (!open || a.day < open.day) openByTask.set(a.taskId, a);
+    }
+    for (const a of openByTask.values()) {
+      const stage = reminderStage(a.day, today, hour);
+      if (stage === null || notified.has(`${a.taskId}|${stage}`)) continue;
+      toNotify.push({ ...a, stage, groupName: group.name });
     }
 
     // Neues von anderen seit dem letzten Ansehen des Tabs. Ohne gemerkten
@@ -143,19 +162,23 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
     (async () => {
       for (const turn of toNotify) {
         try {
-          // Sperre zuerst: Nur wer die Zeile anlegt, schickt – so gibt es die
-          // Mitteilung auch bei gleichzeitigen Aufrufen nur einmal.
+          // Sperre zuerst: Nur wer die Zeile anlegt, schickt – so gibt es jede
+          // Stufe auch bei gleichzeitigen Aufrufen nur einmal.
           const res = await env.DB.prepare(
-            'INSERT INTO cleaning_notified (task_id, week_start) VALUES (?, ?) ON CONFLICT DO NOTHING'
+            'INSERT INTO cleaning_notified (task_id, week_start, stage) VALUES (?, ?, ?) ON CONFLICT DO NOTHING'
           )
-            .bind(turn.taskId, weekStart)
+            .bind(turn.taskId, weekStart, turn.stage)
             .run();
           if (!res.meta || res.meta.changes === 0) continue;
           const task = taskRows.results.find((t) => t.id === turn.taskId);
           const times = Math.max(1, task?.times_per_week ?? 1);
+          const name = taskNames.get(turn.taskId);
           await notifyUsers(env, [turn.assigneeId], {
             title: `Putzplan · ${turn.groupName}`,
-            body: `Du bist diese Woche mit „${taskNames.get(turn.taskId)}" dran${times > 1 ? ` (${times}×)` : ''}.`,
+            body:
+              turn.stage === 0
+                ? `Heute bist du mit „${name}" dran${times > 1 ? ` (${times}× diese Woche)` : ''}.`
+                : `Noch offen: „${name}" – bitte erledigen.`,
             url: '/#/putzplan',
           });
         } catch {

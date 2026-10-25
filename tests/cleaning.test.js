@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {
   assigneeIndex,
   isDueWeek,
+  reminderStage,
   weekAssignments,
   weekIndexOf,
   weekStartFromIndex,
@@ -104,4 +105,29 @@ test('weekAssignments: Überhang pausiert rotierend, jede Aufgabe kommt dran', (
     for (const t of tasks) if (!running.has(t.id)) skipped.add(t.id);
   }
   assert.equal(skipped.size, 4); // über 4 Wochen pausiert jede Aufgabe genau einmal
+});
+
+test('weekAssignments: Tage sind über die Woche verteilt', () => {
+  const monday = '2026-10-19';
+  const tasks = [
+    { id: 't1', interval_weeks: 1 },
+    { id: 't2', interval_weeks: 1 },
+    { id: 't3', interval_weeks: 1 },
+  ];
+  const days = weekAssignments(tasks, ['a', 'b', 'c'], monday, new Set()).map((a) => a.day);
+  assert.deepEqual([...days].sort(), [0, 2, 4]); // Mo, Mi, Fr
+  // Durchgänge einer 2x/3x-Aufgabe verteilen sich ebenfalls.
+  const two = weekAssignments([{ id: 't1', interval_weeks: 1, times_per_week: 2 }], ['a'], monday, new Set());
+  assert.deepEqual(two.map((a) => a.day), [0, 3]); // Mo, Do
+  const three = weekAssignments([{ id: 't1', interval_weeks: 1, times_per_week: 3 }], ['a'], monday, new Set());
+  assert.deepEqual(three.map((a) => a.day), [0, 2, 4]); // Mo, Mi, Fr
+});
+
+test('reminderStage: Stichtag einmal, danach zwei Stufen pro Tag', () => {
+  assert.equal(reminderStage(2, 1, 10), null); // vor dem Stichtag nichts
+  assert.equal(reminderStage(2, 2, 8), 0); // Stichtag: eine Stufe
+  assert.equal(reminderStage(2, 2, 20), 0);
+  assert.equal(reminderStage(2, 3, 9), 1); // Folgetag vormittags
+  assert.equal(reminderStage(2, 3, 15), 2); // Folgetag nachmittags
+  assert.equal(reminderStage(2, 5, 16), 6); // jeden Tag zwei Stufen weiter
 });

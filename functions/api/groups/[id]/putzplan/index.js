@@ -50,7 +50,7 @@ export async function onRequestGet({ env, data, params }) {
   const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
   const mine = assignments
     .filter((a) => a.assigneeId === data.user.id)
-    .map((a) => ({ taskId: a.taskId, slot: a.slot, name: names.get(a.taskId), done: a.done }));
+    .map((a) => ({ taskId: a.taskId, slot: a.slot, name: names.get(a.taskId), done: a.done, day: a.day }));
 
   return json({
     archived: !!group.archived,

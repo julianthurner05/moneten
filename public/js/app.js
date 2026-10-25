@@ -26,6 +26,30 @@ const state = {
   totalBalanceCents: 0,
 };
 
+// Roter Zähler am App-Icon: Summe aller roten Tab-Zahlen plus offene eigene
+// Putz-Durchgänge. Der Service Worker zählt bei Mitteilungen denselben
+// (in IndexedDB gemerkten) Zähler hoch; hier wird er auf die echte Summe gesetzt.
+function updateAppBadge() {
+  if (!('setAppBadge' in navigator)) return;
+  let total = 0;
+  for (const group of state.groups) {
+    if (group.archived) continue;
+    const tabs = group.tabNew ?? {};
+    total += (tabs.gruppe ?? 0) + (tabs.einzug ?? 0) + (tabs.einkauf ?? 0) + (group.myCleaningCount ?? 0);
+  }
+  try {
+    const request = indexedDB.open('moneten-badge', 1);
+    request.onupgradeneeded = () => request.result.createObjectStore('kv');
+    request.onsuccess = () => {
+      request.result.transaction('kv', 'readwrite').objectStore('kv').put(total, 'count');
+    };
+  } catch {
+    // Ohne gemerkten Zähler zählt der Service Worker ab 0 weiter
+  }
+  if (total > 0) navigator.setAppBadge(total).catch(() => {});
+  else navigator.clearAppBadge?.().catch(() => {});
+}
+
 function selectedGroup() {
   return state.groups.find((g) => g.id === state.selectedGroupId) ?? null;
 }
@@ -46,7 +70,10 @@ const ctx = {
   show(active, build) {
     // Der eigene Tab gilt beim Anzeigen als gesehen – Zähler sofort weg.
     const group = selectedGroup();
-    if (group?.tabNew && active in group.tabNew) group.tabNew[active] = 0;
+    if (group?.tabNew && active in group.tabNew && group.tabNew[active] > 0) {
+      group.tabNew[active] = 0;
+      updateAppBadge();
+    }
 
     // Dieselbe Ansicht nach einer Aktion oder Auto-Aktualisierung: in einem
     // Zug ersetzen statt sichtbar aus- und einzublenden.
@@ -93,6 +120,7 @@ const ctx = {
   setCleaningCount(groupId, count) {
     const group = state.groups.find((g) => g.id === groupId);
     if (group) group.myCleaningCount = count;
+    updateAppBadge();
   },
   onLogin(user) {
     state.user = user;
@@ -110,6 +138,7 @@ async function loadGroupsData() {
   const data = await api('/api/groups');
   state.groups = data.groups;
   state.totalBalanceCents = data.totalBalanceCents;
+  updateAppBadge();
 
   // Gewählte Gruppe prüfen bzw. sinnvoll vorbelegen (WG zuerst).
   let stored = null;
@@ -249,8 +278,6 @@ document.addEventListener(
   true
 );
 
-// Beim Öffnen der App den roten Zähler am Icon zurücksetzen.
-navigator.clearAppBadge?.().catch(() => {});
 
 // Auto-Aktualisierung: Wenn die App wieder sichtbar wird und in ruhigem
 // Abstand auch zwischendurch wird die aktuelle Ansicht neu geladen – sanft,
@@ -268,7 +295,6 @@ function autoRefresh() {
 
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
-  navigator.clearAppBadge?.().catch(() => {});
   autoRefresh();
 });
 setInterval(autoRefresh, 30000);

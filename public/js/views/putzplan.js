@@ -15,6 +15,9 @@ const RHYTHM_OPTIONS = [
   { value: '4/1', label: 'Alle 4 Wochen' },
 ];
 
+const WEEKDAYS = ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'];
+const WEEKDAYS_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+
 function rhythmValue(task) {
   return `${task?.intervalWeeks ?? 1}/${task?.timesPerWeek ?? 1}`;
 }
@@ -52,18 +55,23 @@ function build(ctx, groupId, data) {
     task.slots.push(item);
   }
 
-  // Ein abhakbarer Kreis pro Durchgang.
+  // Ein abhakbarer Kreis pro Durchgang, mit Kurz-Wochentag darunter.
   const slotCheck = (item) =>
     el(
-      'button',
-      {
-        className: `einkauf-check putzplan-slot${item.done ? ' is-done' : ''}`,
-        type: 'button',
-        disabled: archived,
-        'aria-label': item.done ? 'Durchgang rückgängig machen' : 'Durchgang erledigt',
-        onClick: () => toggleDone(item),
-      },
-      item.done ? '✓' : ''
+      'div',
+      { className: 'putzplan-slot-wrap' },
+      el(
+        'button',
+        {
+          className: `einkauf-check putzplan-slot${item.done ? ' is-done' : ''}`,
+          type: 'button',
+          disabled: archived,
+          'aria-label': item.done ? 'Durchgang rückgängig machen' : 'Durchgang erledigt',
+          onClick: () => toggleDone(item),
+        },
+        item.done ? '✓' : ''
+      ),
+      el('div', { className: 'putzplan-day' }, WEEKDAYS_SHORT[item.day] ?? '')
     );
 
   // Die eigene Aufgabe füllt die Fläche; bei einem Durchgang ist die ganze
@@ -77,6 +85,7 @@ function build(ctx, groupId, data) {
         className: `card putzplan-card${allDone ? ' is-done' : ''}`,
         ...(single ? { type: 'button', disabled: archived, onClick: () => toggleDone(task.slots[0]) } : {}),
       },
+      single ? el('div', { className: 'putzplan-day' }, WEEKDAYS[task.slots[0].day] ?? '') : null,
       el('div', { className: 'card-amount' }, task.name),
       single
         ? el(

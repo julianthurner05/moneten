@@ -7,6 +7,29 @@ export function viennaToday() {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna' }).format(new Date());
 }
 
+/** Heutiger Wochentag in Wien als Index (Montag = 0 … Sonntag = 6). */
+export function viennaWeekdayIndex() {
+  return (new Date(viennaToday() + 'T00:00:00Z').getUTCDay() + 6) % 7;
+}
+
+/** Aktuelle Stunde in Wien (0–23). */
+export function viennaHour() {
+  return Number(
+    new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Vienna', hour: '2-digit', hour12: false }).format(new Date())
+  );
+}
+
+/**
+ * Erinnerungs-Stufe für eine offene Aufgabe: 0 am Stichtag, danach pro
+ * Folgetag zwei Stufen (vormittags/ab 14 Uhr). Null, solange der Stichtag
+ * noch nicht erreicht ist. Jede Stufe wird nur einmal verschickt.
+ */
+export function reminderStage(dueDay, todayIndex, hour) {
+  if (todayIndex < dueDay) return null;
+  if (todayIndex === dueDay) return 0;
+  return (todayIndex - dueDay) * 2 - (hour < 14 ? 1 : 0);
+}
+
 /** Montag der Woche eines YYYY-MM-DD-Datums, wieder als YYYY-MM-DD. */
 export function weekStartOf(dateString) {
   const d = new Date(dateString + 'T12:00:00Z');
@@ -52,10 +75,14 @@ export function assigneeIndex(weekStart, intervalWeeks, taskIndex, memberCount) 
  * Aufgaben bei derselben Person, rückt die zweite auf die nächste freie
  * Person weiter. Sind mehr Aufgaben fällig als Personen da sind, pausiert
  * der Überhang – rotierend, jede Woche eine andere Aufgabe.
+ *
+ * Jeder Durchgang bekommt einen Wochentag (`day`, Montag = 0), gleichmäßig
+ * über die Woche gestreut: die Aufgaben der Woche untereinander, und bei
+ * 2x/3x die Woche die eigenen Durchgänge (Mo/Do bzw. Mo/Mi/Fr).
  * @param {{id: string, interval_weeks?: number, times_per_week?: number}[]} tasks – sortiert (sort_order, name)
  * @param {string[]} memberIds – sortiert (user_id)
  * @param {Set<string>} doneSet – `${taskId}|${weekStart}|${slot}` der erledigten Durchgänge
- * @returns {{taskId: string, slot: number, assigneeId: string, done: boolean}[]}
+ * @returns {{taskId: string, slot: number, assigneeId: string, done: boolean, day: number}[]}
  */
 export function weekAssignments(tasks, memberIds, weekStart, doneSet) {
   const n = memberIds.length;
@@ -75,14 +102,21 @@ export function weekAssignments(tasks, memberIds, weekStart, doneSet) {
 
   const used = new Set();
   const result = [];
-  for (const { task, index } of selected) {
+  selected.forEach(({ task, index }, position) => {
     let member = assigneeIndex(weekStart, task.interval_weeks, index, n);
     while (used.has(member)) member = (member + 1) % n;
     used.add(member);
     const times = Math.max(1, task.times_per_week ?? 1);
     for (let slot = 0; slot < times; slot++) {
-      result.push({ taskId: task.id, slot, assigneeId: memberIds[member], done: doneSet.has(`${task.id}|${weekStart}|${slot}`) });
+      const day = times > 1 ? Math.floor((slot * 7) / times) : Math.floor((position * 7) / selected.length);
+      result.push({
+        taskId: task.id,
+        slot,
+        assigneeId: memberIds[member],
+        done: doneSet.has(`${task.id}|${weekStart}|${slot}`),
+        day,
+      });
     }
-  }
+  });
   return result;
 }

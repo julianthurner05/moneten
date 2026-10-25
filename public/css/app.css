@@ -1579,7 +1579,8 @@ input[type='checkbox']:disabled {
   gap: var(--space-4);
 }
 
-.putzplan-card {
+.putzplan-card,
+button.putzplan-card {
   min-height: var(--putzplan-card-min);
   align-items: center;
   justify-content: center;
@@ -1589,6 +1590,20 @@ input[type='checkbox']:disabled {
 
 button.putzplan-card {
   cursor: pointer;
+}
+
+/* Wochentag der Aufgabe bzw. des Durchgangs. */
+.putzplan-day {
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-small);
+  color: var(--color-secondary);
+}
+
+.putzplan-slot-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .putzplan-card .card-amount {
