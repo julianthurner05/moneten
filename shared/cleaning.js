@@ -47,8 +47,12 @@ export function weekStartFromIndex(index) {
   return new Date((index * 7 - 3) * 86400000).toISOString().slice(0, 10);
 }
 
+// Vor dieser Woche läuft der Putzplan nicht (Start des Systems am 26.10.2026).
+export const FIRST_WEEK = '2026-10-26';
+
 /** Ist die Aufgabe in dieser Woche fällig? */
 export function isDueWeek(weekStart, intervalWeeks) {
+  if (weekStart < FIRST_WEEK) return false;
   const interval = Math.max(1, intervalWeeks ?? 1);
   return weekIndexOf(weekStart) % interval === 0;
 }

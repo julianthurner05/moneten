@@ -4,6 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  FIRST_WEEK,
   assigneeIndex,
   isDueWeek,
   reminderStage,
@@ -22,7 +23,7 @@ test('weekStartOf liefert den Montag, weekStartFromIndex kehrt weekIndexOf um', 
 });
 
 test('Rhythmus 1: jede Woche fällig, Rotation wie bisher', () => {
-  const monday = '2026-10-19';
+  const monday = '2026-11-02';
   assert.equal(isDueWeek(monday, 1), true);
   const a = assigneeIndex(monday, 1, 0, 3);
   const b = assigneeIndex(weekStartFromIndex(weekIndexOf(monday) + 1), 1, 0, 3);
@@ -32,7 +33,7 @@ test('Rhythmus 1: jede Woche fällig, Rotation wie bisher', () => {
 });
 
 test('Rhythmus 2: nur jede zweite Woche fällig, rückt pro Runde weiter', () => {
-  const idx = weekIndexOf('2026-10-19');
+  const idx = weekIndexOf('2026-11-02');
   const even = weekStartFromIndex(idx % 2 === 0 ? idx : idx + 1);
   const odd = weekStartFromIndex(weekIndexOf(even) + 1);
   assert.equal(isDueWeek(even, 2), true);
@@ -42,7 +43,7 @@ test('Rhythmus 2: nur jede zweite Woche fällig, rückt pro Runde weiter', () =>
 });
 
 test('weekAssignments: nur fällige Aufgaben, mit Person und Erledigt-Stand', () => {
-  const idx = weekIndexOf('2026-10-19');
+  const idx = weekIndexOf('2026-11-02');
   const even = weekStartFromIndex(idx % 2 === 0 ? idx : idx + 1);
   const tasks = [
     { id: 't1', interval_weeks: 1 },
@@ -61,7 +62,7 @@ test('weekAssignments: nur fällige Aufgaben, mit Person und Erledigt-Stand', ()
 });
 
 test('weekAssignments: 2x die Woche ergibt zwei Durchgänge derselben Person', () => {
-  const monday = '2026-10-19';
+  const monday = '2026-11-02';
   const tasks = [{ id: 't1', interval_weeks: 1, times_per_week: 2 }];
   const assignments = weekAssignments(tasks, ['a', 'b', 'c'], monday, new Set([`t1|${monday}|1`]));
   assert.equal(assignments.length, 2);
@@ -78,7 +79,7 @@ test('weekAssignments: bei genug Personen hat niemand zwei Aufgaben', () => {
   ];
   const members = ['a', 'b', 'c'];
   for (let i = 0; i < 8; i++) {
-    const week = weekStartFromIndex(weekIndexOf('2026-10-19') + i);
+    const week = weekStartFromIndex(weekIndexOf('2026-11-02') + i);
     const byPerson = new Map();
     for (const a of weekAssignments(tasks, members, week, new Set())) {
       const seen = byPerson.get(a.assigneeId);
@@ -98,7 +99,7 @@ test('weekAssignments: Aufgaben haben Vorrang – alle laufen, Doppelte rotieren
   const members = ['a', 'b', 'c'];
   const doubled = new Set();
   for (let i = 0; i < 6; i++) {
-    const week = weekStartFromIndex(weekIndexOf('2026-10-19') + i);
+    const week = weekStartFromIndex(weekIndexOf('2026-11-02') + i);
     const assignments = weekAssignments(tasks, members, week, new Set());
     assert.equal(assignments.length, 4); // jede Aufgabe läuft jede Woche
     const perPerson = new Map();
@@ -114,7 +115,7 @@ test('weekAssignments: Aufgaben haben Vorrang – alle laufen, Doppelte rotieren
 });
 
 test('weekAssignments: Tage sind über die Woche verteilt', () => {
-  const monday = '2026-10-19';
+  const monday = '2026-11-02';
   const tasks = [
     { id: 't1', interval_weeks: 1 },
     { id: 't2', interval_weeks: 1 },
@@ -136,4 +137,10 @@ test('reminderStage: Stichtag einmal, danach zwei Stufen pro Tag', () => {
   assert.equal(reminderStage(2, 3, 9), 1); // Folgetag vormittags
   assert.equal(reminderStage(2, 3, 15), 2); // Folgetag nachmittags
   assert.equal(reminderStage(2, 5, 16), 6); // jeden Tag zwei Stufen weiter
+});
+
+test('vor der Startwoche ist nichts fällig', () => {
+  assert.equal(isDueWeek('2026-10-19', 1), false);
+  assert.equal(weekAssignments([{ id: 't1', interval_weeks: 1 }], ['a'], '2026-10-19', new Set()).length, 0);
+  assert.equal(isDueWeek(FIRST_WEEK, 1), true);
 });
