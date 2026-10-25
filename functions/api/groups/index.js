@@ -123,7 +123,7 @@ async function addCleaningStatus(env, groups, userId, waitUntil) {
     const tasks = taskRows.results.filter((t) => t.group_id === group.id);
     const memberIds = memberRows.results.filter((m) => m.group_id === group.id).map((m) => m.user_id);
     const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
-    group.myCleaningCount = assignments.filter((a) => a.assigneeId === userId && !a.done).length;
+    group.myCleaningCount = assignments.filter((a) => a.assigneeId === userId && !a.done && a.day <= today).length;
     // Erinnerung pro Aufgabe: am Stichtag einmal, danach pro Folgetag zweimal,
     // solange noch ein fälliger Durchgang offen ist. Stichtag = frühester
     // offener Durchgang.

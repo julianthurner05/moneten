@@ -101,7 +101,7 @@ function build(ctx, groupId, data) {
 
   const mineArea =
     myTasks.length === 0
-      ? el('p', { className: 'empty-note putzplan-empty' }, 'Diese Woche bist du mit nichts dran.')
+      ? el('p', { className: 'empty-note putzplan-empty' }, 'Gerade bist du mit nichts dran.')
       : el('div', { className: 'putzplan-mine', 'data-stagger': '' }, myTasks.map(mineCard));
 
   // Verwaltung nur für den Admin: Aufgaben samt Rhythmus anlegen und bearbeiten.

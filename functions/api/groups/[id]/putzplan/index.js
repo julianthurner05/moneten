@@ -2,7 +2,7 @@
 // plus Aufgaben lesen/anlegen. Rotation siehe shared/cleaning.js.
 
 import { loadGroupForMember } from '../../../../../shared/groupData.js';
-import { viennaToday, weekAssignments, weekStartOf } from '../../../../../shared/cleaning.js';
+import { viennaToday, viennaWeekdayIndex, weekAssignments, weekStartOf } from '../../../../../shared/cleaning.js';
 import { error, json, nowIso, readJson } from '../../../../../shared/http.js';
 
 // Standard-Aufgaben, die eine WG typischerweise braucht – werden beim ersten
@@ -47,9 +47,11 @@ export async function onRequestGet({ env, data, params }) {
   const doneSet = new Set(doneRows.results.map((d) => `${d.task_id}|${weekStart}|${d.slot}`));
   const names = new Map(tasks.map((t) => [t.id, t.name]));
 
+  // Nicht vorausschauend: Durchgänge erscheinen erst ab ihrem Wochentag.
+  const today = viennaWeekdayIndex();
   const assignments = weekAssignments(tasks, memberIds, weekStart, doneSet);
   const mine = assignments
-    .filter((a) => a.assigneeId === data.user.id)
+    .filter((a) => a.assigneeId === data.user.id && a.day <= today)
     .map((a) => ({ taskId: a.taskId, slot: a.slot, name: names.get(a.taskId), done: a.done, day: a.day }));
 
   return json({
