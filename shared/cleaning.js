@@ -71,10 +71,11 @@ export function assigneeIndex(weekStart, intervalWeeks, taskIndex, memberCount) 
  * Putzplan-Stand einer Gruppe für eine Woche: ein Eintrag pro Durchgang
  * (times_per_week > 1 ergibt mehrere Slots derselben Person in der Woche).
  *
- * Niemand bekommt mehr als eine Aufgabe pro Woche: Kollidieren zwei fällige
- * Aufgaben bei derselben Person, rückt die zweite auf die nächste freie
- * Person weiter. Sind mehr Aufgaben fällig als Personen da sind, pausiert
- * der Überhang – rotierend, jede Woche eine andere Aufgabe.
+ * Jede fällige Aufgabe läuft – die Aufgabe hat Vorrang. Verteilt wird so
+ * gleichmäßig wie möglich: Kollidieren zwei Aufgaben bei derselben Person,
+ * rückt die zweite auf die nächste freie Person weiter, und niemand bekommt
+ * eine zweite Aufgabe, bevor nicht alle eine haben. Sind mehr Aufgaben
+ * fällig als Personen da sind, hat also jemand zwei – wer, rotiert mit.
  *
  * Jeder Durchgang bekommt einen Wochentag (`day`, Montag = 0), gleichmäßig
  * über die Woche gestreut: die Aufgaben der Woche untereinander, und bei
@@ -87,28 +88,22 @@ export function assigneeIndex(weekStart, intervalWeeks, taskIndex, memberCount) 
 export function weekAssignments(tasks, memberIds, weekStart, doneSet) {
   const n = memberIds.length;
   if (n === 0) return [];
-  const weekIdx = weekIndexOf(weekStart);
 
   const due = tasks
     .map((task, index) => ({ task, index }))
     .filter(({ task }) => isDueWeek(weekStart, task.interval_weeks));
 
-  // Überhang pausiert rotierend: Auswahl-Reihenfolge verschiebt sich pro Woche.
-  const selected = due
-    .map((entry, rank) => ({ ...entry, key: (rank + weekIdx) % due.length }))
-    .sort((a, b) => a.key - b.key)
-    .slice(0, n)
-    .sort((a, b) => a.index - b.index);
-
   const used = new Set();
   const result = [];
-  selected.forEach(({ task, index }, position) => {
+  due.forEach(({ task, index }, position) => {
+    // Erst wenn alle eine Aufgabe haben, beginnt die zweite Runde.
+    if (used.size === n) used.clear();
     let member = assigneeIndex(weekStart, task.interval_weeks, index, n);
     while (used.has(member)) member = (member + 1) % n;
     used.add(member);
     const times = Math.max(1, task.times_per_week ?? 1);
     for (let slot = 0; slot < times; slot++) {
-      const day = times > 1 ? Math.floor((slot * 7) / times) : Math.floor((position * 7) / selected.length);
+      const day = times > 1 ? Math.floor((slot * 7) / times) : Math.floor((position * 7) / due.length);
       result.push({
         taskId: task.id,
         slot,

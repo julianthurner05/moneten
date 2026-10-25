@@ -70,7 +70,7 @@ test('weekAssignments: 2x die Woche ergibt zwei Durchgänge derselben Person', (
   assert.deepEqual(assignments.map((a) => a.done), [false, true]);
 });
 
-test('weekAssignments: niemand hat mehr als eine Aufgabe pro Woche', () => {
+test('weekAssignments: bei genug Personen hat niemand zwei Aufgaben', () => {
   const tasks = [
     { id: 't1', interval_weeks: 1 },
     { id: 't2', interval_weeks: 2 },
@@ -88,7 +88,7 @@ test('weekAssignments: niemand hat mehr als eine Aufgabe pro Woche', () => {
   }
 });
 
-test('weekAssignments: Überhang pausiert rotierend, jede Aufgabe kommt dran', () => {
+test('weekAssignments: Aufgaben haben Vorrang – alle laufen, Doppelte rotieren fair', () => {
   const tasks = [
     { id: 't1', interval_weeks: 1 },
     { id: 't2', interval_weeks: 1 },
@@ -96,15 +96,21 @@ test('weekAssignments: Überhang pausiert rotierend, jede Aufgabe kommt dran', (
     { id: 't4', interval_weeks: 1 },
   ];
   const members = ['a', 'b', 'c'];
-  const skipped = new Set();
-  for (let i = 0; i < 4; i++) {
+  const doubled = new Set();
+  for (let i = 0; i < 6; i++) {
     const week = weekStartFromIndex(weekIndexOf('2026-10-19') + i);
     const assignments = weekAssignments(tasks, members, week, new Set());
-    assert.equal(assignments.length, 3); // nie mehr Aufgaben als Personen
-    const running = new Set(assignments.map((a) => a.taskId));
-    for (const t of tasks) if (!running.has(t.id)) skipped.add(t.id);
+    assert.equal(assignments.length, 4); // jede Aufgabe läuft jede Woche
+    const perPerson = new Map();
+    for (const a of assignments) perPerson.set(a.assigneeId, (perPerson.get(a.assigneeId) ?? 0) + 1);
+    // Jede Person hat mindestens eine, niemand mehr als zwei.
+    for (const m of members) assert.ok((perPerson.get(m) ?? 0) >= 1, `${week}: ${m} hat keine Aufgabe`);
+    for (const [m, count] of perPerson) {
+      assert.ok(count <= 2, `${week}: ${m} hätte ${count} Aufgaben`);
+      if (count === 2) doubled.add(m);
+    }
   }
-  assert.equal(skipped.size, 4); // über 4 Wochen pausiert jede Aufgabe genau einmal
+  assert.ok(doubled.size >= 2, 'die Doppel-Aufgabe bleibt nicht an einer Person hängen');
 });
 
 test('weekAssignments: Tage sind über die Woche verteilt', () => {
