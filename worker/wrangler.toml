@@ -4,6 +4,7 @@
 name = "moneten-erinnerungen"
 main = "index.js"
 compatibility_date = "2025-09-01"
+workers_dev = false
 
 [triggers]
 crons = ["0 8 * * *", "0 15 * * *"]
