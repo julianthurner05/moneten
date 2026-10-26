@@ -1,0 +1,14 @@
+# Eigener Worker für die Putzplan-Erinnerungen (Cron läuft auch im Gratis-Tarif).
+# Zeiten in UTC: 8:00 und 15:00 ≈ 9:00 und 16:00 Wiener Winterzeit
+# (Sommerzeit: 10:00 und 17:00).
+name = "moneten-erinnerungen"
+main = "index.js"
+compatibility_date = "2025-09-01"
+
+[triggers]
+crons = ["0 8 * * *", "0 15 * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "moneten"
+database_id = "04e095cf-1d63-4fde-b655-7834fa91a004"
